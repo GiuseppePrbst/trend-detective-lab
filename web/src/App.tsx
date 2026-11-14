@@ -659,8 +659,9 @@ function Compare(p: {
 }
 
 const KIND: Record<string, string> = {
-  station: 'Independent observation (station)',
-  other_reanalysis: 'Another reanalysis',
+  station: 'Point observation (station) — different spatial support',
+  other_reanalysis: 'Another reanalysis — partially dependent (shared observations)',
+  same_source: 'Same underlying source — consistency check only',
 };
 const AGREEMENT: Record<string, string> = {
   consistent: 'Consistent: same verdict and overlapping intervals',
@@ -680,7 +681,7 @@ function CheckCard({ c, name }: { c: Check; name: string }) {
     return r;
   }, [c, name]);
   const make = useCallback((w: number) => intervals(rows, c.unit, w), [rows, c.unit]);
-  const kind = c.independent ? KIND[c.kind] ?? c.kind : 'Same underlying source — consistency check only';
+  const kind = KIND[c.kind] ?? c.kind;
   return (
     <div className="result check">
       <p>
@@ -696,7 +697,7 @@ function CheckCard({ c, name }: { c: Check; name: string }) {
         {c.correlation_annual != null && (
           <div><dt>Correlation of yearly anomalies</dt><dd>{c.correlation_annual.toFixed(2)}</dd></div>
         )}
-        <div><dt>Agreement</dt><dd>{AGREEMENT[c.agreement] ?? c.agreement}</dd></div>
+        <div><dt>Agreement</dt><dd>{AGREEMENT[c.agreement] ?? c.agreement} <span className="muted">(overlapping intervals are not a formal test of equivalence)</span></dd></div>
       </dl>
       {c.caveat && <p className="muted">{c.caveat}</p>}
     </div>

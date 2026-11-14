@@ -157,12 +157,12 @@ def write_report(doc) -> None:
          "| Group | Trend (°C/decade), 95 % CI | p | Verdict |", "|---|---|---|---|"]
     for g in ("coastal", "matched_interior", "difference"):
         t = t1[g]
-        L.append(f"| {g.replace('matched_interior', 'range-restricted interior').replace('_', ' ')} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {t['p_value']:.4f} | {t['verdict']} |")
+        L.append(f"| {g.replace('matched_interior', 'range-restricted interior').replace('_', ' ')} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {trend.fmt_p(t['p_value'], 4)} | {t['verdict']} |")
     np_ = t1["nearest_elevation_pairs"]
     d = np_["difference"]
     L += ["", f"Sensitivity (added after review): nearest-elevation pairing, {np_['n_pairs']} pairs using {np_['n_distinct_interior']} distinct interior "
           f"cells; mean elevation gap interior − coastal {np_['mean_elevation_gap_m']:+.0f} m (largest {np_['max_abs_elevation_gap_m']:.0f} m). "
-          f"Mean paired difference trend {f3(d['slope_per_decade'])} °C/decade ({f3(d['ci_low'])}, {f3(d['ci_high'])}), p = {d['p_value']:.4f}."]
+          f"Mean paired difference trend {f3(d['slope_per_decade'])} °C/decade ({f3(d['ci_low'])}, {f3(d['ci_high'])}), {trend.p_eq(d['p_value'], 4)}."]
     L += ["", "### T2 · Continuous gradients (Spearman ρ across 51 dependent cells — descriptive, no p-values)", "",
           f"- trend vs DEM mean elevation: ρ = {t2['trend_vs_elevation']['rho']:+.2f}",
           f"- trend vs distance from the cell centre to the coast: ρ = {t2['trend_vs_distance']['rho']:+.2f}",
@@ -173,7 +173,7 @@ def write_report(doc) -> None:
           "### T3 · Sensitivity of the coastal class (difference coastal − rest)", "", "| Rule | Coastal / rest | Difference (°C/decade), 95 % CI | p |", "|---|---|---|---|"]
     for r in A["t3"]:
         d = r["difference"]
-        L.append(f"| {r['rule']} | {r['n_coastal']} / {r['n_interior']} | {f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}) | {d['p_value']:.4f} |")
+        L.append(f"| {r['rule']} | {r['n_coastal']} / {r['n_interior']} | {f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}) | {trend.fmt_p(d['p_value'], 4)} |")
     L += ["", "## Los Lagos (T4, descriptive)", ""]
     for ds, v in doc["los_lagos"].items():
         L += [f"### {v['label']} — {v['n_cells']} cells", "", "Mean land-cover shares of the cells (CONAF 2018): " +

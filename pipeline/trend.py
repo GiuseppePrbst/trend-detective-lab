@@ -75,6 +75,20 @@ def annual_means(dates, values):
     return years, [float(np.nanmean(anom[yy == v])) for v in years]
 
 
+def fmt_p(p, digits: int = 4) -> str:
+    """p-value for reports: never '0.0000' - values below the shown precision become '< 0.0001'."""
+    if p is None:
+        return "–"
+    floor = 10 ** -digits
+    return f"< {floor:.{digits}f}" if p < floor else f"{p:.{digits}f}"
+
+
+def p_eq(p, digits: int = 4, name: str = "p") -> str:
+    """'p = 0.0123' or 'p < 0.0001' (never 'p = 0.0000')."""
+    v = fmt_p(p, digits)
+    return f"{name} {v}" if v.startswith("<") else f"{name} = {v}"
+
+
 def bh_adjust(pvalues):
     """Benjamini-Hochberg adjusted p-values (false discovery rate)."""
     p = np.asarray(pvalues, dtype=float)

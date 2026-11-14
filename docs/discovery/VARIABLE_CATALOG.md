@@ -1,6 +1,6 @@
 # Variable catalogue
 
-Generated 2026-11-14T17:37:01+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
+Generated 2026-11-14T19:59:34+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
 
 | Id | Variable | Product | Type | Resolution | Coverage | Access | Status | Depends on | Limitations |
 |---|---|---|---|---|---|---|---|---|---|
@@ -36,7 +36,7 @@ Generated 2026-11-14T17:37:01+00:00 by `python -m pipeline.discovery`. Do not ed
 - **era5**: A second reanalysis at the same points.
 - **stations**: A coastal weather station.
 - **sst**: Sea-surface temperature would add the ocean side — planned.
-- relation t2m – era5: Shared model inputs
+- relation t2m – era5: Partially dependent sources (different systems, some shared observations)
 - relation t2m – stations: Potentially independent observations
 - relation t2m – sst: Not yet evaluated
 
@@ -53,8 +53,8 @@ Generated 2026-11-14T17:37:01+00:00 by `python -m pipeline.discovery`. Do not ed
 - **t2m**: MERRA-2 reanalysis temperature.
 - **era5**: ERA5, another reanalysis.
 - **stations**: Punta Arenas station.
-- relation t2m – era5: Shared model inputs
-- relation precip – era5: Potentially independent observations
+- relation t2m – era5: Partially dependent sources (different systems, some shared observations)
+- relation precip – era5: Partially dependent sources (different systems, some shared observations)
 - relation precip – stations: Potentially independent observations
 
 ### Climate change by region — How do trends differ between regions, and are the differences real?

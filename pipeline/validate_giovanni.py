@@ -60,6 +60,9 @@ def arav(data_id: str, box: str, start: str, end: str, cache_name: str, sess: re
             except (requests.RequestException, ValueError):   # transient non-JSON answers happen while it works
                 continue
             res = r["session"]["resultset"][0]["result"][0]
+            st = res["status"][0]
+            if st["code"][0]["value"] not in ("0", "1"):   # Giovanni reports a failed workflow: stop instead of waiting
+                raise RuntimeError(f"Giovanni workflow failed for {data_id}: {st['message'][0]['value'][:120]}")
             urls = [f["dataUrl"][0]["value"] for g in res.get("data", [{}])[0].get("fileGroup", []) for f in g["dataFile"]]
             if urls:
                 CACHE.mkdir(parents=True, exist_ok=True)
@@ -115,7 +118,7 @@ def main() -> None:
         to, tg = trend.analyze(common, [o[d] for d in common]), trend.analyze(common, [g[d] for d in common])
         L.append(f"| {name} | {box} | {len(lats) * len(lons)} | {len(common)} | {np.abs(diff).max():.4f} | {diff.mean():+.4f} | "
                  f"{to['slope_per_decade']:+.4f} ({to['ci_low']:+.3f}, {to['ci_high']:+.3f}) | {tg['slope_per_decade']:+.4f} "
-                 f"({tg['ci_low']:+.3f}, {tg['ci_high']:+.3f}) | {to['p_value']:.4f} / {tg['p_value']:.4f} |")
+                 f"({tg['ci_low']:+.3f}, {tg['ci_high']:+.3f}) | {trend.fmt_p(to['p_value'], 4)} / {trend.fmt_p(tg['p_value'], 4)} |")
         queries.append(f"- {name}: `{q}`")
     L += ["", "Reproduce: the Giovanni requests below are the ones the web interface issues "
           "(`https://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?<query>`; an Earthdata login is required). "
