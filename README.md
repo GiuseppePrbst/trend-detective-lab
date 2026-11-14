@@ -9,6 +9,43 @@ honest statistical answer — including whether two regions really differ.
 - **Challenge:** NASA Space Apps Challenge 2026 — *Be An Earth System Trend Detective!*
 - **Team:** ProGarLabs (Local Event: Quemchi, Chile) — Giuseppe Proboste, Fabiana García
 
+## At a glance
+
+**What it does.** Trend Detective Lab takes you from an environmental question to an evidence-backed answer: it suggests
+the NASA variables that can help, shows the record and its trend with uncertainty, tests whether two places really
+differ, reveals what regional averages hide, and states for every key result what it supports and what it does not.
+
+**Why it matters.** Detecting a trend is easy; knowing what it means is not. Regional averages hide spatial contrasts,
+products can disagree, short records depend on their start year, and "significant" is routinely over-read. This tool
+makes those pitfalls visible instead of hiding them.
+
+**Live demo:** https://giuseppeprbst.github.io/trend-detective-lab/ (try `?q=coast` or `?q=disagreement`)
+
+![Start with a question: suggested NASA variables with their integration status](docs/presentation/app_screens/01_question.png)
+
+**NASA data:** MERRA-2 air temperature (1980–2025), GPM IMERG Final V07 precipitation (1998–2024), GLDAS-2.1 soil
+moisture, evapotranspiration and snow (2000–2024), all through NASA Giovanni; our averaging reproduces Giovanni's own
+area averages to 0.0003 °C.
+
+**Main findings** (numbers: `docs/discovery/EVIDENCE_CARDS.md`, generated):
+- *Confirmatory:* in MERRA-2 the regional trends of Antofagasta and Los Lagos differ (difference +0.18 °C/decade, p = 0.006).
+- *Exploratory:* inside Antofagasta, no statistically significant warming is detected in the coastal cells while the
+  interior warmed (difference −0.29 °C/decade); ERA5 at matching points shows the same contrast.
+- *Exploratory:* in central Chile, detrended yearly rainfall and modelled root-zone soil moisture vary together
+  (r ≈ 0.8) — partly by construction, because the model is driven by observed rain.
+- *Disagreement:* in Magallanes, IMERG's significant drying and MERRA-2's lack of warming are not reproduced by ERA5 or
+  the Punta Arenas station.
+
+**Scientific cautions.** Trends only, no causes or forecasts; "not significant" is not "no change"; the main test's
+worst simulated false-positive rate is 8.6 % (46 years) and 10.1 % (27 years) instead of 5 %; ERA5 and MERRA-2 share
+observations; 25–50 km cells cannot resolve finer terrain even when the DEM can.
+
+**Run it.** `cd web && npm ci && npm run dev` uses the published results; §9 explains how to regenerate them from the
+cache or repeat the downloads.
+
+**Team ProGarLabs:** Giuseppe Proboste (data, GIS, statistics) and Fabiana García (design, texts, independent review).
+**AI assistance:** declared in §11.
+
 ## 1. The problem
 
 Anyone can draw a line through a climate record. The hard part is knowing whether that line means anything.
@@ -122,8 +159,8 @@ Everything here was decided after the main results; families and corrections wer
 (`docs/multivariable/HYPOTHESES_AND_TEST_FAMILIES.md`, `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`). Numbers:
 `docs/multivariable/MULTIVARIABLE_RESULTS.md`, `TERRITORIAL_RESULTS.md`; selection: `DISCOVERY_SELECTION.md`.
 
-- **Antofagasta, coast vs interior (MERRA-2, 1980–2025).** Coastal cells (land share < 0.99, classified in QGIS) show no
-  warming (−0.03 °C/decade, CI −0.19 to +0.14); interior cells warm +0.27 (CI +0.14 to +0.39). ERA5 at the same points shows
+- **Antofagasta, coast vs interior (MERRA-2, 1980–2025).** No statistically significant warming was detected in
+  the coastal cells (land share < 0.99, classified in QGIS): −0.03 °C/decade, CI −0.19 to +0.14, which includes zero; interior cells warm +0.27 (CI +0.14 to +0.39). ERA5 at the same points shows
   the same contrast (−0.03 vs +0.28), and the coastal Antofagasta station (−0.09) sits with the coast. In an elevation-range-restricted
   comparison (interior cells within the coastal elevation range, on average 361 m higher) the coast still warms 0.20
   °C/decade less (CI −0.25 to −0.14); pairing each coastal cell with the interior cell of nearest elevation gives −0.19
@@ -159,9 +196,9 @@ Everything here was decided after the main results; families and corrections wer
 | ERA5 (`docs/validation_external.md`) | Another reanalysis, at the same five grid points per region | Los Lagos and Antofagasta consistent; Magallanes partly: ERA5 shows significant warming (+0.18 °C/decade) and no significant drying, MERRA-2/IMERG the opposite |
 
 What this means: the north–south warming contrast and the Los Lagos results are supported by a second reanalysis; the
-Magallanes results (no warming, significant drying) are **not** confirmed by ERA5 or by the Punta Arenas station and
+Magallanes results (no significant warming in MERRA-2, significant drying in IMERG) are **not** confirmed by ERA5 or by the Punta Arenas station and
 should be read as product-dependent. A coastal station (Antofagasta, 135 m) and a mostly inland desert region are not the
-same quantity. The exploratory coast/interior analysis (§5b) found that MERRA-2's coastal cells show no warming, like the
+same quantity. The exploratory coast/interior analysis (§5b) found no statistically significant warming in MERRA-2's coastal cells, like the
 station, while interior cells warm; ERA5 shows the same contrast. The disagreement is largely a matter of *where* in the region.
 ERA5 and MERRA-2 assimilate many of the same observations, so their agreement is supporting, not independent, evidence.
 
@@ -201,6 +238,20 @@ No server, no database: a reproducible batch pipeline and a static site.
 
 ## 9. Reproduce
 
+Three levels, from cheapest to complete:
+
+1. **Run the app from the published results** — no credentials: `cd web && npm ci && npm run dev`. CI runs the Python
+   tests (engine specifications, calibration properties, data contracts on the published JSON) and the web build on every
+   pull request (`.github/workflows/ci.yml`).
+2. **Regenerate results from a local cache** — `data/raw/` (NASA cells), `data/external/` (ERA5, stations, Giovanni) and
+   `data/gis_src/` (CIREN DEM, CONAF catastro, Natural Earth, GMTED2010) are not committed; with them in place, run the
+   `build → validate → validate_external → multivar → territory → discovery` steps below (minutes). The QGIS steps need
+   QGIS 4.2.
+3. **Repeat the study with new downloads** — needs an Earthdata token and hours of downloads (~13,000 NASA cells through
+   the Giovanni time-series API), plus the CIREN and CONAF files from their official portals (`docs/gis/DATA_LICENSES.md`).
+   Giovanni's area-averaging service was failing for all variables on 2026-11-14 afternoon, which blocked the coastal SST
+   extension; the main pipeline uses the time-series API, which was working.
+
 Requires [uv](https://docs.astral.sh/uv/) (Python ≥ 3.12), Node 20, and a free [Earthdata Login](https://urs.earthdata.nasa.gov)
 token (approve the "NASA GESDISC DATA ARCHIVE" application in your profile).
 
@@ -216,6 +267,11 @@ uv run python -m pipeline.calibration 800     # docs/calibration.md (synthetic)
 for v in soilm_root soilm_surface evap swe; do uv run python -m pipeline.fetch $v; done   # GLDAS, ~15 min each
 "<QGIS>/bin/python-qgis.bat" qgis/build_layers.py   # QGIS 4.2: geometry checks, coastal cells
 uv run python -m pipeline.multivar            # exploratory lab, docs/multivariable/MULTIVARIABLE_RESULTS.md
+"<QGIS>/bin/python-qgis.bat" qgis/scripts/build_cell_context.py   # CIREN DEM + CONAF context per cell
+uv run python -m pipeline.territory           # docs/multivariable/TERRITORIAL_RESULTS.md
+uv run python -m pipeline.discovery           # catalogue, questions, evidence cards
+"<QGIS>/bin/python-qgis.bat" qgis/scripts/export_territorial_maps.py   # credited maps, refined QGIS project
+uv run --with matplotlib python -m pipeline.make_deck   # 7-slide PDF
 "<QGIS>/bin/python-qgis.bat" qgis/make_project.py   # qgis/trend_detective_chile.qgz
 uv run --with h5py python -m pipeline.validate_giovanni   # docs/validation/GIOVANNI_COMPARISON.md
 uv run pytest
@@ -247,7 +303,7 @@ Data
 - CIREN (2016), DEM ALOS PALSAR regional mosaics (Antofagasta, Los Lagos), geoportal.cl; derived from the ASF ALOS PALSAR RTC DEM (ASF DAAC, https://asf.alaska.edu). JAXA/METI ALOS PALSAR.
 - CONAF / MINAGRI, Catastro de los Recursos Vegetacionales y Uso de la Tierra: Antofagasta 2019, Los Lagos 2018, IDE MINAGRI (https://ide.minagri.gob.cl).
 - Natural Earth 10 m land (public domain), https://www.naturalearthdata.com.
-- USGS GMTED2010 (Danielson, J.J., and D.B. Gesch, 2011, USGS Open-File Report 2011-1073, doi:10.3133/ofr20111073), 15″ mean elevation, public domain: relief shown in maps. CIREN and CONAF data are used for per-cell statistics only; see `docs/gis/DATA_LICENSES.md`.
+- USGS GMTED2010 (Danielson, J.J., and D.B. Gesch, 2011, USGS Open-File Report 2011-1073, doi:10.3133/ofr20111073), 15″ mean elevation, public domain: relief shown in maps. CIREN and CONAF data are used with attribution (per-cell statistics and credited maps); see `docs/gis/DATA_LICENSES.md`.
 - Region boundaries: geoBoundaries gbOpen CHL ADM1 (Runfola et al. 2020, doi:10.1371/journal.pone.0231866); source Biblioteca del Congreso Nacional de Chile / OCHA ROLAC; CC BY 3.0 IGO.
 - Data library handed out at the Quemchi venue (73 resources): audited in `docs/data/OFFICIAL_DATA_LIBRARY_AUDIT.md`.
 

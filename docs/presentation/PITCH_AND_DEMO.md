@@ -36,7 +36,7 @@ the method when it gave too many false alarms, and checked our numbers against N
 they match to a few ten-thousandths of a degree.
 
 Then we used QGIS to look inside the regions. Antofagasta warmed faster than Los Lagos — that was our pre-registered
-question. But its coast did not warm at all; the interior did. A second reanalysis and the coastal weather station
+question. But in its coastal cells we detect no significant warming; the interior warmed. A second reanalysis and the coastal weather station
 agree. A regional average can hide the most interesting part of the story.
 
 In central Chile, rainfall and soil moisture rise and fall together from year to year. But the soil moisture comes from

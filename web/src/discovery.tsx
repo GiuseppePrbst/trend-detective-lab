@@ -32,7 +32,8 @@ const STATUS_LABEL: Record<string, string> = {
 const NE = 'Not evaluated';
 
 export function QuestionStart({ d, onOpen }: { d: Discovery; onOpen: (q: Question) => void }) {
-  const [qid, setQid] = useState<string | null>(null);
+  // ?q=<question id> opens a question directly (shareable demo links)
+  const [qid, setQid] = useState<string | null>(() => new URLSearchParams(location.search).get('q'));
   const q = d.questions.find((x) => x.id === qid);
   const cat = Object.fromEntries(d.catalog.map((c) => [c.id, c]));
   return (
@@ -125,8 +126,8 @@ export function EvidenceCard({ c, note }: { c: Card; note?: string }) {
 
 export function EvidenceCards({ d }: { d: Discovery }) {
   return (
-    <section aria-labelledby="h-evidence" className="evidence-cards">
-      <h2 id="h-evidence"><span className="step">9</span> Evidence cards</h2>
+    <section aria-labelledby="h-evidence-cards" className="evidence-cards">
+      <h2 id="h-evidence-cards"><span className="step">9</span> Evidence cards</h2>
       <p>The same six questions for every important result: what, from which source, how analysed, checked against what, what it
         supports and what it does not. Missing pieces say "{NE}". No confidence score is invented.</p>
       {d.cards.map((c) => <EvidenceCard key={c.id} c={c} note={d.agreement_note} />)}

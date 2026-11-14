@@ -1,6 +1,6 @@
 # Variable catalogue
 
-Generated 2026-11-14T19:59:34+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
+Generated 2026-11-14T20:11:52+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
 
 | Id | Variable | Product | Type | Resolution | Coverage | Access | Status | Depends on | Limitations |
 |---|---|---|---|---|---|---|---|---|---|

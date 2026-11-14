@@ -269,13 +269,13 @@ function CoastPanel({ mv }: { mv: MultiVar }) {
   return (
     <div>
       <p>
-        The weather station at Antofagasta (on the coast) shows no warming, while the regional mean of MERRA-2 does. Is the coast
+        The weather station at Antofagasta (on the coast) shows no statistically significant warming, while the regional mean of MERRA-2 does. Is the coast
         different from the desert interior? Cells were classified in QGIS: {c.rule}.
       </p>
       <PlotFigure make={make} alt="Trend of coastal cells, interior cells and their difference, with 95 % intervals." />
       <p className="result-line">
         Difference coastal − interior: {signed(c.difference.slope_per_decade)} °C per decade (95 % CI {num(c.difference.ci_low)} to{' '}
-        {num(c.difference.ci_high)}), {pval(c.difference.p_value)} — {c.differs ? 'the two parts of the region warmed at different rates in MERRA-2.' : 'MERRA-2 cannot tell the two parts apart.'}{' '}
+        {num(c.difference.ci_high)}), {pval(c.difference.p_value)} — {c.differs ? 'the trends of the two parts of the region differ in MERRA-2.' : 'MERRA-2 cannot tell the two parts apart.'}{' '}
         A coastal MERRA-2 cell is still about 50 km wide and mixes ocean and land, so it is not the same as a coastal station.
       </p>
     </div>
@@ -328,7 +328,7 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
           The coastal station does not show the regional warming.</p></li>
       <li><h4>Split the region: coast vs interior</h4><CoastPanel mv={mv} /></li>
       <li><h4>Geomorphological context</h4>
-        <p>Each MERRA-2 cell (about 50 km) was described in QGIS with a 12.5 m elevation model (CIREN; statistics only) and its distance to
+        <p>Each MERRA-2 cell (about 50 km) was described in QGIS with the CIREN elevation model (12.5 m pixel spacing; used for cell statistics and the map relief) and its distance to
           the coastline. The relief describes the cells; the climate data cannot resolve anything smaller.</p>
         <figure className="map-figure">
           <img src={`${import.meta.env.BASE_URL}img/antofagasta_territorial.png`} loading="lazy" width={620}
@@ -353,8 +353,8 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
         </ul>
         {sst && <SSTPanel sst={sst} />}</li>
       <li><h4>Interpretation, uncertainty and open questions</h4>
-        <p>The regional average hides an important spatial difference: in two reanalyses the coastal cells did not warm while the interior did,
-          and the coastal station agrees. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
+        <p>The regional average hides an important spatial difference: in two reanalyses no statistically significant warming was detected in the
+          coastal cells, while the interior warmed, and the coastal station is consistent with the coastal cells. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
           coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.
           "No statistically significant warming in the coastal cells" is not the same as "the coast did not warm". The causal mechanism remains
           unproven.</p></li>
