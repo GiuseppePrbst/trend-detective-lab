@@ -8,10 +8,15 @@ import pytest
 DATA = Path(__file__).resolve().parent.parent / "web" / "public" / "data"
 
 
+OPTIONAL = {"sst.json"}   # coastal SST: blocked by a Giovanni service failure (docs/submission/FINAL_READINESS.md)
+
+
 def load(name):
     p = DATA / name
     if not p.exists():
-        pytest.skip(f"{name} not generated")
+        if name in OPTIONAL:
+            pytest.skip(f"optional {name} not generated")
+        pytest.fail(f"essential data file {name} is missing")
     return json.loads(p.read_text(encoding="utf-8"))
 
 
@@ -63,3 +68,27 @@ def test_windows_main_equals_published_trend():
     w, t = load("windows.json"), load("t2m.json")
     for rid, r in w["t2m"]["full"]["regions"].items():
         assert abs(r["trend"]["slope_per_decade"] - t["regions"][rid]["trend"]["slope_per_decade"]) < 1e-6
+
+
+def test_cards_never_claim_significance_they_do_not_have():
+    """A card whose p >= 0.05 must not say 'significant' in its 'can' text without a negation."""
+    for c in load("discovery.json")["cards"]:
+        p = c["result"].get("p")
+        if p is not None and p >= 0.05:
+            text = c["can"].lower()
+            assert "no statistically significant" in text or "not significant" in text, c["id"]
+
+
+def test_check_dependencies_are_labelled():
+    for c in load("discovery.json")["cards"]:
+        for k in c["checks"]:
+            assert k.get("dependency") and k.get("scope"), (c["id"], k["source"])
+    for c in load("validation.json")["checks"]:
+        if c["kind"] == "other_reanalysis":
+            assert c["independent"] is False   # partially dependent on MERRA-2's observations
+
+
+def test_reports_never_print_zero_p():
+    root = DATA.parent.parent.parent / "docs"
+    for f in ["results.md", "multivariable/MULTIVARIABLE_RESULTS.md", "multivariable/TERRITORIAL_RESULTS.md", "discovery/EVIDENCE_CARDS.md", "validation_external.md"]:
+        assert "p = 0.0000" not in (root / f).read_text(encoding="utf-8") and "p=0.000 " not in (root / f).read_text(encoding="utf-8"), f

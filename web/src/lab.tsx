@@ -322,7 +322,10 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
         <figure className="map-figure">
           <img src={`${import.meta.env.BASE_URL}img/antofagasta_territorial.png`} loading="lazy" width={620}
             alt="Map of Antofagasta: shaded relief with the MERRA-2 cells coloured by their warming trend; coastal cells outlined in black." />
-          <figcaption>Exported from the project's QGIS workflow. Background relief: USGS GMTED2010 (public domain).</figcaption>
+          <figcaption>Exported from the project's QGIS workflow (qgis/scripts/export_territorial_maps.py). Terrain context:{' '}
+            <a href="https://geoportal.cl/geoportal/catalog/35426/DEM%20Alos%20Palsar%20Regi%C3%B3n%20de%20Antofagasta">CIREN DEM ALOS PALSAR</a> (ASF ALOS
+            PALSAR RTC-derived; 12.5 m pixel spacing, not 12.5 m climate data). Climate trends: NASA MERRA-2 via Giovanni. Provenance:{' '}
+            <a href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/gis/DATA_LICENSES.md">DATA_LICENSES.md</a>.</figcaption>
         </figure>
         <PlotFigure make={scatter} alt="Each cell's warming trend against its mean elevation and against its distance to the coast." /></li>
       <li><h4>External check</h4>
