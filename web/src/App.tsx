@@ -1,4 +1,4 @@
-// SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
+// SI disclosure: developed with Claude and revised with OpenAI Codex; human team review is pending for the revision.
 // Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline, type Interval } from './charts';
@@ -131,7 +131,7 @@ export default function App() {
                       <button className={`case${g === activeCase ? ' is-on' : ''}`} onClick={() => startCase(g)} disabled={!ok}
                         aria-pressed={g === activeCase}>
                         <strong>{g.title}</strong>
-                        <span>{g.question}</span>
+                        <span>{g.variable === 'precip' && g.a === 'los-lagos' && g.b === 'magallanes' ? 'IMERG shows a significant decline in Magallanes, but not Los Lagos. Do their trends differ? Other sources do not fully confirm the Magallanes result.' : g.question}</span>
                         {!ok && <em>Data not available yet</em>}
                       </button>
                     </li>
@@ -142,6 +142,7 @@ export default function App() {
 
             <section aria-labelledby="h-var">
               <h2 id="h-var"><span className="step">2</span> Choose a variable</h2>
+              <p className="hint">Each product uses its full published period. Selecting a different period and recalculating the trend is not available yet.</p>
               <fieldset className="vars">
                 <legend className="sr-only">Variable</legend>
                 {cat.variables.map((x) => (
@@ -182,7 +183,7 @@ export default function App() {
       <footer className="site-footer">
         <div className="wrap">
           <p>Team ProGarLabs · Built during NASA Space Apps Challenge 2026 · License Apache-2.0 · <a href={REPO_URL}>Source repository</a></p>
-          <p>Use of SI: Parts of this code were written with SI coding tools (Claude) and reviewed by the team.</p>
+          <p>Use of SI: Parts of this code were written with SI coding tools (Claude and OpenAI Codex); the team is responsible for review.</p>
           {cat && <p className="muted">Data files generated {cat.generated_at}.</p>}
         </div>
       </footer>
@@ -557,7 +558,7 @@ function Compare(p: {
             Robustness: Theil–Sen {signed(c.theil_sen_per_decade)}, Mann–Kendall {pval(c.mk_p_value)}.
           </p>
           {guided?.lesson && (
-            <p className="lesson"><strong>What this case shows:</strong> {guided.lesson}</p>
+            <p className="lesson"><strong>What this case shows:</strong> {guided.variable === 't2m' && guided.a === 'los-lagos' && guided.b === 'antofagasta' ? 'In MERRA-2 the difference between the trends is significant. ERA5 checks individual regional samples, not the difference itself; the Antofagasta station does not confirm its regional warming estimate.' : guided.lesson}</p>
           )}
         </div>
       )}
@@ -595,7 +596,7 @@ function CheckCard({ c, name }: { c: Check; name: string }) {
       if (x.slope_per_decade != null && x.ci_low != null && x.ci_high != null)
         r.push({ name: label, slope: x.slope_per_decade, lo: x.ci_low, hi: x.ci_high, color });
     };
-    add(`Ours (${name} regional mean)`, c.ours, COLOR_A);
+    add(c.kind === 'other_reanalysis' ? `Ours (same five grid points in ${name})` : `Ours (${name} regional mean)`, c.ours, COLOR_A);
     add(c.source, c.other, '#374151');
     return r;
   }, [c, name]);
@@ -679,11 +680,11 @@ function Evidence(p: {
         {rs && <div><dt>Grid cells in {name}</dt><dd>{rs.n_cells}</dd></div>}
       </dl>
 
-      <h3>Independent checks</h3>
-      {p.validation.state === 'loading' ? (
-        <Status what="the independent checks" s={p.validation} />
+      <h3>External and consistency checks</h3>
+      {p.validation.state !== 'ok' ? (
+        <Status what="the external checks" s={p.validation} />
       ) : checks.length === 0 ? (
-        <p className="status">No independent check for this selection yet.</p>
+        <p className="status">No external check for this selection yet.</p>
       ) : (
         checks.map((c) => <CheckCard key={c.source} c={c} name={name} />)
       )}

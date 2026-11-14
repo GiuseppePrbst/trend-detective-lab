@@ -27,11 +27,11 @@ Residuals of the fitted trend. If the residuals behaved like an AR(1) process, t
 
 Largest excess of r2 over r1²: 0.25.
 
-**Finding and decision (2026-11-14).** In every region r2 is two to three times larger than r1²: the residuals keep more memory than an AR(1) model assumes (plausibly multi-month to interannual variability such as ENSO). An effective sample size based on r1 alone would make the test too optimistic: in our synthetic simulations with this kind of memory it produced 30–48 % false positives. We therefore replaced it with the general effective sample size n / (1 + 2 Σ (1 − k/n) ρ_k) over the leading positive autocorrelations, which is identical for a true AR(1) process and gave 8–9 % false positives in the same simulations (4–5 % for white noise and AR(1)). All results in the app use the corrected method. Lag-12 autocorrelation is negligible, so no seasonal structure is left in the anomalies.
+**Interpretation and method history (2026-11-14).** The monthly residuals retain more lag-2 correlation than implied by a monthly AR(1) model. This motivated a first revision using a multi-lag effective sample size. Later simulations showed that revision also exceeded the target false-positive rate; the final app uses yearly means with a lag-1 adjustment, not the monthly multi-lag method. See `docs/calibration.md` for the simulation and its limitations. Small lag-12 correlation alone does not establish that all seasonal structure is absent.
 
 ## 2. Sensitivity to the start and end years
 
-Slope in °C per decade (95 % CI) when two years are removed from either end.
+Slope in °C per decade (95 % CI) when two years are removed from either end. Asterisks show nominal main-test significance only, not adjusted significance or agreement between methods.
 
 | Region | 1980–2025 | 1982–2025 | 1980–2023 |
 |---|---|---|---|
