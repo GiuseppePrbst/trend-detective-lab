@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-14T12:21:11+00:00",
+ "generated_at": "2026-11-14T12:32:41+00:00",
  "variables": [
   {
    "label": "Air temperature at 2 m",
@@ -24,6 +24,32 @@
    "version": "5.12.4",
    "doi": "10.5067/5ESKGQTZG7FO",
    "source_unit": "K",
+   "service": "NASA Giovanni time-series service (GES DISC)",
+   "accessed": "2026-11-14"
+  },
+  {
+   "label": "Precipitation",
+   "definition": "Rain and snow reaching the ground, added up over each month, estimated by combining many satellites and adjusted with rain gauges.",
+   "unit": "mm/month",
+   "trend_unit": "mm/month per decade",
+   "nature": "satellite_gauge",
+   "nature_label": "Satellite estimate merged with rain gauges (IMERG Final Run)",
+   "product": "GPM IMERG Final Run GPM_3IMERGM",
+   "grid": "0.1° (about 10 km)",
+   "period": [
+    1998,
+    2024
+   ],
+   "caveats": [
+    "The IMERG Final Run V07 monthly record ends in September 2025; we use complete years 1998–2024.",
+    "27 years is short for precipitation, which varies strongly from year to year; in central Chile the period is dominated by the drought that began in 2010.",
+    "Satellite precipitation is less accurate over steep mountains such as the Andes."
+   ],
+   "citation": "Huffman, G.J., E.F. Stocker, D.T. Bolvin, E.J. Nelkin, Jackson Tan (2023), GPM IMERG Final Precipitation L3 1 month 0.1 degree x 0.1 degree V07, Greenbelt, MD, Goddard Earth Sciences Data and Information Services Center (GES DISC), doi:10.5067/GPM/IMERG/3B-MONTH/07. Accessed through the NASA Giovanni time-series service.",
+   "id": "precip",
+   "version": "07",
+   "doi": "10.5067/GPM/IMERG/3B-MONTH/07",
+   "source_unit": "mm/hr",
    "service": "NASA Giovanni time-series service (GES DISC)",
    "accessed": "2026-11-14"
   }

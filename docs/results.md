@@ -1,6 +1,6 @@
 # Results
 
-Generated 2026-11-14T12:21:11+00:00 by `python -m pipeline.build`. Do not edit by hand.
+Generated 2026-11-14T12:32:41+00:00 by `python -m pipeline.build`. Do not edit by hand.
 
 ## Air temperature at 2 m — MERRA-2 M2IMNXASM v5.12.4, 1980–2025
 
@@ -27,3 +27,27 @@ Reanalysis (weather model + observations), not a direct measurement. Regions lis
 
 - Difference antofagasta − los-lagos: +0.183 (+0.071, +0.294) °C per decade, p = 0.0014 → trends differ.
 - Difference los-lagos − magallanes: +0.046 (-0.019, +0.110) °C per decade, p = 0.1665 → trends cannot be said to differ.
+
+## Precipitation — GPM IMERG Final Run GPM_3IMERGM v07, 1998–2024
+
+Satellite estimate merged with rain gauges (IMERG Final Run). Regions listed north to south. Slope in mm/month per decade.
+
+| Region | Grid cells | Mean | Slope (95 % CI) | p | p (BH-adjusted) | n_eff / n | Theil–Sen | MK p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| Arica y Parinacota | – | – | not available yet | – | – | – | – | – | – |
+| Tarapacá | – | – | not available yet | – | – | – | – | – | – |
+| Antofagasta | 1228 | 7.32 | +0.570 (-0.405, +1.546) | 0.2502 | 0.2502 | 181 / 324 | +0.340 | 0.3312 | not significant |
+| Atacama | – | – | not available yet | – | – | – | – | – | – |
+| Coquimbo | – | – | not available yet | – | – | – | – | – | – |
+| Valparaíso | – | – | not available yet | – | – | – | – | – | – |
+| Metropolitana de Santiago | – | – | not available yet | – | – | – | – | – | – |
+| O'Higgins | – | – | not available yet | – | – | – | – | – | – |
+| Maule | – | – | not available yet | – | – | – | – | – | – |
+| Ñuble | – | – | not available yet | – | – | – | – | – | – |
+| Bío-Bío | – | – | not available yet | – | – | – | – | – | – |
+| La Araucanía | – | – | not available yet | – | – | – | – | – | – |
+| Los Ríos | – | – | not available yet | – | – | – | – | – | – |
+| Los Lagos | 709 | 169.91 | -7.565 (-18.104, +2.974) | 0.1586 | 0.2502 | 237 / 324 | -4.677 | 0.2360 | not significant |
+| Aysén | – | – | not available yet | – | – | – | – | – | – |
+| Magallanes | – | – | not available yet | – | – | – | – | – | – |
+
