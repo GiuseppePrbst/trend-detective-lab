@@ -32,11 +32,16 @@ duplicate the corrections and conflict with v3).
 | Evidence cards and reports: conditional wording, p never printed as 0.0000, dependencies labelled | wording only |
 | Main (confirmatory) method and results | **unchanged** |
 
-## Optional extension not delivered
+## Coastal SST (T5) — delivered
 
-Coastal sea-surface temperature (hypothesis T5, registered before computing; amended to NASA MUR v4.1 via Harmony before any value was seen, job `88c8b413…` running on 2026-11-14 evening; included only if it passes `python -m pipeline.sst_mur --validate` before Sunday 12:00). Earlier, Giovanni's area-averaging service returned
-"Workflow failed" for every variable tried on 2026-11-14 afternoon (MODIS-Aqua SST, MERRA-2 ocean skin, and MERRA-2 T2M
-that had worked in the morning). Kept out of all conclusions; the app shows the SST panel only if `sst.json` exists.
+Registered before computing, amended to NASA JPL MUR v4.1 via Harmony before any value was seen (Giovanni area averages
+were failing). Harmony job `88c8b413-232f-4984-84bb-6e8d658c3357`: 8,402 granules, 2 failed in the service (2021-02-20/21);
+8,398 of 8,401 days used. Validation gate passed (`docs/validation/SST_VALIDATION.md`: units kelvin, range, every month
+≥ 20 valid days). Result: +0.11 °C/decade (95 % CI −0.18 to +0.40), not significant, 2003–2025.
+
+It also prompted a period-sensitivity check of the Antofagasta contrast (`docs/multivariable/TERRITORIAL_RESULTS.md`):
+the coast/interior difference comes from 1980–2002 (coastal cells cooled); in 2003–2025 both parts warmed and the
+difference is not significant. App, evidence card, README and deck state this.
 
 ## Simulated evaluation (by the agent; no human interviews)
 

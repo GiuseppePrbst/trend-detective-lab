@@ -96,7 +96,8 @@ const fmtRes = (r: Res) => {
 export function EvidenceCard({ c, note }: { c: Card; note?: string }) {
   const sens = c.analysis.sensitivity as
     | { label: string; period: string; slope: number; ci: [number, number]; p: number; q?: number; main: boolean }[]
-    | { range_restricted: Res; nearest_pairs: Res; thresholds: { rule: string; slope: number; ci: [number, number] }[] }
+    | { range_restricted: Res; nearest_pairs: Res; thresholds: { rule: string; slope: number; ci: [number, number] }[];
+        periods?: { period: string; coastal: number; interior: number; difference: number; ci: [number, number]; p: number }[] }
     | null;
   return (
     <article className="ecard" aria-labelledby={`ec-${c.id}`}>
@@ -107,7 +108,8 @@ export function EvidenceCard({ c, note }: { c: Card; note?: string }) {
         <div><dt>B · Source</dt><dd>{c.source.product} — {c.source.type}, {c.source.resolution}, via {c.source.access}</dd></div>
         <div><dt>C · Analysis</dt><dd>{c.analysis.method}. Multiple testing: {c.analysis.correction}.
           {Array.isArray(sens) && <> Period sensitivity: {sens.map((w) => `${w.main ? 'main' : 'sensitivity'} ${w.period}: ${signed(w.slope)} (${num(w.ci[0])} to ${num(w.ci[1])}), ${pval(w.p)}`).join(' · ')}.</>}
-          {sens && !Array.isArray(sens) && <> Sensitivity: elevation-range-restricted comparison {fmtRes(sens.range_restricted)}; nearest-elevation pairs {fmtRes(sens.nearest_pairs)}; coastal-class rules {sens.thresholds.map((t) => `${t.rule}: ${signed(t.slope)}`).join(', ')}.</>}
+          {sens && !Array.isArray(sens) && <> Sensitivity: elevation-range-restricted comparison {fmtRes(sens.range_restricted)}; nearest-elevation pairs {fmtRes(sens.nearest_pairs)}; coastal-class rules {sens.thresholds.map((t) => `${t.rule}: ${signed(t.slope)}`).join(', ')}.
+            {sens.periods && <> Periods (coast − interior): {sens.periods.map((x) => `${x.period}: coast ${signed(x.coastal)}, interior ${signed(x.interior)}, difference ${signed(x.difference)} (${num(x.ci[0])} to ${num(x.ci[1])}), ${pval(x.p)}`).join(' · ')}.</>}</>}
           {!sens && <> Period sensitivity: {NE.toLowerCase()} for this card.</>}
         </dd></div>
         <div><dt>D · Cross-checks</dt><dd>{c.checks.length ? (

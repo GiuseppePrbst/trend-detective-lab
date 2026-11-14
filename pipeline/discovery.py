@@ -177,7 +177,7 @@ def cards():
                   limitations=["reanalysis, 50 km cells", "regional means hide internal differences"]))
     ci, t1 = MV["coast_interior"], TR["antofagasta"]["t1"]
     cc, ii = ci["coastal"], ci["interior"]
-    C.append(dict(id="antofagasta-coast", title="Coastal and interior MERRA-2 cells of Antofagasta show different warming trends", status="exploratory",
+    C.append(dict(id="antofagasta-coast", title="Coastal and interior MERRA-2 cells of Antofagasta show different warming trends over 1980–2025 (contrast concentrated in 1980–2002)", status="exploratory",
                   variable="Air temperature 2 m", territory="Antofagasta, coastal − interior MERRA-2 cells",
                   result=result(ci["difference"], "°C per decade", "1980–2025"),
                   source=dict(product="MERRA-2; cells classified in QGIS; CIREN DEM for cell elevations", type="reanalysis", resolution="0.5° × 0.625°", access="Giovanni"),
@@ -185,7 +185,10 @@ def cards():
                                 sensitivity=dict(range_restricted=result(t1["difference"], "°C per decade", "1980–2025"),
                                                  nearest_pairs=result(t1["nearest_elevation_pairs"]["difference"], "°C per decade", "1980–2025"),
                                                  thresholds=[dict(rule=r["rule"], slope=r["difference"]["slope_per_decade"], ci=[r["difference"]["ci_low"], r["difference"]["ci_high"]])
-                                                             for r in TR["antofagasta"]["t3"]])),
+                                                             for r in TR["antofagasta"]["t3"]],
+                                                 periods=[dict(period=r["period"], coastal=r["coastal"]["slope_per_decade"], interior=r["interior"]["slope_per_decade"],
+                                                               difference=r["difference"]["slope_per_decade"], ci=[r["difference"]["ci_low"], r["difference"]["ci_high"]],
+                                                               p=r["difference"]["p_value"]) for r in TR["antofagasta"]["t4"]])),
                   checks=[dict(source="ERA5 at 4 coastal and 5 interior cell centres", kind="other_reanalysis", agreement="same contrast",
                                years=46, ours=None, theirs=[ci["point_check"]["ERA5"]["difference"][k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
                                scope="ERA5 and MERRA-2 at the same 9 cell centres (4 coastal, 5 interior), not regional means",
@@ -194,9 +197,12 @@ def cards():
                        f"({cc['slope_per_decade']:+.3f} °C/decade, 95 % CI {cc['ci_low']:+.3f} to {cc['ci_high']:+.3f}, which includes zero), "
                        f"while the interior cells warmed ({ii['slope_per_decade']:+.3f}, CI {ii['ci_low']:+.3f} to {ii['ci_high']:+.3f}). "
                        "The difference between the two trends is significant, and ERA5 at matching points shows the same contrast."),
-                  cannot="It does not show that the coast did not warm (not significant is not 'no change'), and it does not establish a cause: coast and "
-                         "elevation are strongly correlated (ρ = 0.90), the elevation-range-restricted comparison is not exact matching, and coastal cells mix ocean and land.",
-                  open=["Role of the cool coastal ocean (SST not yet integrated)", "Falvey & Garreaud (2009) found a related contrast for 1979–2006"],
+                  cannot=("It does not show that the coast did not warm (not significant is not 'no change'), and it does not establish a cause: coast and "
+                          "elevation are strongly correlated (ρ = 0.90), the elevation-range-restricted comparison is not exact matching, and coastal cells mix ocean and land. "
+                          f"The contrast is not constant in time: in {TR['antofagasta']['t4'][1]['period']} the coastal cells cooled ({TR['antofagasta']['t4'][1]['coastal']['slope_per_decade']:+.2f}) "
+                          f"while in {TR['antofagasta']['t4'][2]['period']} both coastal ({TR['antofagasta']['t4'][2]['coastal']['slope_per_decade']:+.2f}) and interior "
+                          f"({TR['antofagasta']['t4'][2]['interior']['slope_per_decade']:+.2f}) cells warmed and their difference is not significant."),
+                  open=["Coastal sea-surface temperature 2003–2025 (NASA MUR) shows no significant trend — see its card", "The early-period coastal cooling is consistent with the coastal cooling reported by Falvey & Garreaud (2009) for 1979–2006; the mechanism is not tested here"],
                   limitations=["51 dependent cells", "coastal cells mix ocean and land", "exploratory, decided after seeing the regional result"]))
     for var, label, unit, data in (("precip", "Precipitation (IMERG)", "mm/month per decade", P), ("t2m", "Air temperature 2 m (MERRA-2)", "°C per decade", T)):
         t = data["regions"]["magallanes"]["trend"]

@@ -24,13 +24,16 @@ makes those pitfalls visible instead of hiding them.
 ![Start with a question: suggested NASA variables with their integration status](docs/presentation/app_screens/01_question.png)
 
 **NASA data:** MERRA-2 air temperature (1980–2025), GPM IMERG Final V07 precipitation (1998–2024), GLDAS-2.1 soil
-moisture, evapotranspiration and snow (2000–2024), all through NASA Giovanni; our averaging reproduces Giovanni's own
+moisture, evapotranspiration and snow (2000–2024), all through NASA Giovanni; JPL MUR v4.1 sea-surface temperature
+(2003–2025, coastal box, via NASA Harmony); our averaging reproduces Giovanni's own
 area averages to 0.0003 °C.
 
 **Main findings** (numbers: `docs/discovery/EVIDENCE_CARDS.md`, generated):
 - *Confirmatory:* in MERRA-2 the regional trends of Antofagasta and Los Lagos differ (difference +0.18 °C/decade, p = 0.006).
-- *Exploratory:* inside Antofagasta, no statistically significant warming is detected in the coastal cells while the
-  interior warmed (difference −0.29 °C/decade); ERA5 at matching points shows the same contrast.
+- *Exploratory:* inside Antofagasta over 1980–2025, no statistically significant warming is detected in the coastal
+  cells while the interior warmed (difference −0.29 °C/decade); ERA5 at matching points shows the same contrast. The
+  contrast comes from 1980–2002 (coastal cells cooled); since 2003 both parts warmed, and the coastal ocean (NASA MUR SST)
+  shows no significant trend.
 - *Exploratory:* in central Chile, detrended yearly rainfall and modelled root-zone soil moisture vary together
   (r ≈ 0.8) — partly by construction, because the model is driven by observed rain.
 - *Disagreement:* in Magallanes, IMERG's significant drying and MERRA-2's lack of warming are not reproduced by ERA5 or
@@ -166,7 +169,10 @@ Everything here was decided after the main results; families and corrections wer
   °C/decade less (CI −0.25 to −0.14); pairing each coastal cell with the interior cell of nearest elevation gives −0.19
   (CI −0.28 to −0.11), with elevation gaps still up to 827 m. Coast and elevation are strongly
   correlated (ρ = 0.90); a cooler ocean-influenced coast is plausible but not proven. This largely explains the earlier
-  station/region disagreement.
+  station/region disagreement. **Period sensitivity:** the contrast is concentrated in 1980–2002 (coastal cells −0.36
+  °C/decade, interior ~0); in 2003–2025 coastal (+0.43) and interior (+0.52) cells both warmed and their difference is not
+  significant. Coastal sea-surface temperature 2003–2025 (NASA JPL MUR v4.1 via Harmony, registered hypothesis T5): +0.11
+  °C/decade, 95 % CI −0.18 to +0.40, not significant (`docs/validation/SST_VALIDATION.md`).
 - **Central Chile, rain and land water (GLDAS-2.1 model, 2000–2024).** Detrended yearly anomalies of IMERG precipitation and
   root-zone soil moisture correlate at r ≈ 0.8 from Valparaíso to Maule (adjusted p < 0.001 across 64 associations).
   Precipitation–evapotranspiration coupling is strong in the north and centre and disappears from La Araucanía southward,
@@ -302,6 +308,7 @@ Data
 - Beaudoing, H. and M. Rodell (2020), GLDAS Noah Land Surface Model L4 monthly 0.25° V2.1, GES DISC, doi:10.5067/SXAVCZFAQLNO; Rodell, M., et al. (2004), BAMS 85, 381–394, doi:10.1175/BAMS-85-3-381.
 - CIREN (2016), DEM ALOS PALSAR regional mosaics (Antofagasta, Los Lagos), geoportal.cl; derived from the ASF ALOS PALSAR RTC DEM (ASF DAAC, https://asf.alaska.edu). JAXA/METI ALOS PALSAR.
 - CONAF / MINAGRI, Catastro de los Recursos Vegetacionales y Uso de la Tierra: Antofagasta 2019, Los Lagos 2018, IDE MINAGRI (https://ide.minagri.gob.cl).
+- JPL MUR MEaSUREs Project (2015), GHRSST Level 4 MUR Global Foundation SST Analysis v4.1, PO.DAAC, doi:10.5067/GHGMR-4FJ04 (accessed through NASA Harmony).
 - Natural Earth 10 m land (public domain), https://www.naturalearthdata.com.
 - USGS GMTED2010 (Danielson, J.J., and D.B. Gesch, 2011, USGS Open-File Report 2011-1073, doi:10.3133/ofr20111073), 15″ mean elevation, public domain: relief shown in maps. CIREN and CONAF data are used with attribution (per-cell statistics and credited maps); see `docs/gis/DATA_LICENSES.md`.
 - Region boundaries: geoBoundaries gbOpen CHL ADM1 (Runfola et al. 2020, doi:10.1371/journal.pone.0231866); source Biblioteca del Congreso Nacional de Chile / OCHA ROLAC; CC BY 3.0 IGO.

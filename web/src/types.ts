@@ -302,6 +302,7 @@ export interface Territory {
     };
     t2: Record<string, { rho: number; n: number } | number>;
     t3: { rule: string; n_coastal: number; n_interior: number; difference: MVTrend }[];
+    t4: { period: string; coastal: MVTrend; interior: MVTrend; difference: MVTrend }[];
     context: { regional: MVTrend; station: { source: string; years: number; ours_same_months: MVTrend; station: MVTrend } };
     cells: TerrCell[];
   };

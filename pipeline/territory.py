@@ -108,11 +108,18 @@ def antofagasta():
         t3.append(dict(rule=label, n_coastal=len(a), n_interior=len(b), difference=summary(d)))
     keep = ("cell_id", "lat", "lon", "slope_per_decade", "slope_ci_lower", "slope_ci_upper", "p_value", "elevation_mean", "elevation_std",
             "distance_to_coast_km", "land_share", "coastal_e3", "dem_coverage", "bare_share", "grassland_shrubland_share", "urban_industrial_share")
+    # Period sensitivity of the coast/interior contrast (added after the SST comparison showed coastal warming in 2003-2025)
+    sc_all, si_all = group_series(coastal, weights), group_series(interior, weights)
+    t4 = []
+    for y0, y1 in ((1980, 2025), (1980, 2002), (2003, 2025)):
+        cut = lambda ser: ([d for d in ser[0] if y0 <= int(d[:4]) <= y1], [v for d, v in zip(*ser) if y0 <= int(d[:4]) <= y1])   # noqa: E731
+        t4.append(dict(period=f"{y0}–{y1}", coastal=summary(trend.analyze(*cut(sc_all))), interior=summary(trend.analyze(*cut(si_all))),
+                       difference=summary(trend.difference(*cut(sc_all), *cut(si_all)))))
     reg = json.loads((OUT / "t2m.json").read_text(encoding="utf-8"))["regions"]["antofagasta"]["trend"]
     st = next(c for c in json.loads((OUT / "validation.json").read_text(encoding="utf-8"))["checks"]
               if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
     context = dict(regional=summary(reg), station=dict(source=st["source"], years=st["n_years"], ours_same_months=st["ours"], station=st["other"]))
-    return dict(t1=t1, t2=t2, t3=t3, context=context, cells=[{k: c.get(k) for k in keep} for c in cells])
+    return dict(t1=t1, t2=t2, t3=t3, t4=t4, context=context, cells=[{k: c.get(k) for k in keep} for c in cells])
 
 
 def los_lagos():
@@ -174,6 +181,12 @@ def write_report(doc) -> None:
     for r in A["t3"]:
         d = r["difference"]
         L.append(f"| {r['rule']} | {r['n_coastal']} / {r['n_interior']} | {f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}) | {trend.fmt_p(d['p_value'], 4)} |")
+    L += ["", "### Period sensitivity of the coast/interior contrast (sensitivity only, added after the SST comparison)", "",
+          "| Period | Coastal | Interior | Coastal − interior (95 % CI), p |", "|---|---|---|---|"]
+    for r in A["t4"]:
+        c, i, d = r["coastal"], r["interior"], r["difference"]
+        L.append(f"| {r['period']} | {f3(c['slope_per_decade'])} ({trend.p_eq(c['p_value'], 3)}) | {f3(i['slope_per_decade'])} ({trend.p_eq(i['p_value'], 3)}) | "
+                 f"{f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}), {trend.p_eq(d['p_value'], 4)} |")
     L += ["", "## Los Lagos (T4, descriptive)", ""]
     for ds, v in doc["los_lagos"].items():
         L += [f"### {v['label']} — {v['n_cells']} cells", "", "Mean land-cover shares of the cells (CONAF 2018): " +

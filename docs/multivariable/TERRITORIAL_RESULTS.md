@@ -1,6 +1,6 @@
 # Territorial results (exploratory)
 
-Generated 2026-11-14T19:59:30+00:00 by `python -m pipeline.territory`. Do not edit by hand.
+Generated 2026-11-14T23:29:58+00:00 by `python -m pipeline.territory`. Do not edit by hand.
 
 Unit of analysis: the native climate cell. DEM (CIREN, processed at 100 m) and CONAF land cover describe each cell; they add no climate observations. Hypotheses: `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`.
 
@@ -37,6 +37,14 @@ Sensitivity (added after review): nearest-elevation pairing, 10 pairs using 5 di
 | land share < 0.99 (E3) | 10 / 41 | -0.293 (-0.379, -0.206) | < 0.0001 |
 | land share < 0.999 | 11 / 40 | -0.272 (-0.368, -0.176) | < 0.0001 |
 | centre within 30 km of the coast | 10 / 41 | -0.293 (-0.379, -0.206) | < 0.0001 |
+
+### Period sensitivity of the coast/interior contrast (sensitivity only, added after the SST comparison)
+
+| Period | Coastal | Interior | Coastal − interior (95 % CI), p |
+|---|---|---|---|
+| 1980–2025 | -0.027 (p = 0.730) | +0.265 (p < 0.001) | -0.293 (-0.379, -0.206), p < 0.0001 |
+| 1980–2002 | -0.357 (p = 0.003) | +0.003 (p = 0.972) | -0.360 (-0.558, -0.163), p = 0.0011 |
+| 2003–2025 | +0.430 (p = 0.032) | +0.520 (p = 0.005) | -0.090 (-0.523, +0.344), p = 0.6345 |
 
 ## Los Lagos (T4, descriptive)
 
