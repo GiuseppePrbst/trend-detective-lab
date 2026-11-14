@@ -155,3 +155,108 @@ export interface Validation {
 }
 
 export type Regions = FeatureCollection & { SYNTHETIC?: boolean };
+
+// ---- Multivariable lab (exploratory; written by pipeline/multivar.py) ----
+export interface MVTrend {
+  slope_per_decade: number;
+  ci_low: number;
+  ci_high: number;
+  p_value: number;
+  p_adjusted?: number;
+  theil_sen_per_decade: number;
+  mk_p_value: number;
+  verdict: Verdict;
+  n_years_used: number;
+  n_eff_annual: number;
+  start: string;
+  end: string;
+  mean: number;
+}
+
+export interface MVSeries {
+  trend: MVTrend;
+  annual: { years: number[]; anomalies: (number | null)[] };
+  negligible: boolean;
+}
+
+export interface Assoc {
+  computable: boolean;
+  n_years: number;
+  r: number;
+  ci_low: number;
+  ci_high: number;
+  p_value: number;
+  p_adjusted?: number;
+  n_eff: number;
+  r_not_detrended: number;
+  lag_r_monthly: Record<string, number | null>;
+  years: number[];
+  x_detrended: number[];
+  y_detrended: number[];
+  negligible_snow?: boolean;
+}
+
+export interface MVVariable {
+  id: string;
+  label: string;
+  unit: string;
+  trend_unit: string;
+  definition: string;
+  product: string;
+  version: string;
+  doi: string;
+  grid: string;
+  nature_label: string;
+  citation: string;
+}
+
+export interface MVGuided {
+  title: string;
+  question: string;
+  region: string;
+  x: string;
+  y: string;
+  lesson: string;
+}
+
+export interface CoastInterior {
+  n_coastal: number;
+  n_interior: number;
+  rule: string;
+  coastal: MVTrend;
+  interior: MVTrend;
+  difference: MVTrend;
+  differs: boolean;
+}
+
+export interface MultiVar {
+  generated_at: string;
+  status: string;
+  common_period: [number, number];
+  variables: MVVariable[];
+  reference: Record<string, { label: string; unit: string; trend_unit: string }>;
+  pairs: [string, string][];
+  families: Record<string, number>;
+  notes: string[];
+  guided?: MVGuided[];
+  regions: Record<string, { series: Record<string, MVSeries>; associations: Record<string, Assoc>; coverage?: Record<string, number> }>;
+  coast_interior: CoastInterior;
+}
+
+export interface CellMap {
+  variable: string;
+  dlat: number;
+  dlon: number;
+  start: number;
+  end: number;
+  n_cells: number;
+  cells: number[][]; // lat, lon, slope, ci_low, ci_high, p, q (descriptive)
+}
+
+export interface WindowEntry {
+  label: string;
+  start: number;
+  end: number;
+  regions: Record<string, { trend: Trend; climatology: number[]; annual: { years: number[]; anomalies: (number | null)[] } }>;
+}
+export type Windows = Record<string, Record<string, WindowEntry>>;

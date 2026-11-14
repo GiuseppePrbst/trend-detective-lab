@@ -31,6 +31,9 @@ plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 13, "axes.spines
 cat = json.loads((DATA / "catalog.json").read_text(encoding="utf-8"))
 T = json.loads((DATA / "t2m.json").read_text(encoding="utf-8"))
 P = json.loads((DATA / "precip.json").read_text(encoding="utf-8"))
+MV = json.loads((DATA / "multivar.json").read_text(encoding="utf-8"))
+CT = json.loads((DATA / "cells_t2m.json").read_text(encoding="utf-8"))
+VAL = json.loads((DATA / "validation.json").read_text(encoding="utf-8"))
 NAME = {r["id"]: r["name"] for r in cat["regions"]}
 
 
@@ -164,8 +167,9 @@ def main() -> None:
         fig = slide("Real NASA data for all 16 regions of Chile", "The data")
         bullets(fig, [f"{tv['label']} — {tv['product']} v{tv['version']}, {tv['period'][0]}–{tv['period'][1]}\n(a reanalysis, labelled as such)",
                       f"{pv['label']} — GPM IMERG Final Run v{pv['version']}, {pv['period'][0]}–{pv['period'][1]}\n(satellite estimate adjusted with rain gauges)",
-                      "Obtained cell by cell from the NASA Giovanni /\nGES DISC time-series service: 419 + 9,694 grid cells",
-                      "Area-weighted regional means; regions, periods and\nmethods pre-registered before any download"], y=0.72, dy=0.135, size=14)
+                      "GLDAS-2.1 soil moisture, evapotranspiration, snow,\n2000–2024 (a land-surface model; exploratory lab)",
+                      "Cell by cell from the NASA Giovanni time-series service:\n419 + 9,694 + 4 × 1,748 grid cells",
+                      "Our regional averaging matches Giovanni's own area\naverages to 0.0003 °C (same cells, 552 months)"], y=0.74, dy=0.125, size=13.5)
         vmax_t = max(abs(r["trend"]["slope_per_decade"]) for r in T["regions"].values())
         vmax_p = max(abs(r["trend"]["relative_pct_per_decade"]) for r in P["regions"].values())
         ax = fig.add_axes([0.6, 0.1, 0.17, 0.68]); chile_map(ax, T, "RdBu_r", vmax_t, "°C per decade")
@@ -190,46 +194,71 @@ def main() -> None:
             for i, s in enumerate(shots[:2]):
                 ax = fig.add_axes([0.05 + i * w, 0.08, w - 0.02, 0.5]); ax.imshow(plt.imread(s)); ax.axis("off")
         else:
-            bullets(fig, ["Every result is a sentence built from the numbers — no language model writes the figures.",
-                          "Each step shows the evidence: product, version, DOI, grid cells, method and its limits.",
+            bullets(fig, ["NASA Giovanni → Python pipeline → QGIS (cell grids, land mask, coastal cells) → statistics → static app.",
+                          "Main study pre-registered; the multivariable lab is labelled exploratory, with its own corrections.",
                           "The web app computes nothing: it displays what a reproducible, tested pipeline calculated.",
                           "Results that are not significant, or that depend on the method, are shown as such."], y=0.5, dy=0.095, size=15)
         pdf.savefig(fig); plt.close(fig)
 
-        # 5 -------------------------------------------------------------------- case A (temperature)
+        # 5 ------------------------------------------- confirmatory finding + exploratory coast/interior split
         a, b = "los-lagos", "antofagasta"
         d = comp(T, b, a)
-        fig = slide("In MERRA-2, Antofagasta warmed faster than Los Lagos","Finding 1 · temperature, 1980–2025 (MERRA-2 reanalysis)")
-        ax1 = fig.add_axes([0.06, 0.47, 0.4, 0.27]); annual_panel(ax1, T, b, RED, "°C")
-        ax2 = fig.add_axes([0.06, 0.12, 0.4, 0.27], sharey=ax1); annual_panel(ax2, T, a, BLUE, "°C")
-        ax = fig.add_axes([0.6, 0.3, 0.25, 0.4])
+        ci = MV["coast_interior"]
+        fig = slide("Antofagasta warmed faster than Los Lagos — but not on its coast", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
+        ax = fig.add_axes([0.03, 0.08, 0.2, 0.7])
+        cells = [c for c in CT["cells"] if -26.3 < c[0] < -20.7 and c[1] > -71.2 and c[1] < -66.5]
+        coastal = {tuple(x) for x in ci["coastal_cells"]}
+        vmax = max(abs(c[2]) for c in cells)
+        for c in cells:
+            col = plt.get_cmap("RdBu_r")((c[2] / vmax + 1) / 2)
+            ax.add_patch(plt.Rectangle((c[1] - 0.3125, c[0] - 0.25), 0.625, 0.5, color=col,
+                                       ec=INK if (c[0], c[1]) in coastal else "white", lw=1.6 if (c[0], c[1]) in coastal else 0.4))
+        ax.set_xlim(-71.3, -66.4); ax.set_ylim(-26.4, -20.6); ax.set_aspect(1.1); ax.axis("off")
+        ax.set_title("MERRA-2 cells near Antofagasta
+(black outline: coastal)", fontsize=11, color=INK)
+        ax = fig.add_axes([0.42, 0.3, 0.3, 0.46])
         ta, tb = T["regions"][a]["trend"], T["regions"][b]["trend"]
-        interval_chart(ax, [(NAME[b], tb["slope_per_decade"], tb["ci_low"], tb["ci_high"], RED),
-                            (NAME[a], ta["slope_per_decade"], ta["ci_low"], ta["ci_high"], BLUE),
-                            (f"Difference", d["slope"], d["lo"], d["hi"], PURPLE)], "°C")
-        fig.text(0.52, 0.08, f"The difference itself is significant (p = {d['p']:.3f}):\nits interval excludes zero.\n"
-                 f"Los Lagos alone: no significant trend — not “no change”.\n"
-                 f"ERA5 agrees; the coastal Antofagasta station does not.", fontsize=13, color=INK)
+        st = next(c for c in VAL["checks"] if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
+        e5 = ci["point_check"]["ERA5"]
+        interval_chart(ax, [(f"{NAME[b]} − {NAME[a]}", d["slope"], d["lo"], d["hi"], PURPLE),
+                            ("Coastal cells", ci["coastal"]["slope_per_decade"], ci["coastal"]["ci_low"], ci["coastal"]["ci_high"], BLUE),
+                            ("Interior cells", ci["interior"]["slope_per_decade"], ci["interior"]["ci_low"], ci["interior"]["ci_high"], RED),
+                            ("ERA5, coastal points", e5["coastal"]["slope_per_decade"], e5["coastal"]["ci_low"], e5["coastal"]["ci_high"], TEAL),
+                            ("ERA5, interior points", e5["interior"]["slope_per_decade"], e5["interior"]["ci_low"], e5["interior"]["ci_high"], BROWN),
+                            ("Antofagasta station", st["other"]["slope_per_decade"], st["other"]["ci_low"], st["other"]["ci_high"], GREY)], "°C")
+        fig.text(0.3, 0.07, f"Confirmatory (pre-registered): the difference Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).
+"
+                 f"Exploratory (cells classified in QGIS): coastal cells {fmt(ci['coastal']['slope_per_decade'])} vs interior "
+                 f"{fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 and the coastal station agree.
+"
+                 f"The regional mean hid a coast–interior contrast. Coast and altitude cannot be separated with 50 km cells.", fontsize=12, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
-        # 6 ------------------------------------------------------------------ case B (precipitation)
-        a, b = "los-lagos", "magallanes"
-        d = comp(P, a, b)
-        pa, pb = P["regions"][a]["trend"], P["regions"][b]["trend"]
-        fig = slide("One significant, one not: not proof they differ", "Finding 2 · precipitation, 1998–2024 (IMERG)")
-        ax = fig.add_axes([0.2, 0.33, 0.5, 0.4])
-        interval_chart(ax, [(f"{NAME[b]}  (p = {pb['p_value']:.3f})", pb["slope_per_decade"], pb["ci_low"], pb["ci_high"], BROWN),
-                            (f"{NAME[a]}  (p = {pa['p_value']:.2f})", pa["slope_per_decade"], pa["ci_low"], pa["ci_high"], TEAL),
-                            (f"Difference  (p = {d['p']:.2f})", d["slope"], d["lo"], d["hi"], PURPLE)], "mm/month")
-        s = pa["sensitivity"]["preregistered_monthly_ar1"]
-        lr = P["regions"]["los-rios"]["trend"]
-        fig.text(0.05, 0.09,
-                 f"Magallanes: {fmt(pb['relative_pct_per_decade'], 0)} % per decade, significant even after adjusting for 16 regions.  "
-                 f"Los Lagos: {fmt(pa['relative_pct_per_decade'], 1)} % per decade, not significant.\n"
-                 f"Yet the test of their difference cannot tell them apart.\n"
-                 f"Method matters: Los Ríos went from p = {lr['sensitivity']['preregistered_monthly_ar1']['p_value']:.4f} with our first test "
-                 f"to p = {lr['p_value']:.2f} with the calibrated one ({lr['p_adjusted']:.2f} after adjustment).\n"
-                 f"Caution: ERA5 and the Punta Arenas station do not confirm the Magallanes drying.", fontsize=12.5, color=INK)
+        # 6 ------------------------------------------------------------------ multivariable (exploratory)
+        g = MV["guided"][0]
+        R = MV["regions"][g["region"]]
+        x, y = g["x"], g["y"]
+        A = R["associations"][f"{x}|{y}"]
+        lab = {**{k: v["label"] for k, v in MV["reference"].items()}, **{v["id"]: v["label"] for v in MV["variables"]}}
+        unit = {**{k: v["unit"] for k, v in MV["reference"].items()}, **{v["id"]: v["unit"] for v in MV["variables"]}}
+        fig = slide(g["title"], f"Finding 2 · multivariable, {MV['common_period'][0]}–{MV['common_period'][1]} · exploratory")
+        for i, (vid, col) in enumerate(((x, TEAL), (y, BROWN))):
+            S = R["series"][vid]
+            axp = fig.add_axes([0.06, 0.47 - i * 0.33, 0.4, 0.25])
+            axp.axhline(0, color=GREY, lw=0.8)
+            axp.plot(S["annual"]["years"], S["annual"]["anomalies"], "-o", color=col, ms=4)
+            t = S["trend"]
+            q = f", q = {t['p_adjusted']:.3f}" if "p_adjusted" in t else ""
+            axp.set_title(f"{lab[vid]}: {fmt(t['slope_per_decade'])} {unit[vid]}/decade, p = {t['p_value']:.3f}{q}", fontsize=12, loc="left", color=INK)
+        axs = fig.add_axes([0.58, 0.3, 0.3, 0.44])
+        axs.axhline(0, color=GREY, lw=0.6); axs.axvline(0, color=GREY, lw=0.6)
+        axs.plot(A["x_detrended"], A["y_detrended"], "o", color=PURPLE, ms=7, alpha=0.85)
+        axs.set_xlabel(f"{lab[x]} ({unit[x]}), detrended", fontsize=10); axs.set_ylabel(f"{lab[y]} ({unit[y]}), detrended", fontsize=10)
+        axs.set_title(f"Year to year: r = {A['r']:+.2f} (95 % CI {A['ci_low']:+.2f} to {A['ci_high']:+.2f}), q = {A['p_adjusted']:.3f}", fontsize=11.5, color=INK)
+        fig.text(0.05, 0.06, "GLDAS is a land-surface model driven partly by observed rainfall: the agreement is partly built in, and it is an
+"
+                 "association, not a cause. Exploratory: chosen after the main study; corrected for "
+                 f"{MV['families']['E1']} trends and {MV['families']['E2']} associations.", fontsize=11.5, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
         # 7 ----------------------------------------------------------------- impact and limitations

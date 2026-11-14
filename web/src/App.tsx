@@ -6,9 +6,11 @@ import { FIXTURE, load } from './data';
 import {
   GLOSSARY, level, MAP_STATUS, mapStatus, num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHORT, WARNING,
 } from './format';
+import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
 import type {
-  Alt, Catalog, Check, GuidedCase, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
+  Alt, Catalog, CellMap, Check, GuidedCase, MultiVar, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
+  WindowEntry, Windows,
 } from './types';
 
 export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
@@ -53,6 +55,10 @@ export default function App() {
   const catalog = useFile<Catalog>('catalog.json');
   const geoFile = useFile<Regions>('regions.geojson');
   const validation = useFile<Validation>('validation.json');
+  const mvFile = useFile<MultiVar>('multivar.json');
+  const winFile = useFile<Windows>('windows.json');
+  const cellsT = useFile<CellMap>('cells_t2m.json');
+  const cellsS = useFile<CellMap>('cells_soilm_root.json');
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
   const [varId, setVarId] = useState<string | null>(null);
@@ -173,8 +179,13 @@ export default function App() {
                 }}
                 setB={setB} ra={ra} rb={rb} mode={mode} setMode={setMode} exploreRef={exploreRef}
                 synthetic={!!synthetic} activeCase={activeCase} checks={checks} validation={validation}
+                windows={winFile.state === 'ok' ? winFile.data : null}
               />
             )}
+            {mvFile.state === 'ok' ? (
+              <Lab mv={mvFile.data} names={names} geo={geo} cellsT2m={cellsT.state === 'ok' ? cellsT.data : null}
+                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} />
+            ) : <Status what="the multivariable lab" s={mvFile} />}
           </>
         )}
       </main>
@@ -212,8 +223,13 @@ function Workspace(p: {
   activeCase?: GuidedCase;
   checks: Check[];
   validation: Loaded<Validation>;
+  windows: Windows | null;
 }) {
-  const { cat, v, varFile, data, geo, geoFile, names, trends, a, b, setA, setB, ra, rb, mode, setMode } = p;
+  const { cat, v, varFile, data, geo, geoFile, names, trends, a, b, setA, setB, rb, mode, setMode } = p;
+  const wins = p.windows?.[v.id];
+  const [wid, setWid] = useState('full');
+  useEffect(() => setWid('full'), [v.id]);
+  const ra = useMemo(() => applyWindow(p.ra, wid === 'full' ? undefined : wins?.[wid], a), [p.ra, wins, wid, a]);
   const [mapOpen, setMapOpen] = useState(() => window.matchMedia('(min-width: 900px)').matches);
   const nameA = names[a] ?? a;
   const nameB = names[b] ?? b;
@@ -274,6 +290,15 @@ function Workspace(p: {
             <p className="status">{nameA}: not available yet for {v.label.toLowerCase()}.</p>
           ) : (
             <>
+              {wins && (
+                <label className="field period">
+                  Period
+                  <select value={wid} onChange={(e) => setWid(e.target.value)}>
+                    {Object.entries(wins).map(([k, w]) => <option key={k} value={k}>{w.label} ({w.start}–{w.end})</option>)}
+                  </select>
+                </label>
+              )}
+              {wid !== 'full' && <p className="hint">Shorter periods are a sensitivity check: the trend, its interval and the anomalies are recomputed by the pipeline for {wins?.[wid]?.start}–{wins?.[wid]?.end} (adjusted p across the 16 regions for this period). Comparisons below always use the full record.</p>}
               <div className="toggle" role="group" aria-label="What to plot">
                 <button aria-pressed={mode === 'values'} onClick={() => setMode('values')}>Monthly values</button>
                 <button aria-pressed={mode === 'anomalies'} onClick={() => setMode('anomalies')}>Anomalies (seasonal cycle removed)</button>
@@ -316,7 +341,7 @@ function Workspace(p: {
             </select>
           </label>
           {b && b !== a && data && (ra && rb
-            ? <Compare v={v} data={data} a={a} b={b} nameA={nameA} nameB={nameB} ra={ra} rb={rb} alpha={alpha} guided={p.activeCase} />
+            ? <Compare v={v} data={data} a={a} b={b} nameA={nameA} nameB={nameB} ra={p.ra!} rb={rb} alpha={alpha} guided={p.activeCase} />
             : <p className="status">{!ra ? nameA : nameB}: not available yet for {v.label.toLowerCase()}.</p>)}
         </section>
 
@@ -324,6 +349,23 @@ function Workspace(p: {
       </div>
     </div>
   );
+}
+
+/** Swap in the pipeline's results for another time window (dates cut to the window, anomalies against that window's climatology). */
+function applyWindow(rs: RegionSeries | undefined, w: WindowEntry | undefined, rid: string): RegionSeries | undefined {
+  const e = w?.regions[rid];
+  if (!rs || !w || !e) return rs;
+  const idx = rs.dates.map((d, i) => [d, i] as const).filter(([d]) => +d.slice(0, 4) >= w.start && +d.slice(0, 4) <= w.end);
+  const values = idx.map(([, i]) => rs.values[i]);
+  return {
+    ...rs,
+    dates: idx.map(([d]) => d),
+    values,
+    anomalies: idx.map(([d], k) => (values[k] == null ? null : (values[k] as number) - e.climatology[+d.slice(5, 7) - 1])),
+    climatology: e.climatology,
+    annual: e.annual,
+    trend: e.trend,
+  };
 }
 
 const ciText = (lo?: number, hi?: number) => (lo == null || hi == null ? '—' : `${num(lo)} to ${num(hi)}`);

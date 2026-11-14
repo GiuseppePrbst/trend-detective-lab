@@ -1,54 +1,55 @@
-# Pitch and demo script
+# Pitch and demo script (v2)
 
-Material for the team. The deck is `TrendDetectiveLab_demo.pdf` (7 slides including the title, built by
-`pipeline/make_deck.py` from the generated result files). The official demo limit is **7 slides or a video of 30 s or
-less** (Project Submission Guide). Check with the Local Lead whether Quemchi wants a live presentation as well.
+The deck is `TrendDetectiveLab_demo.pdf` (7 slides including the title, built by `pipeline/make_deck.py` from the
+generated result files). Official demo limit: **7 slides or a video of 30 s or less** (Project Submission Guide). Check
+with the Local Lead whether Quemchi also wants a live presentation.
 
-## 30-second demo video (optional; record the real app, no mock-ups)
+Central message: *Trend Detective Lab helps people discover how Earth's systems are changing — by connecting NASA
+datasets, spatial context and transparent statistical evidence.*
 
-| Time | On screen (live app, https://giuseppeprbst.github.io/trend-detective-lab/) | Voice-over / subtitle |
+## 30-second demo video (optional; record the real app)
+
+| Time | On screen (https://giuseppeprbst.github.io/trend-detective-lab/) | Voice-over / subtitle |
 |---|---|---|
-| 0–5 s | Landing page, click guided case 1 | "Is southern Chile warming as fast as the desert north? We use NASA MERRA-2 data." |
-| 5–12 s | Scroll to "Test the trend" for Los Lagos, then to "Compare regions" | "Los Lagos: no significant trend. Antofagasta: plus 0.23 °C per decade. And the difference itself is significant." |
-| 12–20 s | Click case 3 (precipitation, IMERG) | "Rainfall drops significantly in Magallanes, not in Los Lagos — but the test of the difference cannot tell them apart." |
-| 20–27 s | Scroll to "Independent checks" | "We check against weather stations and another reanalysis, and say where they disagree." |
-| 27–30 s | Back to the top | "We don't just show climate trends. We show how confident we can be in them." |
+| 0–5 s | Landing page, guided case 1 | "Is southern Chile warming as fast as the desert north? NASA MERRA-2, 1980 to 2025." |
+| 5–10 s | "Compare regions": difference Antofagasta − Los Lagos | "Yes — and the difference itself is significant." |
+| 10–17 s | Lab → "Coast versus interior" chart | "But not on the coast. The regional mean hid it; ERA5 and the coastal station agree." |
+| 17–25 s | Lab → Water availability, a central region, rain vs root-zone soil moisture | "Rain and soil moisture move together year to year — an association, from a model, not a cause." |
+| 25–30 s | Period selector switching to 2000–2024 | "And change the start year, and precipitation trends change. We show how confident we can be." |
 
-Read the numbers off the screen when recording; they come from `docs/results.md`. If the data are rebuilt, re-check
-the voice-over.
+Read every number off the screen when recording; they come from `docs/results.md` and
+`docs/multivariable/MULTIVARIABLE_RESULTS.md`.
 
 ## Spoken pitch (about 2 minutes)
 
-Anyone can draw a line through a climate record. The hard part is knowing whether that line means anything.
+NASA gives us hundreds of Earth-system variables. The hard part is not getting the data — it is choosing the right
+ones and knowing what they really tell us.
 
-Trend Detective Lab is an open web app that lets anyone investigate how temperature and rainfall have changed in each
-of Chile's 16 regions, using NASA data: MERRA-2 air temperature since 1980 and GPM IMERG precipitation since 1998,
-both obtained through NASA Giovanni.
-
-For every region the app answers four questions: what is changing, how fast, how certain we are, and whether two
-regions really differ. That last one matters. A significant trend in one place and a non-significant one in another
-does not prove the two places differ. Our app tests the difference directly.
+Trend Detective Lab is an open web app for Chile's 16 regions. You choose a variable, a region and a period; you see
+the record, the trend, and how certain it is. Then you compare regions, and in the new multivariable lab you connect
+rainfall with soil moisture, evapotranspiration and snow — all from NASA data obtained through Giovanni.
 
 We don't just show climate trends. We show how confident we can be in them.
 
-We took the statistics seriously. We wrote down our method before downloading any data. Then we tested it with
-simulations and found it gave far too many false alarms, because consecutive months are not independent. So we changed
-it — twice — each time making significance harder to reach, and we kept the earlier results visible. Our final test is
-still not perfect: in our worst simulated case it raises about 9 % false alarms instead of 5 %, and we say so.
+Our main study was pre-registered before we downloaded anything. We tested our statistics with simulations, changed
+the method when it gave too many false alarms, and checked our numbers against NASA Giovanni's own area averages:
+they match to a few ten-thousandths of a degree.
 
-We also checked our results against weather stations and against ERA5, another reanalysis. In Los Lagos they agree.
-In Magallanes they don't, and the app tells you that too.
+Then we used QGIS to look inside the regions. Antofagasta warmed faster than Los Lagos — that was our pre-registered
+question. But its coast did not warm at all; the interior did. A second reanalysis and the coastal weather station
+agree. A regional average can hide the most interesting part of the story.
 
-What did we find? In this reanalysis, most of northern and central Chile warmed by 0.1 to 0.25 °C per decade, and
-Antofagasta warmed faster than Los Lagos. For rainfall, 27 years is short: only Magallanes shows a decrease that
-survives correction for testing 16 regions — and independent checks do not confirm it.
+In central Chile, rainfall and soil moisture rise and fall together from year to year. But the soil moisture comes from
+a model that is itself driven by rainfall, so we call that consistency, not proof. And when we moved the start year of
+the precipitation record by just two years, the number of regions with "significant" drying went from four to eleven.
+That is exactly why we show uncertainty, corrections and time windows on every screen.
 
 Trend Detective Lab is not a forecast or a warning system. It is a tool for learning how to investigate Earth-system
 change honestly — including when the honest answer is "we can't tell yet".
 
 ## What not to say
 
-- Not "Chile is drying" or "the south is not warming": say what the test shows for which product and period.
-- No causes: the app detects trends; it does not attribute them.
-- Not "validated": say "checked against stations and ERA5", and mention Magallanes.
-- Not "perfectly calibrated".
+- Not "Chile is drying" or "the coast is cooling": say what the test shows for which product, place and period.
+- No causes. Correlation of model soil moisture with rainfall is not independent evidence.
+- Separate confirmatory (pre-registered) from exploratory (multivariable lab, coast/interior, windows).
+- Not "validated" for Magallanes: products disagree there.

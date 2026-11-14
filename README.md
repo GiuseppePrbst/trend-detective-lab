@@ -101,19 +101,24 @@ precipitation: p = 0.0003 then, p = 0.03 now, 0.17 after adjustment). That gap i
 |---|---|---|
 | Unit tests (`tests/`) | The engine against known synthetic cases; 17 written from the specification by a separate SI agent that could not read the code | all pass |
 | Calibration (`docs/calibration.md`) | False-positive rate, power, interval coverage of nine procedures | yearly-means test selected |
-| Residual memory, period sensitivity (`docs/validation.md`) | Assumptions on the real data; effect of dropping two years at either end | no verdict changes with the period |
+| Residual memory, period sensitivity (`docs/validation.md`) | Assumptions on the real data; effect of dropping two years at either end (temperature) | **4 of 16 temperature verdicts change** (Atacama, Coquimbo, Metropolitana, O'Higgins sit near the threshold); an earlier version of this README wrongly said none did |
+| Time windows (`docs/multivariable/MULTIVARIABLE_RESULTS.md` E5) | Same test on other periods, both variables | Precipitation is very sensitive to the start year: 4 regions with p < 0.05 for 1998–2024, 11 for 2000–2024. Short-record precipitation trends are fragile |
 | NASA POWER (`docs/validation.md`) | Our download, units and area weighting — **same underlying reanalysis, not independent** | mean abs. difference ≤ 0.02 °C |
 | Spatial weights (`docs/validation.md` §4) | Weights vs true geodesic areas | within 1 % per cell |
+| **NASA Giovanni area averages** (`docs/validation/GIOVANNI_COMPARISON.md`) | Our download, units, averaging and trend vs Giovanni's own *Time Series, Area-Averaged* service, on boxes of the same MERRA-2 cells in Antofagasta, Los Lagos and Magallanes | max. difference 0.0003 °C over 552 months; identical trends |
+| QGIS grid check (`docs/gis/QGIS_WORKFLOW.md`) | MERRA-2 cell grid rebuilt in QGIS vs the pipeline's cell list | 51 / 51 cells identical (Antofagasta); 16 / 16 polygons valid |
 | Weather stations (`docs/validation_external.md`) | Independent ground observations (Meteostat) at Puerto Montt, Antofagasta, Punta Arenas | Los Lagos consistent; Antofagasta temperature **inconsistent** (station −0.09 °C/decade vs regional +0.23); Magallanes partly (station shows warming and a weaker, non-significant drying) |
 | ERA5 (`docs/validation_external.md`) | Another reanalysis, at the same five grid points per region | Los Lagos and Antofagasta consistent; Magallanes partly: ERA5 shows significant warming (+0.18 °C/decade) and no significant drying, MERRA-2/IMERG the opposite |
 
 What this means: the north–south warming contrast and the Los Lagos results are supported by a second reanalysis; the
 Magallanes results (no warming, significant drying) are **not** confirmed by ERA5 or by the Punta Arenas station and
 should be read as product-dependent. A coastal station (Antofagasta, 135 m) and a mostly inland desert region are not the
-same quantity; our interpretation, not tested, is that the cool, ocean-influenced coast and the interior behave differently.
+same quantity. The exploratory coast/interior analysis (§5b) found that MERRA-2's coastal cells show no warming, like the
+station, while interior cells warm; ERA5 shows the same contrast. The disagreement is largely a matter of *where* in the region.
 ERA5 and MERRA-2 assimilate many of the same observations, so their agreement is supporting, not independent, evidence.
 
-Still open: a comparison with the area-averaged series from the Giovanni web interface (needs an interactive login).
+Giovanni offers no polygons for Chile's regions, so the Giovanni check uses boxes of whole cells inside each region: it
+validates the computation exactly, not our treatment of region borders (checked separately against geodesic areas).
 
 ## 7. Limitations
 
@@ -132,11 +137,13 @@ Still open: a comparison with the area-averaged series from the Giovanni web int
 
 ```
 NASA Giovanni time-series service ──► pipeline/fetch.py ──► data/raw (cache, not committed)
-                                          │
-              region polygons ──► pipeline/build.py ──► web/public/data/*.json + docs/results.md
+   (MERRA-2, IMERG, GLDAS)                │
+              region polygons ──► pipeline/build.py ──► web/public/data/*.json + docs/results.md   (confirmatory)
+   QGIS 4.2 (qgis/build_layers.py) ──► pipeline/multivar.py ──► multivar/windows/cells_*.json      (exploratory)
                                           │                      │
         pipeline/trend.py (all statistics)┘                      ▼
-        pipeline/calibration.py, validate.py, validate_external.py   web/ (React, static) ──► GitHub Pages
+        calibration.py, validate.py, validate_external.py,       web/ (React, static) ──► GitHub Pages
+        validate_giovanni.py (Giovanni ArAvTs)
 ```
 
 No server, no database: a reproducible batch pipeline and a static site.
@@ -155,6 +162,11 @@ uv run python -m pipeline.build               # web/public/data/, docs/results.m
 uv run python -m pipeline.validate            # docs/validation.md
 uv run python -m pipeline.validate_external   # docs/validation_external.md (stations, ERA5)
 uv run python -m pipeline.calibration 800     # docs/calibration.md (synthetic)
+for v in soilm_root soilm_surface evap swe; do uv run python -m pipeline.fetch $v; done   # GLDAS, ~15 min each
+"<QGIS>/bin/python-qgis.bat" qgis/build_layers.py   # QGIS 4.2: geometry checks, coastal cells
+uv run python -m pipeline.multivar            # exploratory lab, docs/multivariable/MULTIVARIABLE_RESULTS.md
+"<QGIS>/bin/python-qgis.bat" qgis/make_project.py   # qgis/trend_detective_chile.qgz
+uv run --with h5py python -m pipeline.validate_giovanni   # docs/validation/GIOVANNI_COMPARISON.md
 uv run pytest
 cd web && npm ci && npm run dev
 ```
