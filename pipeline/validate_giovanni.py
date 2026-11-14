@@ -46,9 +46,14 @@ def arav(data_id: str, box: str, start: str, end: str, cache_name: str, sess: re
     query = f"service=ArAvTs&starttime={start}&endtime={end}&bbox={box}&data={data_id}&portal=GIOVANNI&format=json"
     out = CACHE / cache_name
     if not out.exists():
-        j = sess.get(f"{GIOVANNI}?{query}", timeout=120).json()["session"]
+        for _ in range(90):   # an identical workflow may already be running server-side: wait and ask again
+            j = sess.get(f"{GIOVANNI}?{query}", timeout=120).json()["session"]
+            msg = j["resultset"][0]["result"][0]["status"][0]["message"][0]["value"]
+            if "already running" not in msg:
+                break
+            time.sleep(60)
         ids = dict(session=j["id"], resultset=j["resultset"][0]["id"], result=j["resultset"][0]["result"][0]["id"])
-        for _ in range(180):
+        for _ in range(540):
             time.sleep(10)
             try:
                 r = sess.get(GIOVANNI, params={**ids, "portal": "GIOVANNI", "format": "json"}, timeout=120).json()

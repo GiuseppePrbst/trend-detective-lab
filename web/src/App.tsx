@@ -11,7 +11,7 @@ import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
 import type {
   Alt, Catalog, CellMap, Check, GuidedCase, MultiVar, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
-  Territory, WindowEntry, Windows,
+  SST, Territory, WindowEntry, Windows,
 } from './types';
 
 export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
@@ -62,6 +62,7 @@ export default function App() {
   const cellsS = useFile<CellMap>('cells_soilm_root.json');
   const terrFile = useFile<Territory>('territory.json');
   const discFile = useFile<Discovery>('discovery.json');
+  const sstFile = useFile<SST>('sst.json');
   const [labFocus, setLabFocus] = useState<{ region: string; x: string; y: string; n: number }>();
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
@@ -197,7 +198,8 @@ export default function App() {
             )}
             {mvFile.state === 'ok' ? (
               <Lab mv={mvFile.data} names={names} geo={geo} cellsT2m={cellsT.state === 'ok' ? cellsT.data : null}
-                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} focus={labFocus} />
+                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} focus={labFocus}
+                sst={sstFile.state === 'ok' ? sstFile.data : null} />
             ) : <Status what="the multivariable lab" s={mvFile} />}
             {discFile.state === 'ok' && <MagallanesCase d={discFile.data} />}
             {discFile.state === 'ok' ? <EvidenceCards d={discFile.data} /> : <Status what="the evidence cards" s={discFile} />}

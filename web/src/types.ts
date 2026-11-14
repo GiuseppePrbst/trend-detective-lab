@@ -263,6 +263,15 @@ export interface WindowEntry {
 }
 export type Windows = Record<string, Record<string, WindowEntry>>;
 
+export interface SST {
+  generated_at: string;
+  box: string;
+  period: [number, number];
+  series: Record<string, { label: string; kind: string; giovanni_query: string; trend: MVTrend; missing_share: number }>;
+  air_coastal: { label: string; trend: MVTrend };
+  air_interior: { label: string; trend: MVTrend };
+}
+
 export interface TerrCell {
   cell_id: string;
   lat: number;

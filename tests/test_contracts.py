@@ -28,7 +28,7 @@ def finite(obj, path="$"):
 
 
 @pytest.mark.parametrize("name", ["catalog.json", "t2m.json", "precip.json", "multivar.json", "windows.json", "territory.json",
-                                  "validation.json", "discovery.json", "cells_t2m.json", "cells_soilm_root.json"])
+                                  "validation.json", "discovery.json", "cells_t2m.json", "cells_soilm_root.json", "sst.json"])
 def test_files_are_finite(name):
     finite(load(name))
 

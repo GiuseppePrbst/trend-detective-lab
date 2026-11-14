@@ -2,9 +2,9 @@
 // Multivariable lab: shows the EXPLORATORY results written by pipeline/multivar.py. It computes no statistics.
 import * as Plot from '@observablehq/plot';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { COLOR_A, COLOR_B, intervals, PlotFigure } from './charts';
+import { COLOR_A, COLOR_B, intervals, PlotFigure, type Interval } from './charts';
 import { num, pval, signed, VERDICT_SHORT } from './format';
-import type { Assoc, CellMap, MultiVar, MVSeries, Regions, Territory } from './types';
+import type { Assoc, CellMap, MultiVar, MVSeries, Regions, SST, Territory } from './types';
 
 const INK = '#1f2937';
 
@@ -29,9 +29,10 @@ export const PHENOMENA: Record<string, { label: string; vars: string[]; why: str
 
 type Info = { label: string; unit: string; trend_unit: string; product?: string; nature_label?: string };
 
-export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr, focus }: {
+export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr, focus, sst }: {
   mv: MultiVar; names: Record<string, string>; geo: Regions | null; cellsT2m: CellMap | null; cellsSm: CellMap | null; terr: Territory | null;
   focus?: { region: string; x: string; y: string; n: number };
+  sst?: SST | null;
 }) {
   const info: Record<string, Info> = useMemo(() => ({
     ...mv.reference,
@@ -130,7 +131,7 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr, focus }: {
       <CellMaps geo={geo} t2m={cellsT2m} sm={cellsSm} />
 
       <h3 id="h-coast">Guided discovery: why does Antofagasta's coast behave differently from its interior? <span className="tag-exp">exploratory</span></h3>
-      {terr ? <CoastSteps mv={mv} terr={terr} /> : <CoastPanel mv={mv} />}
+      {terr ? <CoastSteps mv={mv} terr={terr} sst={sst} /> : <CoastPanel mv={mv} />}
     </section>
   );
 }
@@ -281,7 +282,7 @@ function CoastPanel({ mv }: { mv: MultiVar }) {
   );
 }
 
-function CoastSteps({ mv, terr }: { mv: MultiVar; terr: Territory }) {
+function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SST | null }) {
   const A = terr.antofagasta;
   const { t1, context } = A;
   const reg = context.regional;
@@ -326,7 +327,8 @@ function CoastSteps({ mv, terr }: { mv: MultiVar; terr: Territory }) {
         <PlotFigure make={scatter} alt="Each cell's warming trend against its mean elevation and against its distance to the coast." /></li>
       <li><h4>External check</h4>
         <p>ERA5, another reanalysis, shows the same contrast at the same points (rows in step 3). ERA5 and MERRA-2 share many assimilated
-          observations, so this is supporting, not fully independent, evidence. The station sits with the coastal cells.</p></li>
+          observations, so this is supporting, not fully independent, evidence. The station sits with the coastal cells.</p>
+        {sst && <SSTPanel sst={sst} />}</li>
       <li><h4>Sensitivity</h4>
         <ul>
           <li><strong>Elevation-range-restricted comparison</strong> (interior cells inside the coastal elevation range; {t1.n_matched} cells averaging
@@ -341,5 +343,24 @@ function CoastSteps({ mv, terr }: { mv: MultiVar; terr: Territory }) {
           and the coastal station agrees. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
           coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.</p></li>
     </ol>
+  );
+}
+
+function SSTPanel({ sst }: { sst: SST }) {
+  const rows: Interval[] = [
+    ...Object.values(sst.series).map((s, i) => ({ name: s.label, slope: s.trend.slope_per_decade, lo: s.trend.ci_low, hi: s.trend.ci_high, color: i ? '#6b7280' : '#01665e' })),
+    { name: sst.air_coastal.label, slope: sst.air_coastal.trend.slope_per_decade, lo: sst.air_coastal.trend.ci_low, hi: sst.air_coastal.trend.ci_high, color: COLOR_A },
+    { name: sst.air_interior.label, slope: sst.air_interior.trend.slope_per_decade, lo: sst.air_interior.trend.ci_low, hi: sst.air_interior.trend.ci_high, color: COLOR_B },
+  ];
+  const make = useCallback((w: number) => intervals(rows, '°C per decade', w), [rows]);
+  return (
+    <div>
+      <h5>The ocean next to the coast ({sst.period[0]}–{sst.period[1]}) <span className="tag-exp">exploratory, registered before computing</span></h5>
+      <p>Sea-surface temperature averaged by NASA Giovanni over the ocean within ~100 km of the coast (box {sst.box}), compared with the
+        MERRA-2 air temperature of the coastal and interior cells over the same years. MODIS-Aqua is an independent satellite
+        observation; MERRA-2's sea surface is a boundary condition it shares with its own air temperature.</p>
+      <PlotFigure make={make} alt="Trends of sea-surface temperature and of coastal and interior air temperature over the same years." />
+      <p className="hint">Different variables (water skin vs air at 2 m) and a shorter period than the main analysis: compare directions and sizes, not as proof of a cause.</p>
+    </div>
   );
 }
