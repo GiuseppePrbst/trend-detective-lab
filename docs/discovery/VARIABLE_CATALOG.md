@@ -1,6 +1,6 @@
 # Variable catalogue
 
-Generated 2026-11-14T20:11:52+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
+Generated 2026-11-14T23:31:39+00:00 by `python -m pipeline.discovery`. Do not edit by hand.
 
 | Id | Variable | Product | Type | Resolution | Coverage | Access | Status | Depends on | Limitations |
 |---|---|---|---|---|---|---|---|---|---|
@@ -11,7 +11,7 @@ Generated 2026-11-14T20:11:52+00:00 by `python -m pipeline.discovery`. Do not ed
 | evap | Evapotranspiration | GLDAS-2.1 Noah GLDAS_NOAH025_M | land-surface model | 0.25°, monthly | used 2000–2024 | Giovanni time-series API | integrated | precipitation and radiation forcing | model output |
 | swe | Snow water equivalent | GLDAS-2.1 Noah GLDAS_NOAH025_M | land-surface model | 0.25°, monthly | used 2000–2024 | Giovanni time-series API | integrated | temperature and precipitation forcing | not glacier mass; accumulates without limit over icefields (Aysén, Magallanes) |
 | ndvi | Vegetation index (NDVI/EVI) | MODIS Terra MOD13C2 C6.1 (doi:10.5067/MODIS/MOD13C2.061) | satellite observation | 0.05°, monthly | 2000– | LP DAAC granules (~95 MB each, no Harmony subsetting); AppEEARS needs a user login | available_not_processed | – | cloud and QA masking required; NDVI change is not deforestation |
-| sst | Sea-surface temperature | GHRSST MUR L4 v4.1 (PO.DAAC) | satellite analysis | 0.01°, daily | 2002– | PO.DAAC (Earthdata); subsetting needed | planned | – | starts 2002; air and sea temperature are different variables |
+| sst | Sea-surface temperature | NASA JPL GHRSST MUR L4 v4.1 (doi:10.5067/GHGMR-4FJ04) | satellite-based blended analysis | 0.01°, daily → monthly | 2003–2025 used (Antofagasta coastal box only) | NASA Harmony subsetting (bbox, time, variable) | integrated | – | starts 2002; air and sea temperature are different variables |
 | discharge | River discharge | CAMELS-CL (CR2) | gauge observations | 516 basins, daily | varies by basin | cr2.cl/camels-cl | planned | human regulation in many basins | basins smaller than one climate cell cannot be resolved by NASA products |
 | era5 | ERA5 temperature and precipitation | ECMWF ERA5 via Open-Meteo | reanalysis | 0.25°, monthly from daily | 1980–2025 | Open-Meteo archive API | validation_only | shares many assimilated observations with MERRA-2 | not a NASA product; used only as a cross-check |
 | stations | Weather stations | Meteostat monthly | station observations | one point, monthly | gaps vary | bulk.meteostat.net | validation_only | some stations are assimilated by reanalyses | a point, not a region |

@@ -347,6 +347,8 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
           <li><strong>Elevation-range-restricted comparison</strong> (interior cells inside the coastal elevation range; {t1.n_matched} cells averaging
             {' '}{Math.round(t1.matched_mean_elevation)} m vs {Math.round(t1.coastal_mean_elevation)} m on the coast — not the same height): coast − interior {ci(t1.difference)}.</li>
           <li><strong>Nearest-elevation pairs</strong> ({np.n_pairs} pairs; elevation gaps up to {Math.round(np.max_abs_elevation_gap_m)} m): {ci(np.difference)}.</li>
+          <li><strong>Period</strong>: {A.t4.map((r) => `${r.period}: coast ${signed(r.coastal.slope_per_decade)}, interior ${signed(r.interior.slope_per_decade)}, difference ${signed(r.difference.slope_per_decade)} (${pval(r.difference.p_value)})`).join('; ')} °C per decade.
+            The contrast comes from the earlier decades, when the coastal cells cooled; since 2003 both parts warmed and their difference is not significant.</li>
           <li><strong>Definition of "coastal"</strong>: {A.t3.map((r) => `${r.rule}: ${signed(r.difference.slope_per_decade)}`).join('; ')} °C per decade.</li>
           <li>Coast and altitude go together (ρ = {signed(rho('elevation_vs_distance'))}). Ranking the trend against distance after removing elevation leaves
             {' '}{signed(part('partial_trend_distance_given_elevation'))}; elevation after removing distance, {signed(part('partial_trend_elevation_given_distance'))} (descriptive; neighbouring cells are not independent).</li>
@@ -355,7 +357,8 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
       <li><h4>Interpretation, uncertainty and open questions</h4>
         <p>The regional average hides an important spatial difference: in two reanalyses no statistically significant warming was detected in the
           coastal cells, while the interior warmed, and the coastal station is consistent with the coastal cells. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
-          coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.
+          coastal cooling was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it. The contrast
+          is concentrated in 1980–2002; since 2003 both coastal and interior cells warmed, and the coastal ocean (NASA MUR) shows no significant trend.
           "No statistically significant warming in the coastal cells" is not the same as "the coast did not warm". The causal mechanism remains
           unproven.</p></li>
     </ol>
@@ -372,9 +375,11 @@ function SSTPanel({ sst }: { sst: SST }) {
   return (
     <div>
       <h5>The ocean next to the coast ({sst.period[0]}–{sst.period[1]}) <span className="tag-exp">exploratory, registered before computing</span></h5>
-      <p>Sea-surface temperature averaged by NASA Giovanni over the ocean within ~100 km of the coast (box {sst.box}), compared with the
-        MERRA-2 air temperature of the coastal and interior cells over the same years. MODIS-Aqua is an independent satellite
-        observation; MERRA-2's sea surface is a boundary condition it shares with its own air temperature.</p>
+      <p>Sea-surface temperature from NASA JPL MUR v4.1 (0.01°, daily analyses subset with NASA Harmony and averaged by us to monthly means)
+        over the ocean within ~100 km of the coast (box {sst.box}), compared with the MERRA-2 air temperature of the coastal and interior cells
+        over the same years. MUR blends several satellites and in-situ data and is independent of MERRA-2's atmosphere; MERRA-2 prescribes its
+        own sea surface from satellite analyses, so the comparison is not between fully independent sources. Validation:{' '}
+        <a href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/validation/SST_VALIDATION.md">SST_VALIDATION.md</a>.</p>
       <PlotFigure make={make} alt="Trends of sea-surface temperature and of coastal and interior air temperature over the same years." />
       <p className="hint">Different variables (water skin vs air at 2 m) and a shorter period than the main analysis: compare directions and sizes, not as proof of a cause.</p>
     </div>

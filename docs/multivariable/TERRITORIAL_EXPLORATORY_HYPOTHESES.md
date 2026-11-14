@@ -50,3 +50,13 @@ elevation pairing, with replacement); it still leaves elevation gaps. Both are e
 - **Family.** One test per SST series (2), exploratory; no correction claimed beyond reporting both.
 - **Dependencies.** MERRA-2 prescribes its sea-surface temperature from satellite analyses, so MERRA-2 skin temperature and
   coastal air temperature share inputs; MODIS SST is an independent observation but 2003–2025 only.
+
+### T5 amendment (2026-11-14 ~17:50, before any SST value was seen)
+
+Giovanni's area-averaging service failed for every variable tried (including one that had worked), and NOAA servers
+(ERDDAP, PSL) were unreachable from our network. The SST product is therefore changed to **NASA JPL GHRSST MUR L4
+v4.1** (`MUR-JPL-L4-GLOB-v4.1`, doi:10.5067/GHGMR-4FJ04, 0.01°, daily), subset to the same ocean box (71.5–70.5° W,
+26–21.5° S) through NASA Harmony (PO.DAAC), variable `analysed_sst`. Monthly means are computed by us from the daily
+analyses (a month counts with ≥ 20 valid days); complete years 2003–2025. Question, method, expected sign, refutation
+criterion and family are unchanged. MUR is a blended analysis of several satellites and in-situ data: an observation-based
+product independent of MERRA-2's atmosphere, but not of all satellite SST inputs that reanalyses also use.

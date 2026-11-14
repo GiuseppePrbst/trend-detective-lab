@@ -59,9 +59,9 @@ CATALOG = [
          coverage="2000–", access="LP DAAC granules (~95 MB each, no Harmony subsetting); AppEEARS needs a user login", status="available_not_processed",
          depends_on=[], limitations=["cloud and QA masking required", "NDVI change is not deforestation"],
          questions=["How does vegetation respond to drought?"]),
-    dict(id="sst", label="Sea-surface temperature", phenomena=["coast"], product="GHRSST MUR L4 v4.1 (PO.DAAC)",
-         source_type="satellite analysis", institution="NASA JPL PO.DAAC", unit="°C", spatial="0.01°", temporal="daily",
-         coverage="2002–", access="PO.DAAC (Earthdata); subsetting needed", status="planned", depends_on=[],
+    dict(id="sst", label="Sea-surface temperature", phenomena=["coast"], product="NASA JPL GHRSST MUR L4 v4.1 (doi:10.5067/GHGMR-4FJ04)",
+         source_type="satellite-based blended analysis", institution="NASA JPL / PO.DAAC", unit="°C", spatial="0.01°", temporal="daily → monthly",
+         coverage="2003–2025 used (Antofagasta coastal box only)", access="NASA Harmony subsetting (bbox, time, variable)", status="planned", depends_on=[],
          limitations=["starts 2002; air and sea temperature are different variables"], questions=["Is the coastal ocean warming like the land?"]),
     dict(id="discharge", label="River discharge", phenomena=["water"], product="CAMELS-CL (CR2)", source_type="gauge observations",
          institution="CR2, Universidad de Chile", unit="m³/s", spatial="516 basins", temporal="daily", coverage="varies by basin",
@@ -177,7 +177,7 @@ def cards():
                   limitations=["reanalysis, 50 km cells", "regional means hide internal differences"]))
     ci, t1 = MV["coast_interior"], TR["antofagasta"]["t1"]
     cc, ii = ci["coastal"], ci["interior"]
-    C.append(dict(id="antofagasta-coast", title="Coastal and interior MERRA-2 cells of Antofagasta show different warming trends", status="exploratory",
+    C.append(dict(id="antofagasta-coast", title="Coastal and interior MERRA-2 cells of Antofagasta show different warming trends over 1980–2025 (contrast concentrated in 1980–2002)", status="exploratory",
                   variable="Air temperature 2 m", territory="Antofagasta, coastal − interior MERRA-2 cells",
                   result=result(ci["difference"], "°C per decade", "1980–2025"),
                   source=dict(product="MERRA-2; cells classified in QGIS; CIREN DEM for cell elevations", type="reanalysis", resolution="0.5° × 0.625°", access="Giovanni"),
@@ -185,7 +185,10 @@ def cards():
                                 sensitivity=dict(range_restricted=result(t1["difference"], "°C per decade", "1980–2025"),
                                                  nearest_pairs=result(t1["nearest_elevation_pairs"]["difference"], "°C per decade", "1980–2025"),
                                                  thresholds=[dict(rule=r["rule"], slope=r["difference"]["slope_per_decade"], ci=[r["difference"]["ci_low"], r["difference"]["ci_high"]])
-                                                             for r in TR["antofagasta"]["t3"]])),
+                                                             for r in TR["antofagasta"]["t3"]],
+                                                 periods=[dict(period=r["period"], coastal=r["coastal"]["slope_per_decade"], interior=r["interior"]["slope_per_decade"],
+                                                               difference=r["difference"]["slope_per_decade"], ci=[r["difference"]["ci_low"], r["difference"]["ci_high"]],
+                                                               p=r["difference"]["p_value"]) for r in TR["antofagasta"]["t4"]])),
                   checks=[dict(source="ERA5 at 4 coastal and 5 interior cell centres", kind="other_reanalysis", agreement="same contrast",
                                years=46, ours=None, theirs=[ci["point_check"]["ERA5"]["difference"][k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
                                scope="ERA5 and MERRA-2 at the same 9 cell centres (4 coastal, 5 interior), not regional means",
@@ -194,9 +197,12 @@ def cards():
                        f"({cc['slope_per_decade']:+.3f} °C/decade, 95 % CI {cc['ci_low']:+.3f} to {cc['ci_high']:+.3f}, which includes zero), "
                        f"while the interior cells warmed ({ii['slope_per_decade']:+.3f}, CI {ii['ci_low']:+.3f} to {ii['ci_high']:+.3f}). "
                        "The difference between the two trends is significant, and ERA5 at matching points shows the same contrast."),
-                  cannot="It does not show that the coast did not warm (not significant is not 'no change'), and it does not establish a cause: coast and "
-                         "elevation are strongly correlated (ρ = 0.90), the elevation-range-restricted comparison is not exact matching, and coastal cells mix ocean and land.",
-                  open=["Role of the cool coastal ocean (SST not yet integrated)", "Falvey & Garreaud (2009) found a related contrast for 1979–2006"],
+                  cannot=("It does not show that the coast did not warm (not significant is not 'no change'), and it does not establish a cause: coast and "
+                          "elevation are strongly correlated (ρ = 0.90), the elevation-range-restricted comparison is not exact matching, and coastal cells mix ocean and land. "
+                          f"The contrast is not constant in time: in {TR['antofagasta']['t4'][1]['period']} the coastal cells cooled ({TR['antofagasta']['t4'][1]['coastal']['slope_per_decade']:+.2f}) "
+                          f"while in {TR['antofagasta']['t4'][2]['period']} both coastal ({TR['antofagasta']['t4'][2]['coastal']['slope_per_decade']:+.2f}) and interior "
+                          f"({TR['antofagasta']['t4'][2]['interior']['slope_per_decade']:+.2f}) cells warmed and their difference is not significant."),
+                  open=["Coastal sea-surface temperature 2003–2025 (NASA MUR) shows no significant trend — see its card", "The early-period coastal cooling is consistent with the coastal cooling reported by Falvey & Garreaud (2009) for 1979–2006; the mechanism is not tested here"],
                   limitations=["51 dependent cells", "coastal cells mix ocean and land", "exploratory, decided after seeing the regional result"]))
     for var, label, unit, data in (("precip", "Precipitation (IMERG)", "mm/month per decade", P), ("t2m", "Air temperature 2 m (MERRA-2)", "°C per decade", T)):
         t = data["regions"]["magallanes"]["trend"]
@@ -263,6 +269,32 @@ def cards():
         "central-water": ("Do wet and dry years show up in the soil of central Chile?", ["imerg", "gldas", "multivar"]),
         "period-sensitivity": ("Does the start year change which regions show a precipitation trend?", ["imerg", "multivar", "method"]),
     }
+    sp = OUT / "sst.json"
+    if sp.exists():
+        S = json.loads(sp.read_text(encoding="utf-8"))
+        m, ac, ai = S["series"]["mur_sst"], S["air_coastal"]["trend"], S["air_interior"]["trend"]
+        t = m["trend"]
+        sig = t["p_value"] < 0.05
+        C.append(dict(id="antofagasta-sst", title="Coastal sea-surface temperature off Antofagasta, 2003–2025 (NASA MUR)", status="exploratory (registered before computing)",
+                      variable="Sea-surface temperature", territory="Ocean within ~100 km of the Antofagasta coast",
+                      result=result(t, "°C per decade", f"{S['period'][0]}–{S['period'][1]}"),
+                      source=dict(product="NASA JPL MUR v4.1, monthly means of daily analyses", type="satellite-based blended analysis", resolution="0.01°", access="NASA Harmony"),
+                      analysis=dict(method=method + "; compared with MERRA-2 air temperature over the same years", correction="single exploratory test (T5)", sensitivity=None),
+                      checks=[dict(source=S["air_coastal"]["label"], kind="context", agreement="descriptive comparison", years=S["period"][1] - S["period"][0] + 1,
+                                   ours=None, theirs=[ac[k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
+                                   scope="different variable (air at 2 m over ~50 km cells vs sea skin/foundation temperature)",
+                                   dependency="MERRA-2 prescribes its sea-surface temperature from satellite analyses, so the two are not fully independent"),
+                              dict(source=S["air_interior"]["label"], kind="context", agreement="descriptive comparison", years=S["period"][1] - S["period"][0] + 1,
+                                   ours=None, theirs=[ai[k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
+                                   scope="inland air temperature, same years", dependency="same reanalysis")],
+                      can=(f"Over {S['period'][0]}–{S['period'][1]} the coastal sea-surface temperature trend is {t['slope_per_decade']:+.3f} °C/decade "
+                           f"(95 % CI {t['ci_low']:+.3f} to {t['ci_high']:+.3f}); " + ("statistically significant." if sig else "no statistically significant trend is detected.")),
+                      cannot="An ocean trend, or its absence, does not show that the ocean causes the coast–interior contrast in air temperature; the period is shorter than the main analysis and the variables differ.",
+                      open=["Whether coastal upwelling or cloud cover explain the contrast is not tested"],
+                      limitations=["2003–2025 only", "one ocean box", "MUR blends several satellites and in-situ data; its long-term stability is not assessed here"]))
+        extra["antofagasta-sst"] = ("Did the coastal ocean off Antofagasta warm over 2003–2025?", ["merra2", "territory"])
+        links["mur"] = ("NASA JPL MUR v4.1 (doi:10.5067/GHGMR-4FJ04)", "https://doi.org/10.5067/GHGMR-4FJ04")
+        extra["antofagasta-sst"] = (extra["antofagasta-sst"][0], ["mur", "merra2", "territory"])
     for c in C:
         q, keys = extra[c["id"]]
         c["question"] = q
@@ -272,6 +304,10 @@ def cards():
 
 
 def main() -> None:
+    sst_file = OUT / "sst.json"
+    for c in CATALOG:
+        if c["id"] == "sst":
+            c["status"] = "integrated" if sst_file.exists() else "planned"
     doc = dict(generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), catalog=CATALOG, relation_types=RELATION,
                agreement_note=AGREEMENT_NOTE,
                questions=[dict(q, variables=[dict(id=v, why=w) for v, w in q["variables"]],

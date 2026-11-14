@@ -34,6 +34,8 @@ P = json.loads((DATA / "precip.json").read_text(encoding="utf-8"))
 MV = json.loads((DATA / "multivar.json").read_text(encoding="utf-8"))
 CT = json.loads((DATA / "cells_t2m.json").read_text(encoding="utf-8"))
 VAL = json.loads((DATA / "validation.json").read_text(encoding="utf-8"))
+TR4 = json.loads((DATA / "territory.json").read_text(encoding="utf-8"))["antofagasta"]["t4"]
+SST = json.loads((DATA / "sst.json").read_text(encoding="utf-8"))
 NAME = {r["id"]: r["name"] for r in cat["regions"]}
 
 
@@ -190,7 +192,7 @@ def main() -> None:
             h, w = img.shape[:2]
             ax = fig.add_axes([0.02, 0.06, 0.27, 0.66]); ax.imshow(img[int(h * 0.07):int(h * 0.86), int(w * 0.03):int(w * 0.62)]); ax.axis("off")
             ax.set_title("QGIS map: CIREN relief, MERRA-2 cells\n(outlined: coastal)", fontsize=9, color=GREY)
-        ax = fig.add_axes([0.47, 0.3, 0.28, 0.44])
+        ax = fig.add_axes([0.47, 0.4, 0.28, 0.38])
         ta, tb = T["regions"][a]["trend"], T["regions"][b]["trend"]
         st = next(c for c in VAL["checks"] if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
         e5 = ci["point_check"]["ERA5"]
@@ -200,10 +202,13 @@ def main() -> None:
                             ("ERA5, coastal points", e5["coastal"]["slope_per_decade"], e5["coastal"]["ci_low"], e5["coastal"]["ci_high"], TEAL),
                             ("ERA5, interior points", e5["interior"]["slope_per_decade"], e5["interior"]["ci_low"], e5["interior"]["ci_high"], BROWN),
                             ("Antofagasta station", st["other"]["slope_per_decade"], st["other"]["ci_low"], st["other"]["ci_high"], GREY)], "°C")
-        fig.text(0.31, 0.08, f"Confirmatory (pre-registered): Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).\n"
+        fig.text(0.31, 0.085, f"Confirmatory (pre-registered): Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).\n"
                  f"Exploratory: no significant warming in coastal cells ({fmt(ci['coastal']['slope_per_decade'])}, CI includes 0);\n"
-                 f"interior {fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 shows the same contrast. Coast and altitude\n"
-                 f"are entangled at 50 km; no cause is claimed.", fontsize=10.5, color=INK)
+                 f"interior {fmt(ci['interior']['slope_per_decade'])} °C/decade (1980–2025); ERA5 shows the same contrast.\n"
+                 f"It comes from {TR4[1]['period']} (coast {fmt(TR4[1]['coastal']['slope_per_decade'])}); in {TR4[2]['period']} both warmed "
+                 f"(coast {fmt(TR4[2]['coastal']['slope_per_decade'])}, interior {fmt(TR4[2]['interior']['slope_per_decade'])}).\n"
+                 f"Coastal SST (NASA MUR, 2003–2025): {fmt(SST['series']['mur_sst']['trend']['slope_per_decade'])}, not significant. No cause is claimed.",
+                 fontsize=10, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
         # 5 ------------------------------------------------------------------ multivariable (exploratory)

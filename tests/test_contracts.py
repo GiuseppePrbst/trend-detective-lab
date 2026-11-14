@@ -48,7 +48,8 @@ def test_discovery_catalogue_and_questions():
     integrated_series = set(mv["regions"]["maule"]["series"])
     for c in d["catalog"]:
         if c["status"] == "integrated":
-            assert c["id"] in integrated_series, f"{c['id']} marked integrated but has no data"
+            own_file = {"sst": "sst.json"}.get(c["id"])
+            assert (DATA / own_file).exists() if own_file else c["id"] in integrated_series, f"{c['id']} marked integrated but has no data"
     for q in d["questions"]:
         assert q["variables"] and all(v["id"] in ids and v["why"] for v in q["variables"])
         assert all(r["type"] in d["relation_types"] for r in q["relations"])
