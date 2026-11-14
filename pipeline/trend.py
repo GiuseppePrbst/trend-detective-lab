@@ -1,10 +1,13 @@
 """Trend detection for monthly Earth-science series.
 
-Main method : OLS trend on monthly anomalies with the standard error adjusted for serial
-              correlation through an effective sample size (the approach of Santer et al. 2000, 2008,
-              generalised from lag 1 to the leading positive autocorrelations).
-Robustness  : Theil-Sen slope + Mann-Kendall test modified by Hamed & Rao (1998).
+Main method : monthly anomalies are averaged per calendar year; OLS trend on the yearly values with
+              the standard error adjusted through a lag-1 effective sample size (Santer et al. 2000,
+              2008). Chosen by simulation (docs/calibration.md): it is the best-calibrated of seven
+              methods when memory decays slowly, at the cost of some power.
+Robustness  : Theil-Sen slope + Mann-Kendall test on the same yearly values.
 Comparison  : the same main method applied to the difference series A - B.
+Transparency: the two earlier monthly tests (pre-registered lag-1, and the multi-lag revision) are
+              still computed and reported under "sensitivity".
 
 Every number shown in the app comes from this module. It detects trends; it does not attribute
 causes or predict.
@@ -23,7 +26,7 @@ ALPHA = 0.05
 MIN_YEARS = 10          # below this we refuse to compute a trend
 SHORT_YEARS = 20        # below this we warn
 MAX_MISSING = 0.10      # max share of missing months inside the analysed period
-MK_LAG = 12             # lags used by the Hamed-Rao variance correction
+MIN_MONTHS_PER_YEAR = 10  # a year enters the yearly series only with at least this many valid months
 
 
 def _clean(dates, values):
@@ -61,6 +64,15 @@ def anomalies(dates, values):
     clim = np.array([np.nanmean(y[mm == m]) for m in range(1, 13)])
     out_dates = [f"{a}-{b:02d}" for a, b in zip(yy, mm)]
     return out_dates, y - clim[mm - 1], clim
+
+
+def annual_means(dates, values):
+    """Yearly means of the monthly anomalies - the values the main test is run on. Returns (years, means)."""
+    yy, mm, y = _clean(dates, values)
+    clim = np.array([np.nanmean(y[mm == m]) for m in range(1, 13)])
+    anom = y - clim[mm - 1]
+    years = [int(v) for v in np.unique(yy) if (~np.isnan(anom[yy == v])).sum() >= MIN_MONTHS_PER_YEAR]
+    return years, [float(np.nanmean(anom[yy == v])) for v in years]
 
 
 def bh_adjust(pvalues):
@@ -119,22 +131,45 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
 
     if np.ptp(a) == 0:  # constant series: no trend, nothing to test
         res.update(slope_per_decade=0.0, ci_low=0.0, ci_high=0.0, p_value=1.0, r1=0.0, n_eff=float(n), acf_lags_used=0,
+                   method="annual_means_ols_ar1", n_years_used=n_years, r1_annual=0.0, n_eff_annual=float(n_years), sensitivity={},
                    theil_sen_per_decade=0.0, mk_p_value=1.0, verdict="not_significant", direction="none")
         res["warnings"] = warnings + ["constant_series"]
         return res
 
-    # --- main: OLS with AR(1) effective sample size --------------------------------------------
-    fit = stats.linregress(tt, a)
-    resid = a - (fit.intercept + fit.slope * tt)
-    r1, n_eff, lags = effective_sample_size(resid)
-    se = fit.stderr * math.sqrt((n - 2) / (n_eff - 2))
-    dof = n_eff - 2
+    # --- monthly diagnostics, and the two earlier monthly tests kept for transparency ------------
+    fit_m = stats.linregress(tt, a)
+    resid_m = a - (fit_m.intercept + fit_m.slope * tt)
+    r1, n_eff_multi, lags = effective_sample_size(resid_m)
+    n_eff_ar1 = max(n * (1 - r1) / (1 + r1) if r1 > 0 else float(n), 3.0)
+
+    def monthly_test(n_eff):
+        se_m = fit_m.stderr * math.sqrt((n - 2) / (n_eff - 2))
+        h = stats.t.ppf(1 - alpha / 2, n_eff - 2) * se_m
+        return dict(slope_per_decade=float(fit_m.slope), ci_low=float(fit_m.slope - h), ci_high=float(fit_m.slope + h),
+                    p_value=float(2 * stats.t.sf(abs(fit_m.slope / se_m), n_eff - 2)), n_eff=float(n_eff))
+
+    # --- main (final method, chosen by the calibration study in docs/calibration.md) -------------
+    # Average the monthly anomalies of each calendar year, then OLS on the yearly values with an
+    # effective sample size from the lag-1 autocorrelation of the yearly residuals.
+    years = np.unique(yy)
+    enough = np.array([(~np.isnan(anom[yy == y])).sum() >= MIN_MONTHS_PER_YEAR for y in years])
+    ya = np.array([np.nanmean(anom[yy == y]) for y in years[enough]])
+    ta = (years[enough] - yy[0] + 0.5) / 10.0
+    na = len(ya)
+    if na < MIN_YEARS:
+        raise ValueError(f"need at least {MIN_YEARS} usable years, got {na}")
+    fit = stats.linregress(ta, ya)
+    resid = ya - (fit.intercept + fit.slope * ta)
+    r1a = float(np.corrcoef(resid[:-1], resid[1:])[0, 1])
+    n_eff_a = max(na * (1 - r1a) / (1 + r1a) if r1a > 0 else float(na), 3.0)
+    dof = n_eff_a - 2
+    se = fit.stderr * math.sqrt((na - 2) / dof)
     tcrit = stats.t.ppf(1 - alpha / 2, dof)
     p = float(2 * stats.t.sf(abs(fit.slope / se), dof))
 
-    # --- robustness: Theil-Sen + Hamed-Rao Mann-Kendall ----------------------------------------
-    ts = float(stats.theilslopes(a, tt)[0])
-    mk_p = float(mk.hamed_rao_modification_test(a, alpha=alpha, lag=min(MK_LAG, n // 4)).p)
+    # --- robustness: Theil-Sen slope + Mann-Kendall test on the same yearly values ----------------
+    ts = float(stats.theilslopes(ya, ta)[0])
+    mk_p = float(mk.original_test(ya, alpha=alpha).p)
 
     main_sig, rob_sig = p < alpha, mk_p < alpha
     same_sign = (fit.slope > 0) == (ts > 0)
@@ -146,8 +181,13 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
         verdict = "not_significant"
 
     res.update(slope_per_decade=float(fit.slope), ci_low=float(fit.slope - tcrit * se), ci_high=float(fit.slope + tcrit * se),
-               p_value=p, r1=r1, n_eff=float(n_eff), acf_lags_used=lags, theil_sen_per_decade=ts, mk_p_value=mk_p, verdict=verdict,
-               direction="increasing" if fit.slope > 0 else "decreasing")
+               p_value=p, method="annual_means_ols_ar1",
+               n_years_used=na, r1_annual=r1a, n_eff_annual=float(n_eff_a),
+               r1=r1, n_eff=float(n_eff_multi), acf_lags_used=lags,       # month-to-month persistence (diagnostic)
+               theil_sen_per_decade=ts, mk_p_value=mk_p, verdict=verdict,
+               direction="increasing" if fit.slope > 0 else "decreasing",
+               sensitivity=dict(preregistered_monthly_ar1=monthly_test(n_eff_ar1),
+                                first_revision_monthly_multilag=monthly_test(n_eff_multi)))
     return res
 
 
