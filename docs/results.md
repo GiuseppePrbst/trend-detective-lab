@@ -1,6 +1,6 @@
 # Results
 
-Generated 2026-11-14T12:32:41+00:00 by `python -m pipeline.build`. Do not edit by hand.
+Generated 2026-11-14T13:35:16+00:00 by `python -m pipeline.build`. Do not edit by hand.
 
 ## Air temperature at 2 m — MERRA-2 M2IMNXASM v5.12.4, 1980–2025
 
@@ -34,20 +34,21 @@ Satellite estimate merged with rain gauges (IMERG Final Run). Regions listed nor
 
 | Region | Grid cells | Mean | Slope (95 % CI) | p | p (BH-adjusted) | n_eff / n | Theil–Sen | MK p | Verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| Arica y Parinacota | – | – | not available yet | – | – | – | – | – | – |
-| Tarapacá | – | – | not available yet | – | – | – | – | – | – |
-| Antofagasta | 1228 | 7.32 | +0.570 (-0.405, +1.546) | 0.2502 | 0.2502 | 181 / 324 | +0.340 | 0.3312 | not significant |
-| Atacama | – | – | not available yet | – | – | – | – | – | – |
-| Coquimbo | – | – | not available yet | – | – | – | – | – | – |
-| Valparaíso | – | – | not available yet | – | – | – | – | – | – |
-| Metropolitana de Santiago | – | – | not available yet | – | – | – | – | – | – |
-| O'Higgins | – | – | not available yet | – | – | – | – | – | – |
-| Maule | – | – | not available yet | – | – | – | – | – | – |
-| Ñuble | – | – | not available yet | – | – | – | – | – | – |
-| Bío-Bío | – | – | not available yet | – | – | – | – | – | – |
-| La Araucanía | – | – | not available yet | – | – | – | – | – | – |
-| Los Ríos | – | – | not available yet | – | – | – | – | – | – |
-| Los Lagos | 709 | 169.91 | -7.565 (-18.104, +2.974) | 0.1586 | 0.2502 | 237 / 324 | -4.677 | 0.2360 | not significant |
-| Aysén | – | – | not available yet | – | – | – | – | – | – |
-| Magallanes | – | – | not available yet | – | – | – | – | – | – |
+| Arica y Parinacota | 183 | 14.26 | -0.427 (-1.943, +1.088) | 0.5790 | 0.6176 | 243 / 324 | +0.470 | 0.0153 | method-dependent |
+| Tarapacá | 417 | 7.07 | +0.373 (-0.421, +1.168) | 0.3553 | 0.4061 | 237 / 324 | +0.282 | 0.1094 | not significant |
+| Antofagasta | 1228 | 7.32 | +0.570 (-0.405, +1.546) | 0.2502 | 0.3079 | 181 / 324 | +0.340 | 0.3312 | not significant |
+| Atacama | 781 | 5.51 | +1.162 (-0.138, +2.462) | 0.0795 | 0.1420 | 152 / 324 | +0.776 | 0.0008 | method-dependent |
+| Coquimbo | 454 | 13.01 | -0.599 (-3.456, +2.258) | 0.6801 | 0.6801 | 246 / 324 | +0.123 | 0.7521 | not significant |
+| Valparaíso | 223 | 28.53 | -4.833 (-9.997, +0.332) | 0.0665 | 0.1420 | 239 / 324 | -1.162 | 0.1339 | not significant |
+| Metropolitana de Santiago | 193 | 41.30 | -4.026 (-10.177, +2.125) | 0.1985 | 0.2646 | 235 / 324 | -0.021 | 0.9891 | not significant |
+| O'Higgins | 201 | 56.19 | -6.616 (-13.636, +0.404) | 0.0646 | 0.1420 | 324 / 324 | -1.606 | 0.2145 | not significant |
+| Maule | 358 | 74.36 | -6.945 (-16.471, +2.581) | 0.1522 | 0.2307 | 234 / 324 | -2.018 | 0.3199 | not significant |
+| Ñuble | 171 | 94.89 | -10.962 (-21.986, +0.062) | 0.0513 | 0.1420 | 230 / 324 | -3.595 | 0.2566 | not significant |
+| Bío-Bío | 324 | 98.29 | -12.958 (-21.401, -4.515) | 0.0027 | 0.0146 | 324 / 324 | -6.085 | 0.0743 | method-dependent |
+| La Araucanía | 398 | 113.16 | -14.722 (-25.607, -3.836) | 0.0083 | 0.0330 | 230 / 324 | -8.478 | 0.0552 | method-dependent |
+| Los Ríos | 243 | 146.25 | -20.848 (-33.389, -8.308) | 0.0012 | 0.0097 | 239 / 324 | -13.422 | 0.0071 | significant, robust |
+| Los Lagos | 709 | 169.91 | -7.565 (-18.104, +2.974) | 0.1586 | 0.2307 | 237 / 324 | -4.677 | 0.2360 | not significant |
+| Aysén | 1653 | 135.85 | -6.029 (-12.781, +0.724) | 0.0799 | 0.1420 | 239 / 324 | -5.432 | 0.0679 | not significant |
+| Magallanes | 2611 | 111.02 | -12.229 (-17.427, -7.030) | 0.0000 | 0.0001 | 139 / 324 | -11.103 | 0.0000 | significant, robust |
 
+- Difference los-lagos − magallanes: +4.663 (-6.832, +16.159) mm/month per decade, p = 0.4249 → trends cannot be said to differ.

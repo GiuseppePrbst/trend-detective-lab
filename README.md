@@ -61,8 +61,16 @@ for that reason only, and both versions are in the commit history.
 For MERRA-2 2-m air temperature, 1980–2025: warming is statistically significant and robust in the north and centre
 of Chile (about +0.1 to +0.25 °C per decade), and **no significant trend is detected from Los Lagos southwards**
 (Los Lagos, Aysén, Magallanes). The trend in Antofagasta is significantly larger than in Los Lagos; Los Lagos and
-Magallanes cannot be told apart. These are statements about the MERRA-2 reanalysis over that period — not about
-causes, and not forecasts.
+Magallanes cannot be told apart.
+
+For GPM IMERG precipitation, 1998–2024: the central estimate is negative in every region from Valparaíso southwards,
+but with only 27 years of a highly variable quantity most of these trends are **not statistically significant**.
+Two regions show a significant, robust decrease (Los Ríos and Magallanes, about −11 to −14 % per decade); three more
+(Bío-Bío, La Araucanía, Atacama) are significant with one method but not the other, and we say so. In Los Lagos the
+estimate is −4.5 % per decade with a confidence interval that includes zero. Monthly precipitation is strongly
+skewed, so the least-squares and rank-based slopes differ more than for temperature.
+
+These are statements about these data products over these periods — not about causes, and not forecasts.
 
 ## Limitations
 

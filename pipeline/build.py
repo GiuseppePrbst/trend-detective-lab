@@ -55,6 +55,7 @@ INFO = {
             "The IMERG Final Run V07 monthly record ends in September 2025; we use complete years 1998–2024.",
             "27 years is short for precipitation, which varies strongly from year to year; in central Chile the period is dominated by the drought that began in 2010.",
             "Satellite precipitation is less accurate over steep mountains such as the Andes.",
+            "Monthly precipitation is strongly skewed: a few very wet months weigh heavily on the least-squares slope, so it can differ clearly from the rank-based Theil–Sen slope. Where the two disagree the verdict is 'method-dependent'. In arid regions the series is dominated by rare events and trends are especially fragile.",
         ],
         citation="Huffman, G.J., E.F. Stocker, D.T. Bolvin, E.J. Nelkin, Jackson Tan (2023), GPM IMERG Final Precipitation L3 1 month 0.1 degree x 0.1 degree V07, Greenbelt, MD, Goddard Earth Sciences Data and Information Services Center (GES DISC), doi:10.5067/GPM/IMERG/3B-MONTH/07. Accessed through the NASA Giovanni time-series service.",
     ),
