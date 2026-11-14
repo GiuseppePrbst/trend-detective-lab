@@ -21,3 +21,4 @@ data/raw/
 
 # cached third-party validation downloads
 data/external/
+data/logs/
