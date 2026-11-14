@@ -21,3 +21,6 @@ data/raw/
 
 # cached third-party validation downloads
 data/external/
+data/logs/
+data/gis_src/
+*.aux.xml

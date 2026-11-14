@@ -42,6 +42,13 @@ VARIABLES = {
         start="1998-01-01T00:00:00", end="2024-12-31T23:59:59",
     ),
 }
+# GLDAS-2.1 Noah land-surface model, monthly 0.25 deg (land only; ocean cells come back as fill values).
+# Period 2000-2024 = the overlap with IMERG. Model output, forced partly by observed precipitation:
+# not independent of the precipitation record.
+for _name, _param in [("soilm_surface", "SoilMoi0_10cm_inst"), ("soilm_root", "RootMoist_inst"),
+                      ("evap", "Evap_tavg"), ("swe", "SWE_inst")]:
+    VARIABLES[_name] = dict(data=f"GLDAS_NOAH025_M_2_1_{_param}", version="2.1", dlat=0.25, dlon=0.25,
+                            lat0=-89.875, lon0=-179.875, start="2000-01-01T00:00:00", end="2024-12-31T23:59:59")
 
 
 def load_regions() -> dict[str, shapely.Geometry]:

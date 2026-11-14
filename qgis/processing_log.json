@@ -1,0 +1,86 @@
+{
+ "report": {
+  "regions_valid": 16,
+  "regions_invalid": 0,
+  "regions_errors": 0,
+  "antofagasta_cells": 51,
+  "coastal_cells": 10
+ },
+ "steps": [
+  {
+   "algorithm": "native:checkvalidity",
+   "parameters": {
+    "INPUT_LAYER": "D:\\repos\\hackathon-nasa\\data\\boundaries\\geoBoundaries-CHL-ADM1_simplified.geojson",
+    "METHOD": "2",
+    "VALID_OUTPUT": "memory:",
+    "INVALID_OUTPUT": "memory:",
+    "ERROR_OUTPUT": "memory:"
+   }
+  },
+  {
+   "algorithm": "native:fixgeometries",
+   "parameters": {
+    "INPUT": "D:\\repos\\hackathon-nasa\\data\\boundaries\\geoBoundaries-CHL-ADM1_simplified.geojson",
+    "METHOD": "1",
+    "OUTPUT": "memory:"
+   }
+  },
+  {
+   "algorithm": "native:savefeatures",
+   "parameters": {
+    "INPUT": "<QgsVectorLayer: 'output' (memory)>",
+    "OUTPUT": "D:\\repos\\hackathon-nasa\\qgis\\layers.gpkg",
+    "LAYER_NAME": "regions",
+    "ACTION_ON_EXISTING_FILE": "1"
+   }
+  },
+  {
+   "algorithm": "native:extractbyexpression",
+   "parameters": {
+    "INPUT": "<QgsVectorLayer: 'output' (memory)>",
+    "EXPRESSION": "\"shapeName\" ILIKE '%Antofagasta%'",
+    "OUTPUT": "memory:"
+   }
+  },
+  {
+   "algorithm": "native:creategrid",
+   "parameters": {
+    "TYPE": "2",
+    "EXTENT": "-70.9375,-66.5625,-26.25,-20.75 [EPSG:4326]",
+    "HSPACING": "0.625",
+    "VSPACING": "0.5",
+    "HOVERLAY": "0",
+    "VOVERLAY": "0",
+    "CRS": "EPSG:4326",
+    "OUTPUT": "memory:"
+   }
+  },
+  {
+   "algorithm": "native:extractbylocation",
+   "parameters": {
+    "INPUT": "<QgsVectorLayer: 'output' (memory)>",
+    "PREDICATE": "[0]",
+    "INTERSECT": "<QgsVectorLayer: 'output' (memory)>",
+    "OUTPUT": "memory:"
+   }
+  },
+  {
+   "algorithm": "native:savefeatures",
+   "parameters": {
+    "INPUT": "<QgsVectorLayer: 'cells' (memory)>",
+    "OUTPUT": "D:\\repos\\hackathon-nasa\\qgis\\layers.gpkg",
+    "LAYER_NAME": "antofagasta_merra2_cells",
+    "ACTION_ON_EXISTING_FILE": "1"
+   }
+  },
+  {
+   "algorithm": "gdal:translate",
+   "parameters": {
+    "INPUT": "NETCDF:\"D:\\repos\\hackathon-nasa\\data\\gis_src\\gldas_elev.nc4\":GLDAS_elevation",
+    "TARGET_CRS": "EPSG:4326",
+    "EXTRA": "-projwin -76 -17 -66 -56",
+    "OUTPUT": "D:\\repos\\hackathon-nasa\\qgis\\gldas_elevation_chile.tif"
+   }
+  }
+ ]
+}

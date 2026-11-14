@@ -32,6 +32,14 @@ Three guided cases, all with real results:
 
 All three use the comparisons written into the pre-registration. Their lessons were rewritten after the final results.
 
+**Period selector.** Full record, WMO normal 1991–2020 (temperature) and 2000–2024 (common with soil moisture); every
+window is recomputed by the pipeline and shown as a sensitivity check.
+
+**Multivariable lab (exploratory).** Choose a phenomenon (water availability, Andean snow, climate) and the app suggests
+variables by documented rules; compare trends, see year-to-year association of detrended anomalies, native-cell trend
+maps, and the territorial case *Why does Antofagasta's coast behave differently from its interior?* (relief from a
+12.5 m DEM and distance to the coast, processed in QGIS; ERA5 check).
+
 ## 3. NASA data
 
 | Variable | Collection | Accessed through | Period used |
@@ -95,25 +103,55 @@ the best calibrated one, say so, and still show in the app what the two earlier 
 Under our pre-registered method several of these would have looked far more certain (for example Los Ríos
 precipitation: p = 0.0003 then, p = 0.03 now, 0.17 after adjustment). That gap is the point of the project.
 
+## 5b. Exploratory extensions (v2) — not confirmatory
+
+Everything here was decided after the main results; families and corrections were written down before computing
+(`docs/multivariable/HYPOTHESES_AND_TEST_FAMILIES.md`, `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`). Numbers:
+`docs/multivariable/MULTIVARIABLE_RESULTS.md`, `TERRITORIAL_RESULTS.md`; selection: `DISCOVERY_SELECTION.md`.
+
+- **Antofagasta, coast vs interior (MERRA-2, 1980–2025).** Coastal cells (land share < 0.99, classified in QGIS) show no
+  warming (−0.03 °C/decade, CI −0.19 to +0.14); interior cells warm +0.27 (CI +0.14 to +0.39). ERA5 at matching points shows
+  the same contrast (−0.03 vs +0.28), and the coastal Antofagasta station (−0.09) sits with the coast. Against interior cells
+  of similar elevation the coast still warms 0.20 °C/decade less (CI −0.25 to −0.14). Coast and elevation are strongly
+  correlated (ρ = 0.90); a cooler ocean-influenced coast is plausible but not proven. This largely explains the earlier
+  station/region disagreement.
+- **Central Chile, rain and land water (GLDAS-2.1 model, 2000–2024).** Detrended yearly anomalies of IMERG precipitation and
+  root-zone soil moisture correlate at r ≈ 0.8 from Valparaíso to Maule (adjusted p < 0.001 across 64 associations).
+  Precipitation–evapotranspiration coupling is strong in the north and centre and disappears from La Araucanía southward,
+  consistent with water-limited vs energy-limited evaporation (interpretation). GLDAS is forced by observed precipitation, so
+  part of the agreement is built in.
+- **Snow.** Warmer years tend to have less GLDAS snow in central regions, but only Los Lagos stays below 0.05 after
+  correction. In Aysén and Magallanes GLDAS snow accumulates on glacier cells and is not seasonal snow.
+- **Start-year sensitivity.** Precipitation trends for 2000–2024 look far stronger than for 1998–2024 (11 vs 4 regions with
+  p < 0.05). The confirmatory result uses the full record.
+- **Los Lagos (descriptive).** Cells with more plantation and agriculture (CONAF 2018) show steeper modelled soil-moisture
+  decline (ρ ≈ −0.6), but GLDAS does not use the CONAF map and those covers sit in the lowland valley: location, not land
+  use, may explain it. Not presented as a finding.
+
 ## 6. Validation
 
 | Check | What it tests | Result |
 |---|---|---|
 | Unit tests (`tests/`) | The engine against known synthetic cases; 17 written from the specification by a separate SI agent that could not read the code | all pass |
 | Calibration (`docs/calibration.md`) | False-positive rate, power, interval coverage of nine procedures | yearly-means test selected |
-| Residual memory, period sensitivity (`docs/validation.md`) | Assumptions on the real data; effect of dropping two years at either end | no verdict changes with the period |
+| Residual memory, period sensitivity (`docs/validation.md`) | Assumptions on the real data; effect of dropping two years at either end (temperature) | **4 of 16 temperature verdicts change** (Atacama, Coquimbo, Metropolitana, O'Higgins sit near the threshold); an earlier version of this README wrongly said none did |
+| Time windows (`docs/multivariable/MULTIVARIABLE_RESULTS.md` E5) | Same test on other periods, both variables | Precipitation is very sensitive to the start year: 4 regions with p < 0.05 for 1998–2024, 11 for 2000–2024. Short-record precipitation trends are fragile |
 | NASA POWER (`docs/validation.md`) | Our download, units and area weighting — **same underlying reanalysis, not independent** | mean abs. difference ≤ 0.02 °C |
 | Spatial weights (`docs/validation.md` §4) | Weights vs true geodesic areas | within 1 % per cell |
+| **NASA Giovanni area averages** (`docs/validation/GIOVANNI_COMPARISON.md`) | Our download, units, averaging and trend vs Giovanni's own *Time Series, Area-Averaged* service, on boxes of the same MERRA-2 cells in Antofagasta, Los Lagos and Magallanes | max. difference 0.0003 °C over 552 months; identical trends |
+| QGIS grid check (`docs/gis/QGIS_WORKFLOW.md`) | MERRA-2 cell grid rebuilt in QGIS vs the pipeline's cell list | 51 / 51 cells identical (Antofagasta); 16 / 16 polygons valid |
 | Weather stations (`docs/validation_external.md`) | Independent ground observations (Meteostat) at Puerto Montt, Antofagasta, Punta Arenas | Los Lagos consistent; Antofagasta temperature **inconsistent** (station −0.09 °C/decade vs regional +0.23); Magallanes partly (station shows warming and a weaker, non-significant drying) |
 | ERA5 (`docs/validation_external.md`) | Another reanalysis, at the same five grid points per region | Los Lagos and Antofagasta consistent; Magallanes partly: ERA5 shows significant warming (+0.18 °C/decade) and no significant drying, MERRA-2/IMERG the opposite |
 
 What this means: the north–south warming contrast and the Los Lagos results are supported by a second reanalysis; the
 Magallanes results (no warming, significant drying) are **not** confirmed by ERA5 or by the Punta Arenas station and
 should be read as product-dependent. A coastal station (Antofagasta, 135 m) and a mostly inland desert region are not the
-same quantity; our interpretation, not tested, is that the cool, ocean-influenced coast and the interior behave differently.
+same quantity. The exploratory coast/interior analysis (§5b) found that MERRA-2's coastal cells show no warming, like the
+station, while interior cells warm; ERA5 shows the same contrast. The disagreement is largely a matter of *where* in the region.
 ERA5 and MERRA-2 assimilate many of the same observations, so their agreement is supporting, not independent, evidence.
 
-Still open: a comparison with the area-averaged series from the Giovanni web interface (needs an interactive login).
+Giovanni offers no polygons for Chile's regions, so the Giovanni check uses boxes of whole cells inside each region: it
+validates the computation exactly, not our treatment of region borders (checked separately against geodesic areas).
 
 ## 7. Limitations
 
@@ -132,11 +170,13 @@ Still open: a comparison with the area-averaged series from the Giovanni web int
 
 ```
 NASA Giovanni time-series service ──► pipeline/fetch.py ──► data/raw (cache, not committed)
-                                          │
-              region polygons ──► pipeline/build.py ──► web/public/data/*.json + docs/results.md
+   (MERRA-2, IMERG, GLDAS)                │
+              region polygons ──► pipeline/build.py ──► web/public/data/*.json + docs/results.md   (confirmatory)
+   QGIS 4.2 (qgis/build_layers.py) ──► pipeline/multivar.py ──► multivar/windows/cells_*.json      (exploratory)
                                           │                      │
         pipeline/trend.py (all statistics)┘                      ▼
-        pipeline/calibration.py, validate.py, validate_external.py   web/ (React, static) ──► GitHub Pages
+        calibration.py, validate.py, validate_external.py,       web/ (React, static) ──► GitHub Pages
+        validate_giovanni.py (Giovanni ArAvTs)
 ```
 
 No server, no database: a reproducible batch pipeline and a static site.
@@ -155,6 +195,11 @@ uv run python -m pipeline.build               # web/public/data/, docs/results.m
 uv run python -m pipeline.validate            # docs/validation.md
 uv run python -m pipeline.validate_external   # docs/validation_external.md (stations, ERA5)
 uv run python -m pipeline.calibration 800     # docs/calibration.md (synthetic)
+for v in soilm_root soilm_surface evap swe; do uv run python -m pipeline.fetch $v; done   # GLDAS, ~15 min each
+"<QGIS>/bin/python-qgis.bat" qgis/build_layers.py   # QGIS 4.2: geometry checks, coastal cells
+uv run python -m pipeline.multivar            # exploratory lab, docs/multivariable/MULTIVARIABLE_RESULTS.md
+"<QGIS>/bin/python-qgis.bat" qgis/make_project.py   # qgis/trend_detective_chile.qgz
+uv run --with h5py python -m pipeline.validate_giovanni   # docs/validation/GIOVANNI_COMPARISON.md
 uv run pytest
 cd web && npm ci && npm run dev
 ```
@@ -180,6 +225,10 @@ Data
 - NASA POWER (consistency check): https://power.larc.nasa.gov/
 - Meteostat monthly station data (validation only; CC BY-NC 4.0, not redistributed here — only derived statistics): https://meteostat.net/
 - ERA5 (Hersbach et al. 2020, doi:10.1002/qj.3803), served by the Open-Meteo historical weather API (CC BY 4.0): https://open-meteo.com/ . Contains modified Copernicus Climate Change Service information.
+- Beaudoing, H. and M. Rodell (2020), GLDAS Noah Land Surface Model L4 monthly 0.25° V2.1, GES DISC, doi:10.5067/SXAVCZFAQLNO; Rodell, M., et al. (2004), BAMS 85, 381–394, doi:10.1175/BAMS-85-3-381.
+- CIREN (2016), DEM ALOS PALSAR regional mosaics (Antofagasta, Los Lagos), geoportal.cl; derived from the ASF ALOS PALSAR RTC DEM (ASF DAAC, https://asf.alaska.edu). JAXA/METI ALOS PALSAR.
+- CONAF / MINAGRI, Catastro de los Recursos Vegetacionales y Uso de la Tierra: Antofagasta 2019, Los Lagos 2018, IDE MINAGRI (https://ide.minagri.gob.cl).
+- Natural Earth 10 m land (public domain), https://www.naturalearthdata.com.
 - Region boundaries: geoBoundaries gbOpen CHL ADM1 (Runfola et al. 2020, doi:10.1371/journal.pone.0231866); source Biblioteca del Congreso Nacional de Chile / OCHA ROLAC; CC BY 3.0 IGO.
 - Data library handed out at the Quemchi venue (73 resources): audited in `docs/data/OFFICIAL_DATA_LIBRARY_AUDIT.md`.
 
@@ -190,11 +239,12 @@ Methods
 - Mann, H.B. (1945), Econometrica 13, 245–259, doi:10.2307/1907187.
 - Hamed, K.H., and A.R. Rao (1998), J. Hydrol. 204, 182–196, doi:10.1016/S0022-1694(97)00125-X.
 - Newey, W.K., and K.D. West (1987), Econometrica 55, 703–708, doi:10.2307/1913610.
+- Bretherton, C.S., et al. (1999), J. Climate 12, 1990–2009, doi:10.1175/1520-0442(1999)012<1990:TENOSD>2.0.CO;2.
 - Benjamini, Y., and Y. Hochberg (1995), J. R. Stat. Soc. B 57, 289–300, doi:10.1111/j.2517-6161.1995.tb02031.x.
 - Wasserstein, R.L., and N.A. Lazar (2016), Am. Stat. 70, 129–133, doi:10.1080/00031305.2016.1154108.
 - Hussain, M., and I. Mahmud (2019), pyMannKendall, J. Open Source Softw. 4(39), 1556, doi:10.21105/joss.01556.
 
-Software (all open source): Python — NumPy (BSD-3), SciPy (BSD-3), Shapely (BSD-3), Requests (Apache-2.0),
+Software (all open source): QGIS 4.2 (GPL-2.0+) with GDAL/OGR (MIT) for the spatial workflow (`qgis/`); h5py (BSD-3) for the Giovanni check. Python — NumPy (BSD-3), SciPy (BSD-3), Shapely (BSD-3), Requests (Apache-2.0),
 pyMannKendall (MIT), pytest (MIT), pyproj (MIT). Web — React (MIT), Vite (MIT), TypeScript (Apache-2.0),
 Observable Plot (ISC), d3-geo (ISC).
 

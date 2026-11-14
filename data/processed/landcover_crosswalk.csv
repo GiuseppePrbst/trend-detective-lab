@@ -1,0 +1,47 @@
+conaf_uso,conaf_subuso,common_class
+Praderas y Matorrales,Matorral,grassland_shrubland
+Praderas y Matorrales,Matorral con Suculentas,grassland_shrubland
+Praderas y Matorrales,Matorral-Pradera,grassland_shrubland
+Praderas y Matorrales,Praderas,grassland_shrubland
+Praderas y Matorrales,Formación de Suculentas,grassland_shrubland
+Áreas Desprovistas de Vegetación,Otros sin Vegetación,bare
+Áreas Urbanas e Industriales,"Ciudades, Pueblos, Zonas Industriales",urban_industrial
+Áreas Desprovistas de Vegetación,Salares,bare
+Terrenos Agrícolas,Terreno de Uso Agrícola,agriculture
+Humedales,Vegas,wetland
+Áreas Urbanas e Industriales,Minería Industrial,urban_industrial
+Áreas Desprovistas de Vegetación,Terreno sobre Límite Altitudinal de la Vegetación,bare
+Cuerpos de Agua,"Lagos, Lagunas, Embalses, Tranques",water
+Humedales,Bofedales,wetland
+Bosques,Plantación,plantation
+Bosques,Bosque Nativo,native_forest
+Praderas y Matorrales,Matorral Arborescente,grassland_shrubland
+Humedales,Otros Terrenos Húmedos,wetland
+Praderas y Matorrales,Matorral,grassland_shrubland
+Praderas y Matorrales,Matorral Arborescente,grassland_shrubland
+Bosques,Bosque Nativo,native_forest
+Humedales,Turbales,wetland
+Áreas Desprovistas de Vegetación,Playas y Dunas,bare
+Áreas Desprovistas de Vegetación,Afloramientos Rocosos,bare
+Cuerpos de Agua,"Lagos, Lagunas, Embalses, Tranques",water
+Praderas y Matorrales,Praderas,grassland_shrubland
+Praderas y Matorrales,Matorral-Pradera,grassland_shrubland
+Áreas Urbanas e Industriales,"Ciudades, Pueblos, Zonas Industriales",urban_industrial
+Bosques,Plantación,plantation
+Humedales,Otros Terrenos Húmedos,wetland
+Cuerpos de Agua,Ríos,water
+Áreas Urbanas e Industriales,Minería Industrial,urban_industrial
+Terrenos Agrícolas,Terreno de Uso Agrícola,agriculture
+Terrenos Agrícolas,Rotación Cultivo-Pradera,agriculture
+Áreas Desprovistas de Vegetación,Otros Terrenos sin Vegetación,bare
+Bosques,Bosque Mixto,mixed_forest
+Humedales,Marismas Herbáceas,wetland
+Humedales,Ñadis,wetland
+Humedales,Vegas,wetland
+Áreas Desprovistas de Vegetación,Cajas de Ríos,bare
+Humedales,Vegetación Herbácea en Orillas de Ríos,wetland
+Áreas Desprovistas de Vegetación,Derrumbe sin Vegetación,bare
+Áreas Desprovistas de Vegetación,Terrenos sobre el Límite Altitudinal de la Vegetación,bare
+Nieves Eternas y Glaciares,Nieves,snow_glacier
+Áreas Desprovistas de Vegetación,Corridas de Lavas y Escoriales,bare
+Nieves Eternas y Glaciares,Glaciares,snow_glacier
