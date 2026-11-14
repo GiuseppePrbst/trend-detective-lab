@@ -59,9 +59,9 @@ CATALOG = [
          coverage="2000–", access="LP DAAC granules (~95 MB each, no Harmony subsetting); AppEEARS needs a user login", status="available_not_processed",
          depends_on=[], limitations=["cloud and QA masking required", "NDVI change is not deforestation"],
          questions=["How does vegetation respond to drought?"]),
-    dict(id="sst", label="Sea-surface temperature", phenomena=["coast"], product="GHRSST MUR L4 v4.1 (PO.DAAC)",
-         source_type="satellite analysis", institution="NASA JPL PO.DAAC", unit="°C", spatial="0.01°", temporal="daily",
-         coverage="2002–", access="PO.DAAC (Earthdata); subsetting needed", status="planned", depends_on=[],
+    dict(id="sst", label="Sea-surface temperature", phenomena=["coast"], product="NASA JPL GHRSST MUR L4 v4.1 (doi:10.5067/GHGMR-4FJ04)",
+         source_type="satellite-based blended analysis", institution="NASA JPL / PO.DAAC", unit="°C", spatial="0.01°", temporal="daily → monthly",
+         coverage="2003–2025 used (Antofagasta coastal box only)", access="NASA Harmony subsetting (bbox, time, variable)", status="planned", depends_on=[],
          limitations=["starts 2002; air and sea temperature are different variables"], questions=["Is the coastal ocean warming like the land?"]),
     dict(id="discharge", label="River discharge", phenomena=["water"], product="CAMELS-CL (CR2)", source_type="gauge observations",
          institution="CR2, Universidad de Chile", unit="m³/s", spatial="516 basins", temporal="daily", coverage="varies by basin",
@@ -263,6 +263,32 @@ def cards():
         "central-water": ("Do wet and dry years show up in the soil of central Chile?", ["imerg", "gldas", "multivar"]),
         "period-sensitivity": ("Does the start year change which regions show a precipitation trend?", ["imerg", "multivar", "method"]),
     }
+    sp = OUT / "sst.json"
+    if sp.exists():
+        S = json.loads(sp.read_text(encoding="utf-8"))
+        m, ac, ai = S["series"]["mur_sst"], S["air_coastal"]["trend"], S["air_interior"]["trend"]
+        t = m["trend"]
+        sig = t["p_value"] < 0.05
+        C.append(dict(id="antofagasta-sst", title="Coastal sea-surface temperature off Antofagasta, 2003–2025 (NASA MUR)", status="exploratory (registered before computing)",
+                      variable="Sea-surface temperature", territory="Ocean within ~100 km of the Antofagasta coast",
+                      result=result(t, "°C per decade", f"{S['period'][0]}–{S['period'][1]}"),
+                      source=dict(product="NASA JPL MUR v4.1, monthly means of daily analyses", type="satellite-based blended analysis", resolution="0.01°", access="NASA Harmony"),
+                      analysis=dict(method=method + "; compared with MERRA-2 air temperature over the same years", correction="single exploratory test (T5)", sensitivity=None),
+                      checks=[dict(source=S["air_coastal"]["label"], kind="context", agreement="descriptive comparison", years=S["period"][1] - S["period"][0] + 1,
+                                   ours=None, theirs=[ac[k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
+                                   scope="different variable (air at 2 m over ~50 km cells vs sea skin/foundation temperature)",
+                                   dependency="MERRA-2 prescribes its sea-surface temperature from satellite analyses, so the two are not fully independent"),
+                              dict(source=S["air_interior"]["label"], kind="context", agreement="descriptive comparison", years=S["period"][1] - S["period"][0] + 1,
+                                   ours=None, theirs=[ai[k] for k in ("slope_per_decade", "ci_low", "ci_high", "p_value")],
+                                   scope="inland air temperature, same years", dependency="same reanalysis")],
+                      can=(f"Over {S['period'][0]}–{S['period'][1]} the coastal sea-surface temperature trend is {t['slope_per_decade']:+.3f} °C/decade "
+                           f"(95 % CI {t['ci_low']:+.3f} to {t['ci_high']:+.3f}); " + ("statistically significant." if sig else "no statistically significant trend is detected.")),
+                      cannot="An ocean trend, or its absence, does not show that the ocean causes the coast–interior contrast in air temperature; the period is shorter than the main analysis and the variables differ.",
+                      open=["Whether coastal upwelling or cloud cover explain the contrast is not tested"],
+                      limitations=["2003–2025 only", "one ocean box", "MUR blends several satellites and in-situ data; its long-term stability is not assessed here"]))
+        extra["antofagasta-sst"] = ("Did the coastal ocean off Antofagasta warm over 2003–2025?", ["merra2", "territory"])
+        links["mur"] = ("NASA JPL MUR v4.1 (doi:10.5067/GHGMR-4FJ04)", "https://doi.org/10.5067/GHGMR-4FJ04")
+        extra["antofagasta-sst"] = (extra["antofagasta-sst"][0], ["mur", "merra2", "territory"])
     for c in C:
         q, keys = extra[c["id"]]
         c["question"] = q
@@ -272,6 +298,10 @@ def cards():
 
 
 def main() -> None:
+    sst_file = OUT / "sst.json"
+    for c in CATALOG:
+        if c["id"] == "sst":
+            c["status"] = "integrated" if sst_file.exists() else "planned"
     doc = dict(generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), catalog=CATALOG, relation_types=RELATION,
                agreement_note=AGREEMENT_NOTE,
                questions=[dict(q, variables=[dict(id=v, why=w) for v, w in q["variables"]],
