@@ -136,3 +136,8 @@ were generated with SI. All numbers shown come from the reproducible code in `pi
 ## License
 
 Apache-2.0. See `LICENSE`. No NASA or Space Apps logos are used. NASA does not endorse this project.
+
+## Links
+
+- Live app: https://giuseppeprbst.github.io/trend-detective-lab/
+- Repository: https://github.com/GiuseppePrbst/trend-detective-lab

@@ -1,5 +1,5 @@
-// SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
-// Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
+﻿// SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
+// Trend Detective Lab â€” displays results computed by the Python pipeline. It computes no statistics.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline } from './charts';
 import { FIXTURE, load } from './data';
@@ -7,7 +7,7 @@ import { num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHOR
 import { ChileMap, rewind } from './map';
 import type { Catalog, Regions, RegionSeries, Trend, VariableData, VariableInfo } from './types';
 
-export const REPO_URL = '#';
+export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
 
 type Loaded<T> = { state: 'loading' } | { state: 'missing' } | { state: 'error'; message: string } | { state: 'ok'; data: T };
 
@@ -24,7 +24,7 @@ function useFile<T>(name: string | null): Loaded<T> {
 }
 
 function Status({ what, s }: { what: string; s: Loaded<unknown> }) {
-  if (s.state === 'loading') return <p className="status" role="status">Loading {what}…</p>;
+  if (s.state === 'loading') return <p className="status" role="status">Loading {what}â€¦</p>;
   if (s.state === 'missing') return <p className="status">{what[0].toUpperCase() + what.slice(1)}: not available yet.</p>;
   if (s.state === 'error') return <p className="status error" role="alert">Could not load {what}: {s.message}</p>;
   return null;
@@ -81,7 +81,7 @@ export default function App() {
           <h1>Is the climate in your region really changing? Review the evidence.</h1>
           <p className="lede">
             Pick a region of Chile and a climate variable, look at the monthly record, and see what a careful
-            statistical test can — and cannot — tell you.
+            statistical test can â€” and cannot â€” tell you.
           </p>
           <p className="source">Data: NASA Giovanni / GES DISC</p>
         </div>
@@ -89,7 +89,7 @@ export default function App() {
 
       {synthetic && (
         <div className="synthetic" role="note">
-          SYNTHETIC fixture data for development — these are not NASA observations and not real results.
+          SYNTHETIC fixture data for development â€” these are not NASA observations and not real results.
         </div>
       )}
 
@@ -126,7 +126,7 @@ export default function App() {
                     <span className="var-title">{x.label}</span>
                     <span className="badge">{x.nature_label}</span>
                     <span className="var-def">{x.definition}</span>
-                    <span className="var-meta">{x.product} · {x.period[0]}–{x.period[1]}</span>
+                    <span className="var-meta">{x.product} Â· {x.period[0]}â€“{x.period[1]}</span>
                   </label>
                 ))}
               </fieldset>
@@ -163,7 +163,7 @@ export default function App() {
 
       <footer className="site-footer">
         <div className="wrap">
-          <p>Team ProGarLabs · Built during NASA Space Apps Challenge 2026 · License Apache-2.0 · <a href={REPO_URL}>Source repository</a></p>
+          <p>Team ProGarLabs Â· Built during NASA Space Apps Challenge 2026 Â· License Apache-2.0 Â· <a href={REPO_URL}>Source repository</a></p>
           <p>Use of SI: Parts of this code were written with SI coding tools (Claude) and reviewed by the team.</p>
           {cat && <p className="muted">Data files generated {cat.generated_at}.</p>}
         </div>
@@ -232,7 +232,7 @@ function Workspace(p: {
                   return (
                     <tr key={r.id} className={r.id === a ? 'is-a' : undefined}>
                       <th scope="row">{r.name}</th>
-                      <td>{t ? signed(t.slope_per_decade) : '—'}</td>
+                      <td>{t ? signed(t.slope_per_decade) : 'â€”'}</td>
                       <td>{t ? VERDICT_SHORT[t.verdict] : 'not available yet'}</td>
                     </tr>
                   );
@@ -273,7 +273,7 @@ function Workspace(p: {
           <label className="field">
             Region B
             <select value={b} onChange={(e) => setB(e.target.value)}>
-              <option value="">Choose a region to compare with {nameA}…</option>
+              <option value="">Choose a region to compare with {nameA}â€¦</option>
               {cat.regions.filter((r) => r.id !== a).map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}{data && !data.regions[r.id] ? ' (not available yet)' : ''}
@@ -298,7 +298,7 @@ function TrendTest({ v, name, rs, cat }: { v: VariableInfo; name: string; rs: Re
       <h2 id="h-test"><span className="step">5</span> Test the trend</h2>
       <div className="result">
         <p className={`verdict v-${t.verdict}`}>
-          <span aria-hidden="true">{t.verdict === 'significant_robust' ? '●' : t.verdict === 'method_dependent' ? '◐' : '○'}</span>{' '}
+          <span aria-hidden="true">{t.verdict === 'significant_robust' ? 'â—' : t.verdict === 'method_dependent' ? 'â—' : 'â—‹'}</span>{' '}
           {VERDICT[t.verdict]}
         </p>
         <p className="sentence" aria-live="polite">{sentence(v, name, t)}</p>
@@ -326,14 +326,14 @@ function TrendTest({ v, name, rs, cat }: { v: VariableInfo; name: string; rs: Re
             </div>
             <div>
               <dt>Robustness check</dt>
-              <dd>Theil–Sen slope {signed(t.theil_sen_per_decade)} {v.trend_unit}; Mann–Kendall {pval(t.mk_p_value)}.</dd>
+              <dd>Theilâ€“Sen slope {signed(t.theil_sen_per_decade)} {v.trend_unit}; Mannâ€“Kendall {pval(t.mk_p_value)}.</dd>
             </div>
             {t.p_adjusted != null && (
               <div>
                 <dt>Adjusted for multiple testing</dt>
                 <dd>
                   {pval(t.p_adjusted)}. Testing 16 regions at once makes some false alarms likely by chance; the adjusted
-                  p-value (Benjamini–Hochberg) accounts for that when you compare across the map.
+                  p-value (Benjaminiâ€“Hochberg) accounts for that when you compare across the map.
                 </dd>
               </div>
             )}
@@ -348,9 +348,9 @@ function TrendTest({ v, name, rs, cat }: { v: VariableInfo; name: string; rs: Re
         </details>
       </div>
       <ul className="caution" aria-label="How to read this result">
-        <li><strong>Significant ≠ caused by something in particular.</strong> This test does not attribute causes.</li>
-        <li><strong>Not significant ≠ no change.</strong> The record may be too short or too variable to tell.</li>
-        <li><strong>Significant ≠ important.</strong> Look at the size of the change.</li>
+        <li><strong>Significant â‰  caused by something in particular.</strong> This test does not attribute causes.</li>
+        <li><strong>Not significant â‰  no change.</strong> The record may be too short or too variable to tell.</li>
+        <li><strong>Significant â‰  important.</strong> Look at the size of the change.</li>
       </ul>
     </section>
   );
@@ -380,7 +380,7 @@ function Compare(p: {
       { name: nameA, slope: ra.trend.slope_per_decade, lo: ra.trend.ci_low, hi: ra.trend.ci_high, color: COLOR_A },
       { name: nameB, slope: rb.trend.slope_per_decade, lo: rb.trend.ci_low, hi: rb.trend.ci_high, color: COLOR_B },
     ];
-    if (c) r.push({ name: `Difference ${nameA} − ${nameB}`, slope: c.slope_per_decade, lo: c.ci_low, hi: c.ci_high, color: '#374151' });
+    if (c) r.push({ name: `Difference ${nameA} âˆ’ ${nameB}`, slope: c.slope_per_decade, lo: c.ci_low, hi: c.ci_high, color: '#374151' });
     return r;
   }, [nameA, nameB, ra, rb, c]);
   const makeIntervals = useCallback((w: number) => intervals(rows, v.trend_unit, w), [rows, v.trend_unit]);
@@ -392,11 +392,11 @@ function Compare(p: {
       {c ? (
         <div className={`result compare-result ${c.differs ? 'differs' : ''}`} aria-live="polite">
           <p className="verdict">
-            {c.differs ? 'The two trends are significantly different' : 'We cannot say these trends differ — even if one looks significant and the other does not.'}
+            {c.differs ? 'The two trends are significantly different' : 'We cannot say these trends differ â€” even if one looks significant and the other does not.'}
           </p>
           <p>
-            Trend of the difference {nameA} − {nameB}: {signed(c.slope_per_decade)} {v.trend_unit} (95 % CI {num(c.ci_low)} to{' '}
-            {num(c.ci_high)}), {pval(c.p_value)}. Robustness: Theil–Sen {signed(c.theil_sen_per_decade)}, Mann–Kendall {pval(c.mk_p_value)}.
+            Trend of the difference {nameA} âˆ’ {nameB}: {signed(c.slope_per_decade)} {v.trend_unit} (95 % CI {num(c.ci_low)} to{' '}
+            {num(c.ci_high)}), {pval(c.p_value)}. Robustness: Theilâ€“Sen {signed(c.theil_sen_per_decade)}, Mannâ€“Kendall {pval(c.mk_p_value)}.
           </p>
         </div>
       ) : (
@@ -443,12 +443,12 @@ function Evidence({ cat, v, name, rs, synthetic }: { cat: Catalog; v: VariableIn
     <section aria-labelledby="h-evidence">
       <h2 id="h-evidence"><span className="step">7</span> Review the evidence</h2>
       <dl className="facts">
-        <div><dt>Product</dt><dd>{v.product} (version {v.version}) — {sourceShort(v)}</dd></div>
+        <div><dt>Product</dt><dd>{v.product} (version {v.version}) â€” {sourceShort(v)}</dd></div>
         <div><dt>DOI</dt><dd><a href={`https://doi.org/${v.doi}`}>{v.doi}</a></dd></div>
         <div><dt>Service</dt><dd>{v.service}</dd></div>
         <div><dt>Accessed</dt><dd>{v.accessed}</dd></div>
         <div><dt>Grid</dt><dd>{v.grid}</dd></div>
-        <div><dt>Period</dt><dd>{v.period[0]}–{v.period[1]}</dd></div>
+        <div><dt>Period</dt><dd>{v.period[0]}â€“{v.period[1]}</dd></div>
         {rs && <div><dt>Grid cells in {name}</dt><dd>{rs.n_cells}</dd></div>}
       </dl>
       <h3>Caveats</h3>
@@ -458,7 +458,7 @@ function Evidence({ cat, v, name, rs, synthetic }: { cat: Catalog; v: VariableIn
       <p>{cat.method.robustness}</p>
       <p>{cat.method.comparison}</p>
       {cat.method.multiple && <p>{cat.method.multiple}</p>}
-      <p>Significance level α = {cat.method.alpha}.</p>
+      <p>Significance level Î± = {cat.method.alpha}.</p>
       <h3>Limitations</h3>
       <ul>{cat.method.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
       <h3>Citation</h3>
