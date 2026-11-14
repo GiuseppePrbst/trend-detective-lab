@@ -182,7 +182,7 @@ def main() -> None:
 
         # 4 ------------------------------------------------------------------------ how it works
         fig = slide("An investigation, not a dashboard", "How it works")
-        steps = ["Choose a\nvariable", "Select a\nregion", "Explore the\ntimeline", "Test the\ntrend", "Compare\nregions", "Review the\nevidence"]
+        steps = ["Ask a\nquestion", "Get suggested\nvariables", "Pick region\nand period", "Test the\ntrend", "Compare and\ncross-check", "Read the\nevidence card"]
         for i, s in enumerate(steps):
             x = 0.05 + i * 0.155
             fig.add_artist(plt.Rectangle((x, 0.63), 0.135, 0.12, color="#f3effa", transform=fig.transFigure))
@@ -262,7 +262,7 @@ def main() -> None:
         fig = slide("What a user takes away — and what we do not claim", "Impact and limitations")
         fig.text(0.05, 0.74, "Impact", color=PURPLE, fontsize=16, weight="bold")
         bullets(fig, ["Anyone can test a climate trend and see how certain it is",
-                      "Teaches three ideas that are routinely misused: autocorrelation,\nsignificance of a difference, multiple comparisons",
+                      "Shows when NASA datasets disagree (Magallanes)\ninstead of hiding it: significance is not certainty",
                       "Open and reproducible: pre-registration, tests, simulations\nand every number traceable to a NASA grid cell"], y=0.67, dy=0.12, size=13.5)
         fig.text(0.55, 0.74, "Limits we state openly", color=PURPLE, fontsize=16, weight="bold")
         bullets(fig, ["MERRA-2: reanalysis, ~50 km cells.\nIMERG: only 27 years",

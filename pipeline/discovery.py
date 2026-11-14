@@ -240,6 +240,21 @@ def main() -> None:
         L += [f"### {q['label']} — {q['prompt']}", ""] + [f"- **{v['id']}**: {v['why']}" for v in q["variables"]] + \
              [f"- relation {r['a']} – {r['b']}: {RELATION[r['type']]}" for r in q["relations"]] + ([f"- Unavailable: {q['unavailable']}"] if q.get("unavailable") else []) + [""]
     (d / "VARIABLE_CATALOG.md").write_text("\n".join(L), encoding="utf-8")
+
+    def res(r):
+        if r.get("count_main") is not None:
+            return f"{r['count_main']} vs {r['count_alt']} regions with p < 0.05 ({r['period']})"
+        est = f"r = {r['r']:+.2f}" if r.get("r") is not None else f"{r['slope']:+.3f} {r['unit']}"
+        ci = f" (95 % CI {r['ci'][0]:+.3f} to {r['ci'][1]:+.3f})" if r.get("ci") else ""
+        p = f", p = {r['p']:.4f}" if r.get("p") is not None else ""
+        q = f", q = {r['q']:.4f}" if r.get("q") is not None else ""
+        return f"{est}{ci}{p}{q}, {r['period']}"
+    E = ["# Evidence cards (claims register)", "", f"Generated {doc['generated_at']} by `python -m pipeline.discovery`. Do not edit by hand. "
+         "Every public claim must match a row here; the app shows the same cards (section 9).", "",
+         "| Card | Status | Result | Supports | Does not support |", "|---|---|---|---|---|"]
+    for c in doc["cards"]:
+        E.append(f"| {c['title']} | {c['status']} | {c['variable']}, {c['territory']}: {res(c['result'])} | {c['can']} | {c['cannot']} |")
+    (d / "EVIDENCE_CARDS.md").write_text("\n".join(E) + "\n", encoding="utf-8")
     print(f"{len(CATALOG)} catalogue entries, {len(QUESTIONS)} questions, {len(doc['cards'])} evidence cards")
 
 

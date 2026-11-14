@@ -41,14 +41,14 @@ def bbox(lats, lons) -> str:
     return f"{min(lons) - v['dlon'] / 2},{min(lats) - v['dlat'] / 2},{max(lons) + v['dlon'] / 2},{max(lats) + v['dlat'] / 2}"
 
 
-def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[str, float], str]:
-    """Run ArAvTs on Giovanni (cached) and return ({'YYYY-MM': deg C}, query string)."""
-    query = f"service=ArAvTs&starttime={START}&endtime={END}&bbox={box}&data={DATA_ID}&portal=GIOVANNI&format=json"
-    out = CACHE / f"{name.split()[0].lower()}_box.nc"
+def arav(data_id: str, box: str, start: str, end: str, cache_name: str, sess: requests.Session) -> tuple[dict[str, float], str]:
+    """Giovanni 'Time Series, Area-Averaged' (ArAvTs) for any variable and box (cached NetCDF). Returns ({'YYYY-MM': raw value}, query)."""
+    query = f"service=ArAvTs&starttime={start}&endtime={end}&bbox={box}&data={data_id}&portal=GIOVANNI&format=json"
+    out = CACHE / cache_name
     if not out.exists():
         j = sess.get(f"{GIOVANNI}?{query}", timeout=120).json()["session"]
         ids = dict(session=j["id"], resultset=j["resultset"][0]["id"], result=j["resultset"][0]["result"][0]["id"])
-        for _ in range(120):
+        for _ in range(180):
             time.sleep(10)
             try:
                 r = sess.get(GIOVANNI, params={**ids, "portal": "GIOVANNI", "format": "json"}, timeout=120).json()
@@ -63,12 +63,19 @@ def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[s
                 out.write_bytes(f.content)
                 break
         else:
-            raise RuntimeError(f"Giovanni did not finish for {name}")
+            raise RuntimeError(f"Giovanni did not finish for {data_id} {box}")
     import h5py
     with h5py.File(out) as h:
-        vals = h[DATA_ID][:].astype(float)
+        vals = h[data_id][:].astype(float)
+        fill = float(h[data_id].attrs.get("_FillValue", [1e15])[0])
         months = [m.decode() if isinstance(m, bytes) else str(m) for m in h["datamonth"][:]]
-    return {m[:4] + "-" + m[-2:]: (np.nan if v >= 1e14 else v - 273.15) for m, v in zip(months, vals)}, query
+    return {m[:4] + "-" + m[-2:]: (np.nan if (v >= 1e14 or v == fill) else float(v)) for m, v in zip(months, vals)}, query
+
+
+def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[str, float], str]:
+    """MERRA-2 T2M area average from Giovanni, in deg C."""
+    raw, query = arav(DATA_ID, box, START, END, f"{name.split()[0].lower()}_box.nc", sess)
+    return {k: v - 273.15 for k, v in raw.items()}, query
 
 
 def our_series(lats, lons) -> dict[str, float]:

@@ -4,18 +4,18 @@ The deck is `TrendDetectiveLab_demo.pdf` (7 slides including the title, built by
 generated result files). Official demo limit: **7 slides or a video of 30 s or less** (Project Submission Guide). Check
 with the Local Lead whether Quemchi also wants a live presentation.
 
-Central message: *Trend Detective Lab helps people discover how Earth's systems are changing — by connecting NASA
-datasets, spatial context and transparent statistical evidence.*
+Central message: *Trend Detective Lab reveals what regional climate averages hide — while showing what the evidence can
+and cannot prove.*
 
 ## 30-second demo video (optional; record the real app)
 
 | Time | On screen (https://giuseppeprbst.github.io/trend-detective-lab/) | Voice-over / subtitle |
 |---|---|---|
-| 0–5 s | Landing page, guided case 1 | "Is southern Chile warming as fast as the desert north? NASA MERRA-2, 1980 to 2025." |
-| 5–10 s | "Compare regions": difference Antofagasta − Los Lagos | "Yes — and the difference itself is significant." |
-| 10–17 s | Lab → "Coast versus interior" chart | "But not on the coast. The regional mean hid it; ERA5 and the coastal station agree." |
-| 17–25 s | Lab → Water availability, a central region, rain vs root-zone soil moisture | "Rain and soil moisture move together year to year — an association, from a model, not a cause." |
-| 25–30 s | Period selector switching to 2000–2024 | "And change the start year, and precipitation trends change. We show how confident we can be." |
+| 0–5 s | Step 0: click "Coastal climate" → suggested variables with their status | "Start with a question; the app suggests which NASA data can answer it." |
+| 5–12 s | Antofagasta case, steps 1–3: regional mean, station, coast vs interior chart | "Antofagasta is warming — but its coast is not. The regional average hid it." |
+| 12–18 s | Step 4–5: relief map and ERA5 rows | "Relief and a second reanalysis support the contrast; the cause is not proven." |
+| 18–25 s | Magallanes case: bars for IMERG, station, ERA5 | "Here datasets disagree, and we say so: significant is not certain." |
+| 25–30 s | An evidence card | "Every result shows what it supports — and what it does not." |
 
 Read every number off the screen when recording; they come from `docs/results.md` and
 `docs/multivariable/MULTIVARIABLE_RESULTS.md`.
