@@ -1,6 +1,6 @@
 # Evidence cards (claims register)
 
-Generated 2026-11-14T20:11:52+00:00 by `python -m pipeline.discovery`. Do not edit by hand. Every public claim must match a row here; the app shows the same cards (section 9).
+Generated 2026-11-14T20:48:18+00:00 by `python -m pipeline.discovery`. Do not edit by hand. Every public claim must match a row here; the app shows the same cards (section 9).
 
 | Card | Status | Result | Supports | Does not support |
 |---|---|---|---|---|
