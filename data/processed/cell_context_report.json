@@ -1,0 +1,50 @@
+{
+ "context_antofagasta_merra2_t2m": {
+  "cells": 51,
+  "dem_crs": "EPSG:32719",
+  "lc_share_sum_ok": true,
+  "elev_share_sum_ok": true,
+  "max_dem_coverage": 0.9997,
+  "max_region_share": 1.0
+ },
+ "antofagasta": {
+  "dem_epsg": "32719",
+  "spikes_masked_100m": 18,
+  "dem_100m_size": [
+   3801,
+   5673
+  ],
+  "dem_min": 1.0,
+  "dem_max": 6748.0,
+  "lc_pixels_classified": 12605925,
+  "lc_unmapped_present": false
+ },
+ "context_los_lagos_merra2_t2m": {
+  "cells": 36,
+  "dem_crs": "EPSG:32718",
+  "lc_share_sum_ok": true,
+  "elev_share_sum_ok": true,
+  "max_dem_coverage": 1.0003,
+  "max_region_share": 1.0
+ },
+ "context_los_lagos_gldas_soilm_root": {
+  "cells": 103,
+  "dem_crs": "EPSG:32718",
+  "lc_share_sum_ok": true,
+  "elev_share_sum_ok": true,
+  "max_dem_coverage": 1.0007,
+  "max_region_share": 1.0
+ },
+ "los-lagos": {
+  "dem_epsg": "32718",
+  "spikes_masked_100m": 6,
+  "dem_100m_size": [
+   2634,
+   4299
+  ],
+  "dem_min": 1.0,
+  "dem_max": 3460.314208984375,
+  "lc_pixels_classified": 4839505,
+  "lc_unmapped_present": false
+ }
+}

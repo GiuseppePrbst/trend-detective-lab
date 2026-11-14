@@ -204,7 +204,7 @@ def main() -> None:
         a, b = "los-lagos", "antofagasta"
         d = comp(T, b, a)
         ci = MV["coast_interior"]
-        fig = slide("Antofagasta warmed faster than Los Lagos — but not on its coast", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
+        fig = slide("Antofagasta warmed faster — but not its coast", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
         ax = fig.add_axes([0.03, 0.08, 0.2, 0.7])
         cells = [c for c in CT["cells"] if -26.3 < c[0] < -20.7 and c[1] > -71.2 and c[1] < -66.5]
         coastal = {tuple(x) for x in ci["coastal_cells"]}
@@ -214,8 +214,7 @@ def main() -> None:
             ax.add_patch(plt.Rectangle((c[1] - 0.3125, c[0] - 0.25), 0.625, 0.5, color=col,
                                        ec=INK if (c[0], c[1]) in coastal else "white", lw=1.6 if (c[0], c[1]) in coastal else 0.4))
         ax.set_xlim(-71.3, -66.4); ax.set_ylim(-26.4, -20.6); ax.set_aspect(1.1); ax.axis("off")
-        ax.set_title("MERRA-2 cells near Antofagasta
-(black outline: coastal)", fontsize=11, color=INK)
+        ax.set_title("MERRA-2 cells near Antofagasta\n(black outline: coastal)", fontsize=11, color=INK)
         ax = fig.add_axes([0.42, 0.3, 0.3, 0.46])
         ta, tb = T["regions"][a]["trend"], T["regions"][b]["trend"]
         st = next(c for c in VAL["checks"] if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
@@ -226,12 +225,10 @@ def main() -> None:
                             ("ERA5, coastal points", e5["coastal"]["slope_per_decade"], e5["coastal"]["ci_low"], e5["coastal"]["ci_high"], TEAL),
                             ("ERA5, interior points", e5["interior"]["slope_per_decade"], e5["interior"]["ci_low"], e5["interior"]["ci_high"], BROWN),
                             ("Antofagasta station", st["other"]["slope_per_decade"], st["other"]["ci_low"], st["other"]["ci_high"], GREY)], "°C")
-        fig.text(0.3, 0.07, f"Confirmatory (pre-registered): the difference Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).
-"
-                 f"Exploratory (cells classified in QGIS): coastal cells {fmt(ci['coastal']['slope_per_decade'])} vs interior "
-                 f"{fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 and the coastal station agree.
-"
-                 f"The regional mean hid a coast–interior contrast. Coast and altitude cannot be separated with 50 km cells.", fontsize=12, color=INK)
+        fig.text(0.27, 0.08, f"Confirmatory (pre-registered): Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).\n"
+                 f"Exploratory (QGIS cell classes): coast {fmt(ci['coastal']['slope_per_decade'])} vs interior "
+                 f"{fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 and the station agree.\n"
+                 f"The regional mean hid this contrast; coast and altitude are entangled at 50 km.", fontsize=11, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
         # 6 ------------------------------------------------------------------ multivariable (exploratory)
@@ -254,9 +251,8 @@ def main() -> None:
         axs.axhline(0, color=GREY, lw=0.6); axs.axvline(0, color=GREY, lw=0.6)
         axs.plot(A["x_detrended"], A["y_detrended"], "o", color=PURPLE, ms=7, alpha=0.85)
         axs.set_xlabel(f"{lab[x]} ({unit[x]}), detrended", fontsize=10); axs.set_ylabel(f"{lab[y]} ({unit[y]}), detrended", fontsize=10)
-        axs.set_title(f"Year to year: r = {A['r']:+.2f} (95 % CI {A['ci_low']:+.2f} to {A['ci_high']:+.2f}), q = {A['p_adjusted']:.3f}", fontsize=11.5, color=INK)
-        fig.text(0.05, 0.06, "GLDAS is a land-surface model driven partly by observed rainfall: the agreement is partly built in, and it is an
-"
+        axs.set_title(f"Year to year: r = {A['r']:+.2f} (95 % CI {A['ci_low']:+.2f} to {A['ci_high']:+.2f}), q {'< 0.001' if A['p_adjusted'] < 0.001 else '= ' + format(A['p_adjusted'], '.3f')}", fontsize=11.5, color=INK)
+        fig.text(0.05, 0.075, "GLDAS is a land-surface model driven partly by observed rainfall: the agreement is partly built in, and it is an\n"
                  "association, not a cause. Exploratory: chosen after the main study; corrected for "
                  f"{MV['families']['E1']} trends and {MV['families']['E2']} associations.", fontsize=11.5, color=INK)
         pdf.savefig(fig); plt.close(fig)

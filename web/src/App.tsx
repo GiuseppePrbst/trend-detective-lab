@@ -10,7 +10,7 @@ import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
 import type {
   Alt, Catalog, CellMap, Check, GuidedCase, MultiVar, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
-  WindowEntry, Windows,
+  Territory, WindowEntry, Windows,
 } from './types';
 
 export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
@@ -59,6 +59,7 @@ export default function App() {
   const winFile = useFile<Windows>('windows.json');
   const cellsT = useFile<CellMap>('cells_t2m.json');
   const cellsS = useFile<CellMap>('cells_soilm_root.json');
+  const terrFile = useFile<Territory>('territory.json');
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
   const [varId, setVarId] = useState<string | null>(null);
@@ -184,7 +185,7 @@ export default function App() {
             )}
             {mvFile.state === 'ok' ? (
               <Lab mv={mvFile.data} names={names} geo={geo} cellsT2m={cellsT.state === 'ok' ? cellsT.data : null}
-                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} />
+                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} />
             ) : <Status what="the multivariable lab" s={mvFile} />}
           </>
         )}

@@ -48,8 +48,21 @@ MV = {
 }
 OTHER = {"precip": dict(label="Precipitation (IMERG)", unit="mm/month", trend_unit="mm/month per decade"),
          "t2m": dict(label="Air temperature at 2 m (MERRA-2)", unit="°C", trend_unit="°C per decade")}
+# Guided discoveries for the lab, written AFTER seeing the E1/E2 results (exploratory; numbers are read from the data).
+GUIDED_MV = [
+    dict(title="Does soil moisture follow the rain?", region="metropolitana-de-santiago", x="precip", y="soilm_root",
+         question="In the Santiago region, do wet and dry years show up in the soil?",
+         lesson="Yes, strongly, year to year — but GLDAS is driven by observed rain, so part of this agreement is built into the model."),
+    dict(title="Where evapotranspiration depends on rain", region="valparaiso", x="precip", y="evap",
+         question="In Valparaíso, do years with more rain also return more water to the air?",
+         lesson="In the dry centre and north, yes. Switch the region to Los Ríos: there the link disappears, consistent with a place where water is plentiful and energy, not rain, limits evaporation (an interpretation, not tested)."),
+    dict(title="Warm years, less snow?", region="o-higgins", x="t2m", y="swe",
+         question="In O'Higgins, do warmer years have less Andean snow?",
+         lesson="The sign is negative in most central regions, but after correcting for 64 associations none is clearly distinguishable from chance except Los Lagos. A plausible idea that this data cannot yet confirm."),
+]
 PAIRS = [("precip", "soilm_root"), ("precip", "soilm_surface"), ("precip", "evap"), ("t2m", "swe")]
 COMMON = (2000, 2024)
+SWE_ACCUMULATING = 200.0  # mm; regional mean SWE above this means glacier/icefield cells dominate (Aysén, Magallanes)
 MIN_COVERAGE = 0.5      # share of the region's cell weight with valid (land) GLDAS data needed to compute a region
 WINDOWS = {"t2m": [("full", 1980, 2025, "Full record"), ("normal", 1991, 2020, "WMO climate normal"),
                    ("common", 2000, 2024, "Common with soil-moisture data")],
@@ -229,7 +242,9 @@ def main() -> None:
                 continue
             ys, an = trend.annual_means(dc, vc)
             item = dict(trend=summary(t), annual=dict(years=ys, anomalies=[rnd(x, 4) for x in an]),
-                        negligible=bool(name == "swe" and t["mean"] < 1.0))
+                        negligible=bool(name == "swe" and t["mean"] < 1.0),
+                        # GLDAS lets snow pile up without limit over glaciers and icefields; such a series is not seasonal snow
+                        accumulating=bool(name == "swe" and t["mean"] > SWE_ACCUMULATING))
             out[rid]["series"][name] = item
             if name in MV:
                 e1.append((rid, name))
@@ -278,7 +293,7 @@ def main() -> None:
     meta = [dict(id=k, **{kk: vv for kk, vv in m.items() if kk != "convert"}, **GLDAS_COMMON) for k, m in MV.items()]
     doc = dict(generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), status="exploratory",
                common_period=list(COMMON), variables=meta, reference=OTHER, pairs=[list(p) for p in PAIRS],
-               families={"E1": len(e1), "E2": len(e2)}, notes=notes, regions=out, coast_interior=ci)
+               families={"E1": len(e1), "E2": len(e2)}, notes=notes, guided=GUIDED_MV, regions=out, coast_interior=ci)
     OUT.joinpath("multivar.json").write_text(json.dumps(rnd_deep(doc), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     OUT.joinpath("windows.json").write_text(json.dumps(rnd_deep(windows), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     for k, c in cells.items():
@@ -303,7 +318,7 @@ def write_report(doc, windows, cells, names) -> None:
                 return "n/a"
             t = s[n]["trend"]
             extra = f", q={t['p_adjusted']:.3f}" if q and "p_adjusted" in t else ""
-            neg = " (negligible snow)" if s[n].get("negligible") else ""
+            neg = " (negligible snow)" if s[n].get("negligible") else (" (glacier cells accumulate: not seasonal snow)" if s[n].get("accumulating") else "")
             return f"{f3(t['slope_per_decade'])} p={t['p_value']:.3f}{extra}{neg}"
         L.append(f"| {names[rid]} | {cell('precip', False)} | {cell('soilm_root')} | {cell('soilm_surface')} | {cell('evap')} | {cell('swe')} | {cell('t2m', False)} |")
     L += ["", "## E2 · Year-to-year association (detrended yearly anomalies; r [95 % CI], p, q; BH over all pairs × regions)", "",

@@ -50,3 +50,10 @@ Every Processing call and its parameters are written to `qgis/processing_log.jso
 - geoBoundaries gbOpen CHL ADM1 (Runfola et al. 2020), CC BY 3.0 IGO.
 - Natural Earth 10 m land, public domain (https://www.naturalearthdata.com). Not committed; downloaded by hand into `data/gis_src/`.
 - GLDAS model elevation `GLDASp4_elevation_025d.nc4`, NASA LDAS, downloaded from https://ldas.gsfc.nasa.gov/sites/default/files/ldas/gldas/ELEV/GLDASp4_elevation_025d.nc4.
+
+## Territorial refinement (v2)
+
+`qgis/scripts/build_cell_context.py` (DEM + coastline + CONAF land cover per native cell),
+`pipeline/territory.py` (exploratory analyses), `qgis/scripts/export_territorial_maps.py` (refined project
+`qgis/trend_detective_chile_refined.qgz` with relative paths, and the maps in `docs/gis/maps/`). Details, sources and
+checks: `docs/gis/TERRITORIAL_REFINEMENT.md`. The first project, `qgis/trend_detective_chile.qgz`, is kept unchanged.

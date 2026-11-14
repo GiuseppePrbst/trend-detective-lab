@@ -177,6 +177,7 @@ export interface MVSeries {
   trend: MVTrend;
   annual: { years: number[]; anomalies: (number | null)[] };
   negligible: boolean;
+  accumulating?: boolean;
 }
 
 export interface Assoc {
@@ -227,6 +228,7 @@ export interface CoastInterior {
   interior: MVTrend;
   difference: MVTrend;
   differs: boolean;
+  point_check?: Record<string, { coastal: MVTrend; interior: MVTrend; difference: MVTrend }>;
 }
 
 export interface MultiVar {
@@ -260,3 +262,35 @@ export interface WindowEntry {
   regions: Record<string, { trend: Trend; climatology: number[]; annual: { years: number[]; anomalies: (number | null)[] } }>;
 }
 export type Windows = Record<string, Record<string, WindowEntry>>;
+
+export interface TerrCell {
+  cell_id: string;
+  lat: number;
+  lon: number;
+  slope_per_decade: number;
+  slope_ci_lower: number;
+  slope_ci_upper: number;
+  p_value: number;
+  elevation_mean: number;
+  distance_to_coast_km: number;
+  land_share: number;
+  coastal_e3: number;
+}
+
+export interface Territory {
+  generated_at: string;
+  antofagasta: {
+    t1: {
+      coastal_elevation_range: [number, number];
+      n_coastal: number;
+      n_matched: number;
+      coastal_mean_elevation: number;
+      matched_mean_elevation: number;
+      coastal: MVTrend;
+      matched_interior: MVTrend;
+      difference: MVTrend;
+    };
+    t2: Record<string, { rho: number; n: number } | number>;
+    cells: TerrCell[];
+  };
+}

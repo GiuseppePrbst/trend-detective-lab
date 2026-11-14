@@ -4,7 +4,7 @@ import * as Plot from '@observablehq/plot';
 import { useCallback, useMemo, useState } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure } from './charts';
 import { num, pval, signed, VERDICT_SHORT } from './format';
-import type { Assoc, CellMap, MultiVar, MVSeries, Regions } from './types';
+import type { Assoc, CellMap, MultiVar, MVSeries, Regions, Territory } from './types';
 
 const INK = '#1f2937';
 
@@ -29,8 +29,8 @@ export const PHENOMENA: Record<string, { label: string; vars: string[]; why: str
 
 type Info = { label: string; unit: string; trend_unit: string; product?: string; nature_label?: string };
 
-export function Lab({ mv, names, geo, cellsT2m, cellsSm }: {
-  mv: MultiVar; names: Record<string, string>; geo: Regions | null; cellsT2m: CellMap | null; cellsSm: CellMap | null;
+export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr }: {
+  mv: MultiVar; names: Record<string, string>; geo: Regions | null; cellsT2m: CellMap | null; cellsSm: CellMap | null; terr: Territory | null;
 }) {
   const info: Record<string, Info> = useMemo(() => ({
     ...mv.reference,
@@ -73,6 +73,12 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm }: {
                 </button>
               </li>
             ))}
+            <li>
+              <button className="case" onClick={() => document.getElementById('h-coast')?.scrollIntoView({ block: 'start' })}>
+                <strong>Why does Antofagasta's coast behave differently from its interior?</strong>
+                <span>The regional mean warms; the coast does not. Relief, distance to the sea and a second reanalysis.</span>
+              </button>
+            </li>
           </ul>
         </>
       )}
@@ -115,8 +121,9 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm }: {
       <h3>Where is the change happening? <span className="tag-exp">descriptive</span></h3>
       <CellMaps geo={geo} t2m={cellsT2m} sm={cellsSm} />
 
-      <h3>Coast versus interior: Antofagasta <span className="tag-exp">exploratory, one planned test</span></h3>
+      <h3 id="h-coast">Guided discovery: why does Antofagasta's coast behave differently from its interior? <span className="tag-exp">exploratory</span></h3>
       <CoastPanel mv={mv} />
+      {terr && <TerrainPanel terr={terr} />}
     </section>
   );
 }
@@ -133,7 +140,7 @@ function TrendRows({ R, ids, info }: { R: Record<string, MVSeries>; ids: string[
           const t = s.trend;
           return (
             <tr key={id}>
-              <th scope="row">{info[id]?.label}{s.negligible ? ' (almost no snow here)' : ''}</th>
+              <th scope="row">{info[id]?.label}{s.negligible ? ' (almost no snow here)' : ''}{s.accumulating ? ' (glacier cells: GLDAS lets snow pile up, so this is not seasonal snow)' : ''}</th>
               <td>{signed(t.slope_per_decade)} {info[id]?.trend_unit} ({num(t.ci_low)} to {num(t.ci_high)})</td>
               <td>{pval(t.p_value)}</td>
               <td>{t.p_adjusted == null ? 'reference' : pval(t.p_adjusted).replace('p', 'q')}</td>
@@ -246,6 +253,10 @@ function CoastPanel({ mv }: { mv: MultiVar }) {
     { name: `Coastal cells (${c.n_coastal})`, slope: c.coastal.slope_per_decade, lo: c.coastal.ci_low, hi: c.coastal.ci_high, color: COLOR_A },
     { name: `Interior cells (${c.n_interior})`, slope: c.interior.slope_per_decade, lo: c.interior.ci_low, hi: c.interior.ci_high, color: COLOR_B },
     { name: 'Coastal − interior', slope: c.difference.slope_per_decade, lo: c.difference.ci_low, hi: c.difference.ci_high, color: '#5b21b6' },
+    ...(c.point_check?.ERA5 ? [
+      { name: 'ERA5 reanalysis, coastal points', slope: c.point_check.ERA5.coastal.slope_per_decade, lo: c.point_check.ERA5.coastal.ci_low, hi: c.point_check.ERA5.coastal.ci_high, color: '#01665e' },
+      { name: 'ERA5 reanalysis, interior points', slope: c.point_check.ERA5.interior.slope_per_decade, lo: c.point_check.ERA5.interior.ci_low, hi: c.point_check.ERA5.interior.ci_high, color: '#8c510a' },
+    ] : []),
   ], '°C per decade', w), [c]);
   return (
     <div>
@@ -258,6 +269,53 @@ function CoastPanel({ mv }: { mv: MultiVar }) {
         Difference coastal − interior: {signed(c.difference.slope_per_decade)} °C per decade (95 % CI {num(c.difference.ci_low)} to{' '}
         {num(c.difference.ci_high)}), {pval(c.difference.p_value)} — {c.differs ? 'the two parts of the region warmed at different rates in MERRA-2.' : 'MERRA-2 cannot tell the two parts apart.'}{' '}
         A coastal MERRA-2 cell is still about 50 km wide and mixes ocean and land, so it is not the same as a coastal station.
+      </p>
+    </div>
+  );
+}
+
+function TerrainPanel({ terr }: { terr: Territory }) {
+  const A = terr.antofagasta;
+  const t1 = A.t1;
+  const rho = (k: string) => (A.t2[k] as { rho: number }).rho;
+  const part = (k: string) => A.t2[k] as number;
+  const make = useCallback((w: number) => {
+    const fig = document.createElement('div');
+    fig.className = 'lab-pair';
+    const rows = A.cells.map((c) => ({ ...c, cls: c.coastal_e3 === 1 ? 'coastal cell' : 'interior cell' }));
+    for (const [key, lab] of [['elevation_mean', 'Mean elevation of the cell (m, CIREN DEM)'], ['distance_to_coast_km', 'Distance from cell centre to the coast (km)']] as const) {
+      fig.append(Plot.plot({
+        width: Math.min(w, 340), height: 260, marginLeft: 48, grid: true, style: { fontSize: '12px', color: INK },
+        x: { label: lab }, y: { label: 'Trend (°C per decade)' },
+        color: { domain: ['coastal cell', 'interior cell'], range: [COLOR_A, COLOR_B], legend: key === 'elevation_mean' },
+        marks: [Plot.ruleY([0], { stroke: '#6b7280' }),
+          Plot.ruleX(rows, { x: key, y1: 'slope_ci_lower', y2: 'slope_ci_upper', stroke: 'cls', strokeOpacity: 0.35 }),
+          Plot.dot(rows, { x: key, y: 'slope_per_decade', fill: 'cls', r: 4 })],
+      }));
+    }
+    return fig;
+  }, [A]);
+  return (
+    <div className="terrain">
+      <p>
+        Each MERRA-2 cell (about 50 km) was described in QGIS with a 12.5 m elevation model (CIREN, processed at 100 m) and its
+        distance to the coastline. The relief only <em>describes</em> the cells: the climate data cannot resolve anything smaller.
+      </p>
+      <figure className="map-figure">
+        <img src={`${import.meta.env.BASE_URL}img/antofagasta_territorial.png`} loading="lazy" width={620}
+          alt="Map of Antofagasta: hillshaded relief with the MERRA-2 cells coloured by their warming trend; coastal cells outlined." />
+        <figcaption>Map exported from the project's QGIS workflow (qgis/scripts/export_territorial_maps.py).</figcaption>
+      </figure>
+      <PlotFigure make={make} alt="Each cell's warming trend against its mean elevation and against its distance to the coast." />
+      <p className="result-line">
+        Coast and altitude go together here (ρ = {signed(rho('elevation_vs_distance'))}), so we cannot fully separate them. Two checks
+        point to distance from the sea rather than altitude: (1) compared with interior cells of <strong>similar elevation</strong>{' '}
+        ({t1.n_matched} cells, average {Math.round(t1.matched_mean_elevation)} m vs {Math.round(t1.coastal_mean_elevation)} m for the coast), coastal
+        cells still warmed {num(Math.abs(t1.difference.slope_per_decade))} °C per decade less (95 % CI {num(t1.difference.ci_low)} to {num(t1.difference.ci_high)},{' '}
+        {pval(t1.difference.p_value)}); (2) ranking the trend against distance after removing elevation leaves an association of{' '}
+        {signed(part('partial_trend_distance_given_elevation'))}, while elevation after removing distance gives {signed(part('partial_trend_elevation_given_distance'))}.
+        Neighbouring cells are not independent, so these correlations are descriptive. A cooler ocean-influenced coast is a plausible physical
+        explanation, but this analysis does not prove it.
       </p>
     </div>
   );

@@ -201,3 +201,5 @@ button:disabled { cursor: not-allowed; }
 .lab-pair { display: flex; flex-wrap: wrap; gap: 1rem; }
 .field.period { max-width: 26rem; }
 .cellmap .plot { max-width: 320px; }
+.map-figure img { max-width: 100%; height: auto; border: 1px solid #e5e7eb; }
+.map-figure figcaption { font-size: 0.8rem; color: #6b7280; }

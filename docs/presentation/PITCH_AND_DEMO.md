@@ -53,3 +53,14 @@ change honestly — including when the honest answer is "we can't tell yet".
 - No causes. Correlation of model soil moisture with rainfall is not independent evidence.
 - Separate confirmatory (pre-registered) from exploratory (multivariable lab, coast/interior, windows).
 - Not "validated" for Magallanes: products disagree there.
+
+## Territorial case storyboard — "Why does Antofagasta's coast behave differently from its interior?"
+
+1. **Regional mean** (main app, Antofagasta): +0.23 °C/decade, significant. The coastal weather station shows none.
+2. **Cells** (lab → coast panel): coastal MERRA-2 cells ≈ 0; interior ≈ +0.27 °C/decade.
+3. **Relief** (map `docs/gis/maps/antofagasta_territorial.png`): coastal escarpment and desert interior from the CIREN DEM.
+4. **Distance vs altitude** (two scatterplots): both rise inland; against interior cells of similar elevation the coast still
+   warms ~0.2 °C/decade less.
+5. **Second opinion**: ERA5 at the same points shows the same contrast; the station sits with the coast.
+6. **Careful reading**: an ocean-influenced coast is a plausible explanation, not a proven one; 50 km cells cannot separate
+   coast from altitude completely. Exploratory.
