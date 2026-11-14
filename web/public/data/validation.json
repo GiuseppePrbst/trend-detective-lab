@@ -1,0 +1,389 @@
+{
+ "generated_at": "2026-11-14T14:32:27+00:00",
+ "checks": [
+  {
+   "variable": "t2m",
+   "region": "los-lagos",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85799 (Puerto Montt, -41.42°, -73.08°, 85 m)",
+   "url": "https://meteostat.net/en/station/85799",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 45,
+   "ours": {
+    "slope_per_decade": 0.0475,
+    "ci_low": -0.0416,
+    "ci_high": 0.1366,
+    "p_value": 0.2879,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.0256,
+    "ci_low": -0.0574,
+    "ci_high": 0.1086,
+    "p_value": 0.536,
+    "verdict": "not_significant"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.827,
+   "agreement": "consistent",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "precip",
+   "region": "los-lagos",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85799 (Puerto Montt, -41.42°, -73.08°, 85 m)",
+   "url": "https://meteostat.net/en/station/85799",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 21,
+   "ours": {
+    "slope_per_decade": -7.5755,
+    "ci_low": -20.3229,
+    "ci_high": 5.1719,
+    "p_value": 0.2324,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": -11.2917,
+    "ci_low": -25.8185,
+    "ci_high": 3.2351,
+    "p_value": 0.1195,
+    "verdict": "not_significant"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.937,
+   "agreement": "consistent",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "t2m",
+   "region": "los-lagos",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with MERRA-2 at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 46,
+   "ours": {
+    "slope_per_decade": 0.0638,
+    "ci_low": -0.0335,
+    "ci_high": 0.161,
+    "p_value": 0.1928,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.0726,
+    "ci_low": -0.0179,
+    "ci_high": 0.163,
+    "p_value": 0.1129,
+    "verdict": "not_significant"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.9,
+   "agreement": "consistent",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 is a different reanalysis system; the two are not fully independent because reanalyses share many of the same observations."
+  },
+  {
+   "variable": "precip",
+   "region": "los-lagos",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with IMERG at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 27,
+   "ours": {
+    "slope_per_decade": -3.9368,
+    "ci_low": -18.1107,
+    "ci_high": 10.237,
+    "p_value": 0.5724,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": -1.7991,
+    "ci_low": -22.0046,
+    "ci_high": 18.4064,
+    "p_value": 0.856,
+    "verdict": "not_significant"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.901,
+   "agreement": "consistent",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 precipitation is a model product; IMERG is a satellite estimate adjusted with gauges."
+  },
+  {
+   "variable": "t2m",
+   "region": "antofagasta",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85442 (Antofagasta, -23.43°, -70.43°, 135 m)",
+   "url": "https://meteostat.net/en/station/85442",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 45,
+   "ours": {
+    "slope_per_decade": 0.2301,
+    "ci_low": 0.1062,
+    "ci_high": 0.354,
+    "p_value": 0.0008,
+    "verdict": "significant_robust"
+   },
+   "other": {
+    "slope_per_decade": -0.0878,
+    "ci_low": -0.2496,
+    "ci_high": 0.0739,
+    "p_value": 0.2751,
+    "verdict": "not_significant"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.379,
+   "agreement": "inconsistent",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "precip",
+   "region": "antofagasta",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85442 (Antofagasta, -23.43°, -70.43°, 135 m)",
+   "url": "https://meteostat.net/en/station/85442",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 23,
+   "ours": {
+    "slope_per_decade": 0.5711,
+    "ci_low": -1.3857,
+    "ci_high": 2.5279,
+    "p_value": 0.5315,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.0156,
+    "ci_low": -0.0828,
+    "ci_high": 0.1139,
+    "p_value": 0.7455,
+    "verdict": "not_significant"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.041,
+   "agreement": "consistent",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "t2m",
+   "region": "antofagasta",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with MERRA-2 at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 46,
+   "ours": {
+    "slope_per_decade": 0.2824,
+    "ci_low": 0.1599,
+    "ci_high": 0.4048,
+    "p_value": 0.0001,
+    "verdict": "significant_robust"
+   },
+   "other": {
+    "slope_per_decade": 0.2777,
+    "ci_low": 0.1869,
+    "ci_high": 0.3684,
+    "p_value": 0.0,
+    "verdict": "significant_robust"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.828,
+   "agreement": "consistent",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 is a different reanalysis system; the two are not fully independent because reanalyses share many of the same observations."
+  },
+  {
+   "variable": "precip",
+   "region": "antofagasta",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with IMERG at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 27,
+   "ours": {
+    "slope_per_decade": 0.1496,
+    "ci_low": -1.216,
+    "ci_high": 1.5152,
+    "p_value": 0.8178,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.15,
+    "ci_low": -0.9488,
+    "ci_high": 1.2488,
+    "p_value": 0.7809,
+    "verdict": "not_significant"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.141,
+   "agreement": "consistent",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 precipitation is a model product; IMERG is a satellite estimate adjusted with gauges."
+  },
+  {
+   "variable": "t2m",
+   "region": "magallanes",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85934 (Punta Arenas, -53.00°, -70.85°, 37 m)",
+   "url": "https://meteostat.net/en/station/85934",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 45,
+   "ours": {
+    "slope_per_decade": 0.002,
+    "ci_low": -0.1009,
+    "ci_high": 0.1049,
+    "p_value": 0.9691,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.1538,
+    "ci_low": 0.0676,
+    "ci_high": 0.24,
+    "p_value": 0.0008,
+    "verdict": "significant_robust"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.813,
+   "agreement": "partly",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "precip",
+   "region": "magallanes",
+   "kind": "station",
+   "independent": true,
+   "source": "Meteostat station 85934 (Punta Arenas, -53.00°, -70.85°, 37 m)",
+   "url": "https://meteostat.net/en/station/85934",
+   "licence": "Meteostat (CC BY-NC 4.0); original data from national weather services / NOAA",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 22,
+   "ours": {
+    "slope_per_decade": -12.2453,
+    "ci_low": -19.0691,
+    "ci_high": -5.4215,
+    "p_value": 0.0013,
+    "verdict": "significant_robust"
+   },
+   "other": {
+    "slope_per_decade": -3.2005,
+    "ci_low": -6.5586,
+    "ci_high": 0.1575,
+    "p_value": 0.0607,
+    "verdict": "method_dependent"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.27,
+   "agreement": "partly",
+   "caveat": "A station is one point; our value is the mean of a whole region. Levels are not comparable — trends and year-to-year variations are."
+  },
+  {
+   "variable": "t2m",
+   "region": "magallanes",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with MERRA-2 at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1980,
+    2025
+   ],
+   "n_years": 46,
+   "ours": {
+    "slope_per_decade": 0.0045,
+    "ci_low": -0.1079,
+    "ci_high": 0.1169,
+    "p_value": 0.9351,
+    "verdict": "not_significant"
+   },
+   "other": {
+    "slope_per_decade": 0.1806,
+    "ci_low": 0.0846,
+    "ci_high": 0.2766,
+    "p_value": 0.0005,
+    "verdict": "significant_robust"
+   },
+   "unit": "°C per decade",
+   "correlation_annual": 0.773,
+   "agreement": "partly",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 is a different reanalysis system; the two are not fully independent because reanalyses share many of the same observations."
+  },
+  {
+   "variable": "precip",
+   "region": "magallanes",
+   "kind": "other_reanalysis",
+   "independent": true,
+   "source": "ERA5 (ECMWF reanalysis) at 5 grid points, compared with IMERG at the same points",
+   "url": "https://open-meteo.com/en/docs/historical-weather-api",
+   "licence": "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
+   "period": [
+    1998,
+    2024
+   ],
+   "n_years": 27,
+   "ours": {
+    "slope_per_decade": -8.9362,
+    "ci_low": -13.0279,
+    "ci_high": -4.8445,
+    "p_value": 0.0002,
+    "verdict": "significant_robust"
+   },
+   "other": {
+    "slope_per_decade": 4.3534,
+    "ci_low": -7.7708,
+    "ci_high": 16.4776,
+    "p_value": 0.4665,
+    "verdict": "not_significant"
+   },
+   "unit": "mm/month per decade",
+   "correlation_annual": 0.313,
+   "agreement": "partly",
+   "caveat": "Compared at five grid points, not over the whole region. ERA5 precipitation is a model product; IMERG is a satellite estimate adjusted with gauges."
+  }
+ ]
+}

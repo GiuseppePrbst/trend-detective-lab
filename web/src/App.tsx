@@ -1,11 +1,15 @@
 // SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
 // Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline } from './charts';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline, type Interval } from './charts';
 import { FIXTURE, load } from './data';
-import { num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHORT, WARNING } from './format';
+import {
+  GLOSSARY, level, MAP_STATUS, mapStatus, num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHORT, WARNING,
+} from './format';
 import { ChileMap, rewind } from './map';
-import type { Catalog, Regions, RegionSeries, Trend, VariableData, VariableInfo } from './types';
+import type {
+  Alt, Catalog, Check, GuidedCase, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
+} from './types';
 
 export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
 
@@ -30,9 +34,25 @@ function Status({ what, s }: { what: string; s: Loaded<unknown> }) {
   return null;
 }
 
+/** A "?" button that reveals a short plain-language explanation right after it. */
+function Explain({ term, children }: { term: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <>
+      <button type="button" className="q" aria-expanded={open} aria-controls={id} aria-label={`What is ${term}?`}
+        onClick={(e) => { e.preventDefault(); setOpen(!open); }}>?</button>
+      <span id={id} className="explain" hidden={!open}>{children}</span>
+    </>
+  );
+}
+
+const VerdictBadge = ({ v }: { v: Verdict }) => <span className={`vbadge v-${v}`}>{VERDICT_SHORT[v]}</span>;
+
 export default function App() {
   const catalog = useFile<Catalog>('catalog.json');
   const geoFile = useFile<Regions>('regions.geojson');
+  const validation = useFile<Validation>('validation.json');
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
   const [varId, setVarId] = useState<string | null>(null);
@@ -60,8 +80,11 @@ export default function App() {
   const ra = data?.regions[a];
   const rb = b ? data?.regions[b] : undefined;
   const synthetic = FIXTURE || cat?.SYNTHETIC || data?.SYNTHETIC;
+  // The guided case whose selection is currently on screen (if any).
+  const activeCase = cat?.guided.find((g) => g.variable === varId && g.a === a && g.b === b);
+  const checks = validation.state === 'ok' ? validation.data.checks.filter((c) => c.variable === varId && c.region === a) : [];
 
-  const startCase = (g: Catalog['guided'][number]) => {
+  const startCase = (g: GuidedCase) => {
     setVarId(g.variable);
     setA(g.a);
     setB(g.b);
@@ -78,10 +101,10 @@ export default function App() {
       <header className="site-header">
         <div className="wrap">
           <p className="eyebrow">Trend Detective Lab</p>
-          <h1>Is the climate in your region really changing? Review the evidence.</h1>
+          <h1>What is changing, where, how fast — and how certain are we?</h1>
           <p className="lede">
-            Pick a region of Chile and a climate variable, look at the monthly record, and see what a careful
-            statistical test can — and cannot — tell you.
+            Pick a region of Chile and a climate variable, look at the record, and see what a careful statistical test
+            can — and cannot — tell you.
           </p>
           <p className="source">Data: NASA Giovanni / GES DISC</p>
         </div>
@@ -105,7 +128,8 @@ export default function App() {
                   const ok = cat.variables.some((x) => x.id === g.variable);
                   return (
                     <li key={g.title}>
-                      <button className="case" onClick={() => startCase(g)} disabled={!ok}>
+                      <button className={`case${g === activeCase ? ' is-on' : ''}`} onClick={() => startCase(g)} disabled={!ok}
+                        aria-pressed={g === activeCase}>
                         <strong>{g.title}</strong>
                         <span>{g.question}</span>
                         {!ok && <em>Data not available yet</em>}
@@ -121,40 +145,34 @@ export default function App() {
               <fieldset className="vars">
                 <legend className="sr-only">Variable</legend>
                 {cat.variables.map((x) => (
-                  <label key={x.id} className={`var-card${x.id === varId ? ' is-on' : ''}`}>
-                    <input type="radio" name="variable" value={x.id} checked={x.id === varId} onChange={() => setVarId(x.id)} />
-                    <span className="var-title">{x.label}</span>
-                    <span className="badge">{x.nature_label}</span>
+                  <div key={x.id} className={`var-card${x.id === varId ? ' is-on' : ''}`}>
+                    <label className="var-pick">
+                      <input type="radio" name="variable" value={x.id} checked={x.id === varId} onChange={() => setVarId(x.id)} />
+                      <span className="var-title">{x.label}</span>
+                    </label>
                     <span className="var-def">{x.definition}</span>
+                    <span>
+                      <span className="badge">{x.nature_label}</span>{' '}
+                      <Explain term={`a ${x.nature.replace('_', ' + ')} product`}>
+                        {GLOSSARY[x.nature as keyof typeof GLOSSARY] ?? x.nature_label}
+                      </Explain>
+                    </span>
                     <span className="var-meta">{x.product} · {x.period[0]}–{x.period[1]}</span>
-                  </label>
+                  </div>
                 ))}
               </fieldset>
             </section>
 
             {v && (
               <Workspace
-                cat={cat}
-                v={v}
-                varFile={varFile}
-                data={data}
-                geo={geo}
-                geoFile={geoFile}
-                names={names}
-                trends={trends}
-                a={a}
-                b={b}
+                cat={cat} v={v} varFile={varFile} data={data} geo={geo} geoFile={geoFile} names={names} trends={trends}
+                a={a} b={b}
                 setA={(id) => {
                   setA(id);
                   if (id === b) setB('');
                 }}
-                setB={setB}
-                ra={ra}
-                rb={rb}
-                mode={mode}
-                setMode={setMode}
-                exploreRef={exploreRef}
-                synthetic={!!synthetic}
+                setB={setB} ra={ra} rb={rb} mode={mode} setMode={setMode} exploreRef={exploreRef}
+                synthetic={!!synthetic} activeCase={activeCase} checks={checks} validation={validation}
               />
             )}
           </>
@@ -191,11 +209,15 @@ function Workspace(p: {
   setMode: (m: 'values' | 'anomalies') => void;
   exploreRef: React.RefObject<HTMLHeadingElement | null>;
   synthetic: boolean;
+  activeCase?: GuidedCase;
+  checks: Check[];
+  validation: Loaded<Validation>;
 }) {
   const { cat, v, varFile, data, geo, geoFile, names, trends, a, b, setA, setB, ra, rb, mode, setMode } = p;
   const [mapOpen, setMapOpen] = useState(() => window.matchMedia('(min-width: 900px)').matches);
   const nameA = names[a] ?? a;
   const nameB = names[b] ?? b;
+  const alpha = cat.method.alpha;
 
   const makeTimeline = useCallback((w: number) => timeline(ra!, mode, v.unit, w), [ra, mode, v.unit]);
 
@@ -216,15 +238,15 @@ function Workspace(p: {
         <details className="map-box" open={mapOpen} onToggle={(e) => setMapOpen(e.currentTarget.open)}>
           <summary>Map: trend in every region</summary>
           {geo && data ? (
-            <ChileMap geo={geo} v={v} trends={trends} a={a} b={b} onSelect={setA} />
+            <ChileMap geo={geo} v={v} trends={trends} a={a} b={b} alpha={alpha} onSelect={setA} />
           ) : (
             <Status what="the map" s={geo ? varFile : geoFile} />
           )}
           {data && (
             <table className="region-table">
-              <caption>Trend per region, north to south ({v.trend_unit})</caption>
+              <caption>Trend per region, north to south ({v.trend_unit}). Significance adjusted for testing 16 regions.</caption>
               <thead>
-                <tr><th scope="col">Region</th><th scope="col">Change</th><th scope="col">Verdict</th></tr>
+                <tr><th scope="col">Region</th><th scope="col">Change</th><th scope="col">Result</th></tr>
               </thead>
               <tbody>
                 {cat.regions.map((r) => {
@@ -233,7 +255,7 @@ function Workspace(p: {
                     <tr key={r.id} className={r.id === a ? 'is-a' : undefined}>
                       <th scope="row">{r.name}</th>
                       <td>{t ? signed(t.slope_per_decade) : '—'}</td>
-                      <td>{t ? VERDICT_SHORT[t.verdict] : 'not available yet'}</td>
+                      <td>{t ? MAP_STATUS[mapStatus(t, alpha)] : 'not available yet'}</td>
                     </tr>
                   );
                 })}
@@ -259,9 +281,17 @@ function Workspace(p: {
               <p className="hint">
                 {mode === 'values'
                   ? `Monthly mean of ${v.label.toLowerCase()} over ${nameA} (${v.unit}). Gaps are missing months.`
-                  : `Each month minus the usual value for that calendar month. Zero = a typical month. The thick line is the fitted trend.`}
+                  : `Each month minus the usual value for that calendar month: zero is a typical month. The test uses the yearly averages of these anomalies.`}
               </p>
               <PlotFigure make={makeTimeline} alt={sentence(v, nameA, ra.trend)} />
+              {mode === 'anomalies' && (
+                <ul className="chart-key">
+                  <li><span className="sw sw-month" aria-hidden="true" /> Monthly anomalies</li>
+                  <li><span className="sw sw-year" aria-hidden="true" /> Yearly means (what the test uses)</li>
+                  <li><span className="sw sw-trend" aria-hidden="true" /> Trend</li>
+                  <li><span className="sw sw-band" aria-hidden="true" /> Range of trends compatible with the data (95 % confidence interval)</li>
+                </ul>
+              )}
             </>
           )}
         </section>
@@ -270,6 +300,10 @@ function Workspace(p: {
 
         <section aria-labelledby="h-compare">
           <h2 id="h-compare"><span className="step">6</span> Compare regions</h2>
+          <p className="callout" role="note">
+            A significant trend in one region and a non-significant trend in another do <strong>not</strong> show that the
+            regions differ. Only the test of the difference can.
+          </p>
           <label className="field">
             Region B
             <select value={b} onChange={(e) => setB(e.target.value)}>
@@ -281,18 +315,27 @@ function Workspace(p: {
               ))}
             </select>
           </label>
-          {b && b !== a && data && (ra && rb ? <Compare v={v} data={data} a={a} b={b} nameA={nameA} nameB={nameB} ra={ra} rb={rb} />
+          {b && b !== a && data && (ra && rb
+            ? <Compare v={v} data={data} a={a} b={b} nameA={nameA} nameB={nameB} ra={ra} rb={rb} alpha={alpha} guided={p.activeCase} />
             : <p className="status">{!ra ? nameA : nameB}: not available yet for {v.label.toLowerCase()}.</p>)}
         </section>
 
-        <Evidence cat={cat} v={v} name={nameA} rs={ra} synthetic={p.synthetic} />
+        <Evidence cat={cat} v={v} name={nameA} rs={ra} synthetic={p.synthetic} checks={p.checks} validation={p.validation} />
       </div>
     </div>
   );
 }
 
+const ciText = (lo?: number, hi?: number) => (lo == null || hi == null ? '—' : `${num(lo)} to ${num(hi)}`);
+
 function TrendTest({ v, name, rs, cat }: { v: VariableInfo; name: string; rs: RegionSeries; cat: Catalog }) {
   const t = rs.trend;
+  const s = t.sensitivity;
+  const methods: [string, Alt | undefined][] = [
+    ['Final: yearly means', { slope_per_decade: t.slope_per_decade, ci_low: t.ci_low, ci_high: t.ci_high, p_value: t.p_value }],
+    ['First revision: monthly, multi-lag', s?.first_revision_monthly_multilag],
+    ['Pre-registered: monthly, lag-1', s?.preregistered_monthly_ar1],
+  ];
   return (
     <section aria-labelledby="h-test">
       <h2 id="h-test"><span className="step">5</span> Test the trend</h2>
@@ -300,48 +343,112 @@ function TrendTest({ v, name, rs, cat }: { v: VariableInfo; name: string; rs: Re
         <p className={`verdict v-${t.verdict}`}>
           <span aria-hidden="true">{t.verdict === 'significant_robust' ? '●' : t.verdict === 'method_dependent' ? '◐' : '○'}</span>{' '}
           {VERDICT[t.verdict]}
+          {t.verdict === 'not_significant' && <> <Explain term="not significant">{GLOSSARY.notsig}</Explain></>}
         </p>
         <p className="sentence" aria-live="polite">{sentence(v, name, t)}</p>
         <dl className="stats">
-          <div><dt>Change per decade</dt><dd>{signed(t.slope_per_decade)} {v.trend_unit}</dd></div>
-          <div><dt>95 % confidence interval</dt><dd>{num(t.ci_low)} to {num(t.ci_high)}</dd></div>
-          <div><dt>p-value</dt><dd>{pval(t.p_value)}</dd></div>
+          <div>
+            <dt>Change per decade <Explain term="the change per decade">{GLOSSARY.slope}</Explain></dt>
+            <dd>{signed(t.slope_per_decade)} {v.trend_unit}</dd>
+          </div>
+          <div>
+            <dt>95 % confidence interval <Explain term="a 95 % confidence interval">{GLOSSARY.ci}</Explain></dt>
+            <dd>{num(t.ci_low)} to {num(t.ci_high)}</dd>
+          </div>
+          <div>
+            <dt>p-value <Explain term="a p-value">{GLOSSARY.p}</Explain></dt>
+            <dd>{pval(t.p_value)}</dd>
+          </div>
           {t.relative_pct_per_decade != null && (
-            <div><dt>Relative change</dt><dd>{signed(t.relative_pct_per_decade)} % per decade</dd></div>
+            <div>
+              <dt>Relative change</dt>
+              <dd>
+                {signed(t.relative_pct_per_decade)} % per decade (relative to the {t.start.slice(0, 4)}–{t.end.slice(0, 4)} mean
+                of {level(t.mean)} {v.unit})
+              </dd>
+            </div>
           )}
         </dl>
+        <p className="muted">
+          Where does the uncertainty come from? <Explain term="the source of the uncertainty">{GLOSSARY.uncertainty}</Explain>
+        </p>
         <details className="how">
           <summary>How do we know?</summary>
           <dl className="stats">
+            {t.n_years_used != null && t.n_eff_annual != null && (
+              <div>
+                <dt>Years used <Explain term="the effective number of years">{GLOSSARY.neff}</Explain></dt>
+                <dd>
+                  The test uses {t.n_years_used} yearly means, which carry the information of about {Math.round(t.n_eff_annual)}{' '}
+                  independent years.
+                </dd>
+              </div>
+            )}
+            {t.r1_annual != null && (
+              <div>
+                <dt>Year-to-year persistence</dt>
+                <dd>Each year resembles the previous one by r1 = {t.r1_annual.toFixed(2)} (lag-1 autocorrelation of yearly values).</dd>
+              </div>
+            )}
             <div>
-              <dt>Memory between months</dt>
-              <dd>Each month resembles the previous one: lag-1 autocorrelation r1 = {t.r1.toFixed(2)}.</dd>
-            </div>
-            <div>
-              <dt>Effective sample size</dt>
-              <dd>
-                {t.n_months} months of data behave like about {Math.round(t.n_eff)} independent values (n_eff), so the
-                uncertainty is wider than a naive count suggests.
-              </dd>
-            </div>
-            <div>
-              <dt>Robustness check</dt>
+              <dt>Robustness check (same yearly values)</dt>
               <dd>Theil–Sen slope {signed(t.theil_sen_per_decade)} {v.trend_unit}; Mann–Kendall {pval(t.mk_p_value)}.</dd>
             </div>
             {t.p_adjusted != null && (
               <div>
-                <dt>Adjusted for multiple testing</dt>
+                <dt>Adjusted for 16 regions <Explain term="the adjusted p-value">{GLOSSARY.fdr}</Explain></dt>
                 <dd>
-                  {pval(t.p_adjusted)}. Testing 16 regions at once makes some false alarms likely by chance; the adjusted
-                  p-value (Benjamini–Hochberg) accounts for that when you compare across the map.
+                  {pval(t.p_adjusted)} —{' '}
+                  {t.significant_after_fdr ? 'still significant after adjustment' : 'not significant after adjustment'}. Use this one
+                  when comparing regions on the map.
                 </dd>
               </div>
             )}
+            <div>
+              <dt>Month-to-month memory (diagnostic)</dt>
+              <dd>
+                Monthly anomalies resemble their neighbours (r1 = {t.r1.toFixed(2)}): {t.n_months} months behave like about{' '}
+                {Math.round(t.n_eff)} independent values. This is why the test works on yearly means.
+              </dd>
+            </div>
           </dl>
           {t.warnings.length > 0 && (
             <ul className="warnings">
               {t.warnings.map((w) => <li key={w}>{WARNING[w]?.(rs.n_cells) ?? w}</li>)}
             </ul>
+          )}
+
+          {s && (
+            <>
+              <h3>Would another method have said something different?</h3>
+              <div className="table-scroll">
+                <table className="sens">
+                  <thead>
+                    <tr><th scope="col">Method</th><th scope="col">Change per decade</th><th scope="col">95 % CI</th><th scope="col">p-value</th></tr>
+                  </thead>
+                  <tbody>
+                    {methods.map(([label, m]) => (
+                      <tr key={label}>
+                        <th scope="row">{label}</th>
+                        <td>{m?.slope_per_decade != null ? signed(m.slope_per_decade) : '—'}</td>
+                        <td>{ciText(m?.ci_low, m?.ci_high)}</td>
+                        <td>{m ? pval(m.p_value) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="muted">
+                The two earlier monthly methods gave too many false alarms in our simulations, so the yearly-means result is the
+                one we report. {cat.method.calibration}
+              </p>
+            </>
+          )}
+          {cat.method.changes && cat.method.changes.length > 0 && (
+            <>
+              <h3>How our method changed, and why</h3>
+              <ol className="changes">{cat.method.changes.map((c) => <li key={c}>{c}</li>)}</ol>
+            </>
           )}
           <p className="muted">{cat.method.main}</p>
           <p className="muted">{cat.method.robustness}</p>
@@ -365,46 +472,98 @@ function Compare(p: {
   nameB: string;
   ra: RegionSeries;
   rb: RegionSeries;
+  alpha: number;
+  guided?: GuidedCase;
 }) {
-  const { v, data, a, b, nameA, nameB, ra, rb } = p;
+  const { v, data, a, b, nameA, nameB, ra, rb, alpha, guided } = p;
   const c = orient(data.comparisons, a, b);
+  const nPairs = Object.keys(data.comparisons).length;
+  const unplanned = c?.planned === false;
+  const differs = c ? (unplanned ? !!c.differs_after_fdr : c.differs) : false;
+  const sigA = ra.trend.p_value < alpha;
+  const sigB = rb.trend.p_value < alpha;
+  const oneOfThose = !!c && sigA !== sigB && !differs;
+
   // Shared y-axis extent so the two panels are visually comparable (display range, not a statistic).
   const yDomain = useMemo(() => {
     const all = [...ra.anomalies, ...rb.anomalies].filter((x): x is number => x != null);
     return [Math.min(...all), Math.max(...all)] as [number, number];
   }, [ra, rb]);
-  const makeA = useCallback((w: number) => timeline(ra, 'anomalies', v.unit, w, { color: COLOR_A, yDomain, height: 200 }), [ra, v.unit, yDomain]);
-  const makeB = useCallback((w: number) => timeline(rb, 'anomalies', v.unit, w, { color: COLOR_B, dash: '4,3', yDomain, height: 200 }), [rb, v.unit, yDomain]);
+  const makeA = useCallback((w: number) => timeline(ra, 'anomalies', v.unit, w, { color: COLOR_A, yDomain, height: 220 }), [ra, v.unit, yDomain]);
+  const makeB = useCallback((w: number) => timeline(rb, 'anomalies', v.unit, w, { color: COLOR_B, dash: '4,3', yDomain, height: 220 }), [rb, v.unit, yDomain]);
   const rows = useMemo(() => {
-    const r = [
-      { name: nameA, slope: ra.trend.slope_per_decade, lo: ra.trend.ci_low, hi: ra.trend.ci_high, color: COLOR_A },
-      { name: nameB, slope: rb.trend.slope_per_decade, lo: rb.trend.ci_low, hi: rb.trend.ci_high, color: COLOR_B },
+    const r: Interval[] = [
+      { name: `Trend in ${nameA}`, slope: ra.trend.slope_per_decade, lo: ra.trend.ci_low, hi: ra.trend.ci_high, color: COLOR_A },
+      { name: `Trend in ${nameB}`, slope: rb.trend.slope_per_decade, lo: rb.trend.ci_low, hi: rb.trend.ci_high, color: COLOR_B },
     ];
     if (c) r.push({ name: `Difference ${nameA} − ${nameB}`, slope: c.slope_per_decade, lo: c.ci_low, hi: c.ci_high, color: '#374151' });
     return r;
   }, [nameA, nameB, ra, rb, c]);
   const makeIntervals = useCallback((w: number) => intervals(rows, v.trend_unit, w), [rows, v.trend_unit]);
 
-  const alt = (n: string, t: Trend) => `${n}: ${signed(t.slope_per_decade)} ${v.trend_unit} (95 % CI ${num(t.ci_low)} to ${num(t.ci_high)}), ${VERDICT_SHORT[t.verdict]}`;
+  const alt = (n: string, t: { slope_per_decade: number; ci_low: number; ci_high: number }) =>
+    `${n}: ${signed(t.slope_per_decade)} ${v.trend_unit} (95 % CI ${num(t.ci_low)} to ${num(t.ci_high)})`;
+
+  const Block = ({ title, t, verdict, p: pv, cls }: { title: string; t: { slope_per_decade: number; ci_low: number; ci_high: number }; verdict: ReactNode; p: string; cls: string }) => (
+    <div className={`cblock ${cls}`}>
+      <h3>{title}</h3>
+      <p className="cblock-slope">{signed(t.slope_per_decade)} <span>{v.trend_unit}</span></p>
+      <p className="muted">95 % CI {num(t.ci_low)} to {num(t.ci_high)} · {pv}</p>
+      {verdict}
+    </div>
+  );
 
   return (
     <div className="compare">
-      {c ? (
-        <div className={`result compare-result ${c.differs ? 'differs' : ''}`} aria-live="polite">
+      {guided && guided.preregistered === false && (
+        <p className="note">This pair was chosen after seeing the results, to illustrate a point.</p>
+      )}
+      <div className="cblocks">
+        <Block title={`Trend in ${nameA}`} t={ra.trend} cls="cb-a" p={pval(ra.trend.p_value)} verdict={<VerdictBadge v={ra.trend.verdict} />} />
+        <Block title={`Trend in ${nameB}`} t={rb.trend} cls="cb-b" p={pval(rb.trend.p_value)} verdict={<VerdictBadge v={rb.trend.verdict} />} />
+        {c ? (
+          <Block title={`Difference ${nameA} − ${nameB}`} t={c} cls="cb-d"
+            p={unplanned && c.p_adjusted != null ? `adjusted ${pval(c.p_adjusted)}` : pval(c.p_value)}
+            verdict={<span className={`vbadge ${differs ? 'v-significant_robust' : 'v-not_significant'}`}>{differs ? 'trends differ' : 'cannot tell apart'}</span>} />
+        ) : (
+          <div className="cblock cb-d"><h3>Difference {nameA} − {nameB}</h3><p className="status">Not available yet.</p></div>
+        )}
+      </div>
+
+      <PlotFigure make={makeIntervals} alt={rows.map((r) => alt(r.name, { slope_per_decade: r.slope, ci_low: r.lo, ci_high: r.hi })).join('. ')} />
+
+      {c && (
+        <div className={`result compare-result${differs ? ' differs' : ''}`} aria-live="polite">
           <p className="verdict">
-            {c.differs ? 'The two trends are significantly different' : 'We cannot say these trends differ — even if one looks significant and the other does not.'}
+            {differs ? 'The two trends are significantly different.' : 'We cannot say these trends differ — even if one looks significant and the other does not.'}
           </p>
+          {oneOfThose && (
+            <p className="those">
+              <strong>This is one of those cases:</strong> {sigA ? nameA : nameB} has a significant trend and{' '}
+              {sigA ? nameB : nameA} does not, yet the test of the difference cannot tell the two regions apart.
+            </p>
+          )}
+          {unplanned && c.p_adjusted != null && (
+            <p className="adjusted">
+              <strong>Adjusted {pval(c.p_adjusted)}</strong> (unadjusted {pval(c.p_value)}). This pair was not planned in advance:
+              you are looking at one of {nPairs} possible pairs, so some will look different by chance. The adjusted p-value
+              accounts for that.
+            </p>
+          )}
           <p>
             Trend of the difference {nameA} − {nameB}: {signed(c.slope_per_decade)} {v.trend_unit} (95 % CI {num(c.ci_low)} to{' '}
-            {num(c.ci_high)}), {pval(c.p_value)}. Robustness: Theil–Sen {signed(c.theil_sen_per_decade)}, Mann–Kendall {pval(c.mk_p_value)}.
+            {num(c.ci_high)}), {pval(c.p_value)}
+            {c.n_years_used != null && c.n_eff_annual != null && <>, from {c.n_years_used} yearly means (about {Math.round(c.n_eff_annual)} independent years)</>}.
+            Robustness: Theil–Sen {signed(c.theil_sen_per_decade)}, Mann–Kendall {pval(c.mk_p_value)}.
           </p>
+          {guided?.lesson && (
+            <p className="lesson"><strong>What this case shows:</strong> {guided.lesson}</p>
+          )}
         </div>
-      ) : (
-        <p className="status">The difference test for this pair is not available yet.</p>
       )}
-      <h3>Both slopes with their 95 % confidence intervals</h3>
-      <PlotFigure make={makeIntervals} alt={`${alt(nameA, ra.trend)}. ${alt(nameB, rb.trend)}.`} />
+
       <h3>Anomalies on the same scale</h3>
+      <p className="hint">Thin grey: monthly anomalies. Dots: yearly means. Thick line and shading: trend and its 95 % range.</p>
       <div className="multiples">
         <figure>
           <figcaption><span className="key key-a" aria-hidden="true" /> {nameA} (solid line)</figcaption>
@@ -419,7 +578,61 @@ function Compare(p: {
   );
 }
 
-function Evidence({ cat, v, name, rs, synthetic }: { cat: Catalog; v: VariableInfo; name: string; rs?: RegionSeries; synthetic: boolean }) {
+const KIND: Record<string, string> = {
+  station: 'Independent observation (station)',
+  other_reanalysis: 'Another reanalysis',
+};
+const AGREEMENT: Record<string, string> = {
+  consistent: 'Consistent: same verdict and overlapping intervals',
+  partly: 'Partly consistent',
+  inconsistent: 'Inconsistent',
+};
+
+function CheckCard({ c, name }: { c: Check; name: string }) {
+  const rows = useMemo(() => {
+    const r: Interval[] = [];
+    const add = (label: string, x: Alt, color: string) => {
+      if (x.slope_per_decade != null && x.ci_low != null && x.ci_high != null)
+        r.push({ name: label, slope: x.slope_per_decade, lo: x.ci_low, hi: x.ci_high, color });
+    };
+    add(`Ours (${name} regional mean)`, c.ours, COLOR_A);
+    add(c.source, c.other, '#374151');
+    return r;
+  }, [c, name]);
+  const make = useCallback((w: number) => intervals(rows, c.unit, w), [rows, c.unit]);
+  const kind = c.independent ? KIND[c.kind] ?? c.kind : 'Same underlying source — consistency check only';
+  return (
+    <div className="result check">
+      <p>
+        <span className={`badge${c.independent ? '' : ' badge-warn'}`}>{kind}</span>{' '}
+        <strong>{c.url ? <a href={c.url}>{c.source}</a> : c.source}</strong>
+      </p>
+      <p className="muted">
+        {c.period && <>Period {c.period[0]}–{c.period[1]}</>}{c.n_years != null && <> · {c.n_years} years</>}
+        {c.licence && <> · Licence: {c.licence}</>}
+      </p>
+      {rows.length > 0 && <PlotFigure make={make} alt={rows.map((r) => `${r.name}: ${num(r.slope)} ${c.unit} (${num(r.lo)} to ${num(r.hi)})`).join('. ')} />}
+      <dl className="stats">
+        {c.correlation_annual != null && (
+          <div><dt>Correlation of yearly anomalies</dt><dd>{c.correlation_annual.toFixed(2)}</dd></div>
+        )}
+        <div><dt>Agreement</dt><dd>{AGREEMENT[c.agreement] ?? c.agreement}</dd></div>
+      </dl>
+      {c.caveat && <p className="muted">{c.caveat}</p>}
+    </div>
+  );
+}
+
+function Evidence(p: {
+  cat: Catalog;
+  v: VariableInfo;
+  name: string;
+  rs?: RegionSeries;
+  synthetic: boolean;
+  checks: Check[];
+  validation: Loaded<Validation>;
+}) {
+  const { cat, v, name, rs, synthetic, checks } = p;
   const download = () => {
     if (!rs) return;
     const lines = [
@@ -427,21 +640,35 @@ function Evidence({ cat, v, name, rs, synthetic }: { cat: Catalog; v: VariableIn
       `# ${v.label} (${v.unit}), ${name}, regional mean of ${rs.n_cells} grid cells`,
       `# Source: ${v.product} v${v.version}, doi:${v.doi}, via ${v.service}, accessed ${v.accessed}`,
       `# Citation: ${v.citation}`,
-      `# anomaly = value minus the mean of the same calendar month over the analysed period`,
+      `# Block 1: monthly series. anomaly = value minus the mean of the same calendar month over the analysed period`,
       'date,value,anomaly',
       ...rs.dates.map((d, i) => `${d},${rs.values[i] ?? ''},${rs.anomalies[i] ?? ''}`),
+      ...(rs.annual
+        ? [
+            '',
+            '# Block 2: yearly means of the monthly anomalies (the values the trend test uses), as published by the pipeline',
+            'year,annual_mean_anomaly',
+            ...rs.annual.years.map((y, i) => `${y},${rs.annual!.anomalies[i] ?? ''}`),
+          ]
+        : []),
     ];
-    const url = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv' }));
+    const url = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv;charset=utf-8' }));
     const el = document.createElement('a');
     el.href = url;
-    el.download = `${v.id}_${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`;
+    el.download = `${v.id}_${name.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`;
+    document.body.appendChild(el);
     el.click();
-    URL.revokeObjectURL(url);
+    el.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
     <section aria-labelledby="h-evidence">
       <h2 id="h-evidence"><span className="step">7</span> Review the evidence</h2>
+      <p>
+        <strong>What this measures:</strong> {v.definition} {v.nature_label}.{' '}
+        <Explain term={`a ${v.nature.replace('_', ' + ')} product`}>{GLOSSARY[v.nature as keyof typeof GLOSSARY] ?? v.nature_label}</Explain>
+      </p>
       <dl className="facts">
         <div><dt>Product</dt><dd>{v.product} (version {v.version}) — {sourceShort(v)}</dd></div>
         <div><dt>DOI</dt><dd><a href={`https://doi.org/${v.doi}`}>{v.doi}</a></dd></div>
@@ -451,6 +678,16 @@ function Evidence({ cat, v, name, rs, synthetic }: { cat: Catalog; v: VariableIn
         <div><dt>Period</dt><dd>{v.period[0]}–{v.period[1]}</dd></div>
         {rs && <div><dt>Grid cells in {name}</dt><dd>{rs.n_cells}</dd></div>}
       </dl>
+
+      <h3>Independent checks</h3>
+      {p.validation.state === 'loading' ? (
+        <Status what="the independent checks" s={p.validation} />
+      ) : checks.length === 0 ? (
+        <p className="status">No independent check for this selection yet.</p>
+      ) : (
+        checks.map((c) => <CheckCard key={c.source} c={c} name={name} />)
+      )}
+
       <h3>Caveats</h3>
       <ul>{v.caveats.map((c) => <li key={c}>{c}</li>)}</ul>
       <h3>Method</h3>

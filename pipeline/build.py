@@ -62,20 +62,27 @@ INFO = {
     ),
 }
 
+# The three guided cases use only the comparisons written into the pre-registration (first commit):
+# Los Lagos vs Antofagasta and Los Lagos vs Magallanes. Lessons were rewritten after the final results
+# (14 Nov afternoon); every number they refer to is computed below and shown next to them in the app.
+PREREGISTERED_PAIRS = {("antofagasta", "los-lagos"), ("los-lagos", "magallanes")}   # both variables
 GUIDED = [
     dict(title="Is southern Chile warming as fast as the desert north?",
          question="Compare air temperature trends in Los Lagos and Antofagasta since 1980.",
-         variable="t2m", a="los-lagos", b="antofagasta"),
+         lesson="In MERRA-2 the difference between the two trends is itself significant, so this reanalysis says Antofagasta warmed faster. "
+                "ERA5 agrees; the Antofagasta weather station does not (see Independent checks) — a reanalysis result, not a settled fact.",
+         variable="t2m", a="los-lagos", b="antofagasta", preregistered=True),
+    dict(title="Two flat lines — or too little evidence?",
+         question="Neither Los Lagos nor Magallanes shows a significant warming trend in MERRA-2. Does that mean neither is warming?",
+         lesson="No. 'Not significant' means the record cannot tell, not that nothing changed. For Magallanes, ERA5 and the Punta Arenas station "
+                "both show significant warming that MERRA-2 does not — one dataset is never the last word.",
+         variable="t2m", a="los-lagos", b="magallanes", preregistered=True),
     dict(title="One significant, one not — are they different?",
-         question="Precipitation falls significantly in Magallanes but not in Los Lagos. Does that mean the two regions behave differently?",
-         lesson="No. The test of the difference is what answers that question, and here it cannot tell them apart.",
+         question="Rainfall falls significantly in Magallanes but not in Los Lagos. Do the two regions behave differently?",
+         lesson="Not shown. The test of the difference is what answers that, and it cannot tell them apart. Also: several regions have p < 0.05 "
+                "on their own, but after adjusting for testing 16 regions only Magallanes remains — and neither ERA5 nor its station confirms it clearly.",
          variable="precip", a="los-lagos", b="magallanes", preregistered=True),
-    dict(title="When the answer depends on the method",
-         question="In La Araucanía and Los Ríos the conclusion about rainfall changes with the statistical method. Why?",
-         lesson="With 27 years of a very variable quantity, reasonable methods disagree. We chose this pair after seeing the results, to show that honestly.",
-         variable="precip", a="la-araucania", b="los-rios", preregistered=False),
 ]
-GUIDED[0].update(lesson="Yes: the difference between the two trends is itself significant, so we can say northern Chile warmed faster in this reanalysis.", preregistered=True)
 
 METHOD = dict(
     alpha=0.05,
@@ -83,7 +90,7 @@ METHOD = dict(
     robustness="As a second opinion with different assumptions we compute, on the same yearly values, the Theil–Sen slope (Sen 1968) and the Mann–Kendall test (Mann 1945), which use ranks instead of magnitudes, with the same allowance for year-to-year persistence. If the two approaches disagree we say so.",
     comparison="To ask whether two regions differ we analyse the difference between their series with the same method. Two separately significant trends do not show that the trends are different — and one significant plus one non-significant trend does not either.",
     multiple="Looking at many regions at once makes chance findings likely. Across the 16 regional trends of a variable, and separately across the 120 pairwise differences, we report Benjamini–Hochberg adjusted p-values. The guided comparisons were chosen before seeing any data, so their unadjusted p-value applies; for any other pair, use the adjusted one.",
-    calibration="We chose the main method by simulation (docs/calibration.md in the repository): seven methods, eleven kinds of synthetic series, fixed acceptance criteria. With slowly decaying memory like that of our real temperature residuals, our pre-registered monthly test gave 33–47 % false positives, our first revision 10–13 %, Newey–West 16–43 %, a block bootstrap 13–20 %, and the yearly-means test 6–9 %. No method reached the nominal 5 % in every scenario; we use the best calibrated one and still show what the earlier ones would have concluded.",
+    calibration="We chose the main method by simulation (docs/calibration.md in the repository): nine procedures, eleven kinds of synthetic series, acceptance criteria fixed beforehand. In the worst case — slowly decaying memory like that of our real temperature residuals — our pre-registered monthly test gave 47 % false positives where 5 % is promised, our first revision 13 %, Newey–West 21–43 %, a block bootstrap 20 %, and the yearly-means test 9 %. No method reached the nominal 5 % in every scenario; we use the best calibrated one and still show what the earlier ones would have concluded.",
     changes=[
         "Pre-registered (14 Nov, 09:05): least squares on monthly anomalies with a lag-1 effective sample size.",
         "Revision 1 (14 Nov, morning): validation on the real data showed more memory than lag-1 assumes; effective sample size extended to the leading positive autocorrelations. Wider intervals.",
@@ -96,6 +103,7 @@ METHOD = dict(
         "The test is still not perfectly calibrated: in our worst simulated case it gave about 9 % false positives instead of 5 % (about 10 % for 27-year records).",
         "Measurement uncertainty of the data products is not propagated into the confidence interval.",
         "A regional mean hides differences inside the region; MERRA-2 cells are about 50 km wide.",
+        "For Magallanes, another reanalysis (ERA5) and the Punta Arenas station do not confirm our results (they show warming, and no clear drying). Treat Magallanes as product-dependent.",
     ],
 )
 
@@ -181,7 +189,7 @@ def build_variable(name: str, regions: dict, ids: dict) -> dict | None:
     for a, b in combinations(sorted(out), 2):
         d = trend.difference(*series[a], *series[b])
         comparisons[f"{a}|{b}"] = {k: d[k] for k in keep_keys}
-    planned = {"|".join(sorted((g["a"], g["b"]))) for g in GUIDED if g["variable"] == name and g["preregistered"]}
+    planned = {"|".join(sorted(pair)) for pair in PREREGISTERED_PAIRS}
     for key, padj in zip(comparisons, trend.bh_adjust([c["p_value"] for c in comparisons.values()])):
         c = comparisons[key]
         c["p_adjusted"] = padj

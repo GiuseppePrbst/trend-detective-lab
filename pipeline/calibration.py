@@ -286,6 +286,14 @@ def main(n_seeds: int) -> None:
            "**No method meets criterion 1.** We therefore take the smallest worst-case type I error. ") +
           f"Selected by the stated rules: **M{ms.index(best)} — {best}** "
           f"(worst-case type I {100 * worst[best]:.1f} %, mean power {100 * power[best]:.1f} %).", "",
+          "Exceptions to state openly. (a) The fallback rule for 'no method meets criterion 1' was written into the code "
+          "(pipeline/calibration.py docstring) but not into the three criteria above. (b) Only methods that give a confidence "
+          "interval were eligible, because the pre-registration promises a slope with a 95 % interval; this requirement was "
+          "implicit, not listed. Without it, M8 (yearly Mann–Kendall with the same correction) would have the smallest worst case "
+          "(8.4 % vs 8.6 %), a difference far below the Monte-Carlo error (about ±1 point at these rates), so the two are tied; "
+          "M8 is shown in the app as the robustness check. (c) The worst case of M6 is 10.1 % for 27-year records — the length of "
+          "the precipitation series. (d) The missing-month table uses fewer series (a quarter of the main count), so its "
+          "Monte-Carlo error is about twice as large.", "",
           "What this means for the app: the pre-registered monthly test (M1) and its first revision (M2) are replaced as the main "
           "method. They are still computed and shown as a sensitivity analysis, so anyone can see what each choice would have concluded. "
           "The chosen method is still not perfectly calibrated — its worst case is above 5 % — and it has less power, so some real "

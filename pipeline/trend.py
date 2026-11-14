@@ -2,8 +2,8 @@
 
 Main method : monthly anomalies are averaged per calendar year; OLS trend on the yearly values with
               the standard error adjusted through a lag-1 effective sample size (Santer et al. 2000,
-              2008). Chosen by simulation (docs/calibration.md): it is the best-calibrated of seven
-              methods when memory decays slowly, at the cost of some power.
+              2008). Chosen by simulation (docs/calibration.md): it is the best-calibrated of the nine
+              methods compared when memory decays slowly, at the cost of some power.
 Robustness  : Theil-Sen slope + Mann-Kendall test on the same yearly values.
 Comparison  : the same main method applied to the difference series A - B.
 Transparency: the two earlier monthly tests (pre-registered lag-1, and the multi-lag revision) are
@@ -160,7 +160,8 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
         raise ValueError(f"need at least {MIN_YEARS} usable years, got {na}")
     fit = stats.linregress(ta, ya)
     resid = ya - (fit.intercept + fit.slope * ta)
-    r1a = float(np.corrcoef(resid[:-1], resid[1:])[0, 1])
+    rc = resid - resid.mean()
+    r1a = float(rc[:-1] @ rc[1:] / (rc @ rc))   # same lag-1 estimator as the calibration study (pipeline/calibration.py)
     n_eff_a = max(na * (1 - r1a) / (1 + r1a) if r1a > 0 else float(na), 3.0)
     dof = n_eff_a - 2
     se = fit.stderr * math.sqrt((na - 2) / dof)
