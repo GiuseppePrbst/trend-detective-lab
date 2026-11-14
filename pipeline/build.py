@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from pipeline import trend
-from pipeline.fetch import BOUNDARIES, ROOT, VARIABLES, cell_path, load_regions, parse_cell, region_cells
+from pipeline.fetch import BOUNDARIES, ROOT, VARIABLES, cell_path, fix_name, load_regions, parse_cell, region_cells
 
 OUT = ROOT / "web" / "public" / "data"
 MIN_CELLS = 10
@@ -72,7 +72,7 @@ GUIDED = [
 
 METHOD = dict(
     alpha=0.05,
-    main="We remove the seasonal cycle (each month minus the average of that calendar month), then fit a straight line by least squares. Because each month resembles the previous one, the uncertainty is widened using an effective sample size based on the lag-1 autocorrelation of the residuals (Santer et al. 2000, 2008). This gives the change per decade, its 95 % confidence interval and a two-sided p-value.",
+    main="We remove the seasonal cycle (each month minus the average of that calendar month), then fit a straight line by least squares. Because each month resembles the months before it, the uncertainty is widened using an effective sample size computed from the autocorrelation of the residuals (the approach of Santer et al. 2000, 2008, extended beyond lag 1 because our real residuals keep more memory than a lag-1 model assumes). This gives the change per decade, its 95 % confidence interval and a two-sided p-value.",
     robustness="As a second opinion with different assumptions we compute the Theil–Sen slope (Sen 1968) and the Mann–Kendall test with the Hamed & Rao (1998) correction for autocorrelation. If the two approaches disagree we say so.",
     comparison="To ask whether two regions differ we analyse the difference between their series with the same method. Two separately significant trends do not show that the trends are different.",
     multiple="When all 16 regions are shown together, p-values are adjusted with the Benjamini–Hochberg procedure to limit false discoveries.",
@@ -80,7 +80,7 @@ METHOD = dict(
         "The test looks for a straight-line trend over the whole period; it does not describe changes of direction.",
         "A significant trend says nothing about its cause, and it is not a forecast.",
         "Not significant does not mean no change: the record may be too short or too variable to tell.",
-        "Significance depends on the assumption that month-to-month persistence is well described by lag-1 autocorrelation.",
+        "Significance depends on how well the autocorrelation of the residuals is estimated; with very persistent variables the test is still somewhat optimistic (about 8–9 % false positives instead of 5 % in our simulations).",
         "Measurement uncertainty of the data products is not propagated into the confidence interval.",
     ],
 )
@@ -90,7 +90,7 @@ SHORT = {"Región Metropolitana de Santiago": "Metropolitana de Santiago", "Regi
 
 
 def short_name(full: str) -> str:
-    return SHORT.get(full) or re.sub(r"^Región (de la |de los |de |del )?", "", full).replace("La Araucanía", "La Araucanía")
+    return SHORT.get(full) or re.sub(r"^Región (de |del )?", "", full)
 
 
 def slug(name: str) -> str:
@@ -152,7 +152,7 @@ def build_variable(name: str, regions: dict, ids: dict) -> dict | None:
     for a, b in combinations(sorted(out), 2):
         d = trend.difference(*series[a], *series[b])
         comparisons[f"{a}|{b}"] = {k: (rnd(d[k], 6) if isinstance(d[k], float) else d[k]) for k in
-                                   ("slope_per_decade", "ci_low", "ci_high", "p_value", "theil_sen_per_decade", "mk_p_value", "r1", "n_eff", "verdict", "differs")}
+                                   ("slope_per_decade", "ci_low", "ci_high", "p_value", "theil_sen_per_decade", "mk_p_value", "r1", "n_eff", "acf_lags_used", "verdict", "differs")}
     wdir = ROOT / "data" / "weights"
     wdir.mkdir(parents=True, exist_ok=True)
     with open(wdir / f"{name}.csv", "w", newline="", encoding="utf-8") as f:
@@ -167,7 +167,7 @@ def main() -> None:
 
     fc = json.loads(BOUNDARIES.read_text(encoding="utf-8"))
     for f in fc["features"]:
-        full = f["properties"]["shapeName"]
+        full = fix_name(f["properties"]["shapeName"])
         f["properties"] = dict(id=ids[full], name=short_name(full))
     (OUT / "regions.geojson").write_text(json.dumps(fc, ensure_ascii=False), encoding="utf-8")
 

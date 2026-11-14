@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -51,7 +52,16 @@ def load_regions() -> dict[str, shapely.Geometry]:
         r.raise_for_status()
         BOUNDARIES.write_bytes(r.content)
     fc = json.loads(BOUNDARIES.read_text(encoding="utf-8"))
-    return {f["properties"]["shapeName"]: shapely.make_valid(shape(f["geometry"])) for f in fc["features"]}
+    return {fix_name(f["properties"]["shapeName"]): shapely.make_valid(shape(f["geometry"])) for f in fc["features"]}
+
+
+def fix_name(name: str) -> str:
+    """The boundary file stores names as double-encoded UTF-8 ('RegiÃ³n'); repair when possible."""
+    try:
+        name = name.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        pass
+    return unicodedata.normalize("NFC", name)
 
 
 def region_cells(geom: shapely.Geometry, var: dict) -> list[tuple[float, float, float]]:

@@ -1,7 +1,8 @@
 """Trend detection for monthly Earth-science series.
 
-Main method : OLS trend on monthly anomalies with the standard error adjusted for lag-1
-              autocorrelation through an effective sample size (Santer et al. 2000, 2008).
+Main method : OLS trend on monthly anomalies with the standard error adjusted for serial
+              correlation through an effective sample size (the approach of Santer et al. 2000, 2008,
+              generalised from lag 1 to the leading positive autocorrelations).
 Robustness  : Theil-Sen slope + Mann-Kendall test modified by Hamed & Rao (1998).
 Comparison  : the same main method applied to the difference series A - B.
 
@@ -74,6 +75,27 @@ def bh_adjust(pvalues):
     return out.tolist()
 
 
+def effective_sample_size(resid: np.ndarray) -> tuple[float, float, int]:
+    """Effective number of independent values in autocorrelated residuals.
+
+    n_eff = n / (1 + 2 * sum_k (1 - k/n) * rho_k), summing the leading run of positive autocorrelations
+    (stops at the first non-positive lag, at most n/5 lags). For an AR(1) process this equals the
+    familiar n(1 - r1)/(1 + r1); unlike that shortcut it stays honest when memory decays more slowly
+    than AR(1), which is what our real temperature residuals show (see docs/validation.md).
+    Returns (r1, n_eff, number of lags used). n_eff is never larger than n.
+    """
+    n = len(resid)
+    rc = resid - resid.mean()
+    rho = np.correlate(rc, rc, "full")[n - 1:] / float(rc @ rc)
+    total, lags = 0.0, 0
+    for k in range(1, max(2, n // 5)):
+        if rho[k] <= 0:
+            break
+        total += (1 - k / n) * rho[k]
+        lags = k
+    return float(rho[1]), max(n / (1 + 2 * total), 3.0), lags
+
+
 def analyze(dates, values, alpha: float = ALPHA) -> dict:
     """Trend of a monthly series. Raises ValueError when the data cannot support a trend estimate."""
     yy, mm, raw = _clean(dates, values)
@@ -96,7 +118,7 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
                alpha=alpha, mean=float(np.nanmean(raw)), warnings=warnings)
 
     if np.ptp(a) == 0:  # constant series: no trend, nothing to test
-        res.update(slope_per_decade=0.0, ci_low=0.0, ci_high=0.0, p_value=1.0, r1=0.0, n_eff=float(n),
+        res.update(slope_per_decade=0.0, ci_low=0.0, ci_high=0.0, p_value=1.0, r1=0.0, n_eff=float(n), acf_lags_used=0,
                    theil_sen_per_decade=0.0, mk_p_value=1.0, verdict="not_significant", direction="none")
         res["warnings"] = warnings + ["constant_series"]
         return res
@@ -104,9 +126,7 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
     # --- main: OLS with AR(1) effective sample size --------------------------------------------
     fit = stats.linregress(tt, a)
     resid = a - (fit.intercept + fit.slope * tt)
-    r1 = float(np.corrcoef(resid[:-1], resid[1:])[0, 1])
-    n_eff = n * (1 - r1) / (1 + r1) if r1 > 0 else float(n)   # never inflate n for negative r1
-    n_eff = max(n_eff, 3.0)
+    r1, n_eff, lags = effective_sample_size(resid)
     se = fit.stderr * math.sqrt((n - 2) / (n_eff - 2))
     dof = n_eff - 2
     tcrit = stats.t.ppf(1 - alpha / 2, dof)
@@ -126,7 +146,7 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
         verdict = "not_significant"
 
     res.update(slope_per_decade=float(fit.slope), ci_low=float(fit.slope - tcrit * se), ci_high=float(fit.slope + tcrit * se),
-               p_value=p, r1=r1, n_eff=float(n_eff), theil_sen_per_decade=ts, mk_p_value=mk_p, verdict=verdict,
+               p_value=p, r1=r1, n_eff=float(n_eff), acf_lags_used=lags, theil_sen_per_decade=ts, mk_p_value=mk_p, verdict=verdict,
                direction="increasing" if fit.slope > 0 else "decreasing")
     return res
 

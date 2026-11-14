@@ -1,0 +1,134 @@
+{
+ "generated_at": "2026-11-14T12:17:41+00:00",
+ "variables": [
+  {
+   "label": "Air temperature at 2 m",
+   "definition": "The temperature of the air two metres above the ground — what a weather station thermometer would read — averaged over each month.",
+   "unit": "°C",
+   "trend_unit": "°C per decade",
+   "nature": "reanalysis",
+   "nature_label": "Reanalysis (weather model + observations), not a direct measurement",
+   "product": "MERRA-2 M2IMNXASM",
+   "grid": "0.5° × 0.625° (about 50 km)",
+   "period": [
+    1980,
+    2025
+   ],
+   "caveats": [
+    "MERRA-2 is a reanalysis: a weather model constrained by observations. Changes in the observing system over the decades can leave artificial jumps in the record.",
+    "Grid cells are about 50 km wide, so the coast and the Andes are not separated; coastal cells mix land and ocean.",
+    "A regional mean hides differences inside the region."
+   ],
+   "citation": "Global Modeling and Assimilation Office (GMAO) (2015), MERRA-2 instM_2d_asm_Nx: 2d, Monthly mean, Single-Level, Assimilation, Single-Level Diagnostics V5.12.4, Greenbelt, MD, USA, Goddard Earth Sciences Data and Information Services Center (GES DISC), doi:10.5067/5ESKGQTZG7FO. Accessed through the NASA Giovanni time-series service.",
+   "id": "t2m",
+   "version": "5.12.4",
+   "doi": "10.5067/5ESKGQTZG7FO",
+   "source_unit": "K",
+   "service": "NASA Giovanni time-series service (GES DISC)",
+   "accessed": "2026-11-14"
+  }
+ ],
+ "regions": [
+  {
+   "id": "arica-y-parinacota",
+   "name": "Arica y Parinacota"
+  },
+  {
+   "id": "tarapaca",
+   "name": "Tarapacá"
+  },
+  {
+   "id": "antofagasta",
+   "name": "Antofagasta"
+  },
+  {
+   "id": "atacama",
+   "name": "Atacama"
+  },
+  {
+   "id": "coquimbo",
+   "name": "Coquimbo"
+  },
+  {
+   "id": "valparaiso",
+   "name": "Valparaíso"
+  },
+  {
+   "id": "metropolitana-de-santiago",
+   "name": "Metropolitana de Santiago"
+  },
+  {
+   "id": "o-higgins",
+   "name": "O'Higgins"
+  },
+  {
+   "id": "maule",
+   "name": "Maule"
+  },
+  {
+   "id": "nuble",
+   "name": "Ñuble"
+  },
+  {
+   "id": "bio-bio",
+   "name": "Bío-Bío"
+  },
+  {
+   "id": "la-araucania",
+   "name": "La Araucanía"
+  },
+  {
+   "id": "los-rios",
+   "name": "Los Ríos"
+  },
+  {
+   "id": "los-lagos",
+   "name": "Los Lagos"
+  },
+  {
+   "id": "aysen",
+   "name": "Aysén"
+  },
+  {
+   "id": "magallanes",
+   "name": "Magallanes"
+  }
+ ],
+ "guided": [
+  {
+   "title": "Is southern Chile warming as fast as the desert north?",
+   "question": "Compare air temperature trends in Los Lagos and Antofagasta since 1980.",
+   "variable": "t2m",
+   "a": "los-lagos",
+   "b": "antofagasta"
+  },
+  {
+   "title": "Los Lagos versus the far south",
+   "question": "Do Los Lagos and Magallanes show the same temperature trend?",
+   "variable": "t2m",
+   "a": "los-lagos",
+   "b": "magallanes"
+  },
+  {
+   "title": "Is it raining less in Los Lagos?",
+   "question": "Look at precipitation in Los Lagos since 1998 and compare it with Magallanes.",
+   "variable": "precip",
+   "a": "los-lagos",
+   "b": "magallanes"
+  }
+ ],
+ "method": {
+  "alpha": 0.05,
+  "main": "We remove the seasonal cycle (each month minus the average of that calendar month), then fit a straight line by least squares. Because each month resembles the months before it, the uncertainty is widened using an effective sample size computed from the autocorrelation of the residuals (the approach of Santer et al. 2000, 2008, extended beyond lag 1 because our real residuals keep more memory than a lag-1 model assumes). This gives the change per decade, its 95 % confidence interval and a two-sided p-value.",
+  "robustness": "As a second opinion with different assumptions we compute the Theil–Sen slope (Sen 1968) and the Mann–Kendall test with the Hamed & Rao (1998) correction for autocorrelation. If the two approaches disagree we say so.",
+  "comparison": "To ask whether two regions differ we analyse the difference between their series with the same method. Two separately significant trends do not show that the trends are different.",
+  "multiple": "When all 16 regions are shown together, p-values are adjusted with the Benjamini–Hochberg procedure to limit false discoveries.",
+  "limitations": [
+   "The test looks for a straight-line trend over the whole period; it does not describe changes of direction.",
+   "A significant trend says nothing about its cause, and it is not a forecast.",
+   "Not significant does not mean no change: the record may be too short or too variable to tell.",
+   "Significance depends on how well the autocorrelation of the residuals is estimated; with very persistent variables the test is still somewhat optimistic (about 8–9 % false positives instead of 5 % in our simulations).",
+   "Measurement uncertainty of the data products is not propagated into the confidence interval."
+  ]
+ }
+}
