@@ -89,9 +89,10 @@ export interface Interval {
 /** Dot-and-interval chart: every row shares ONE x-axis, with a vertical zero line. */
 export function intervals(rows: Interval[], unit: string, width: number) {
   const label = (r: Interval) => `${r.name}: ${num(r.slope)} (${num(r.lo)} to ${num(r.hi)})`;
+  const narrow = width < 520;   // phones: wrap long labels instead of letting them run off the chart
   return Plot.plot({
     width,
-    height: 50 + rows.length * 58,
+    height: 50 + rows.length * (narrow ? 74 : 58),
     marginTop: 34,
     marginLeft: 16,
     marginRight: 16,
@@ -103,7 +104,7 @@ export function intervals(rows: Interval[], unit: string, width: number) {
       Plot.ruleX([0], { stroke: INK, strokeWidth: 1.5 }),
       Plot.ruleY(rows, { y: 'name', x1: 'lo', x2: 'hi', stroke: 'color', strokeWidth: 3 }),
       Plot.dot(rows, { y: 'name', x: 'slope', fill: 'color', r: 6 }),
-      Plot.text(rows, { y: 'name', text: label, frameAnchor: 'left', textAnchor: 'start', dy: -16, fontWeight: 600, fill: INK, stroke: '#fff', strokeWidth: 4, paintOrder: 'stroke' }),
+      Plot.text(rows, { y: 'name', text: label, frameAnchor: 'left', textAnchor: 'start', dy: narrow ? -22 : -16, lineWidth: narrow ? Math.floor(width / 7.5 / 1.0 / 1.4) : undefined, fontSize: narrow ? 11 : 12, fontWeight: 600, fill: INK, stroke: '#fff', strokeWidth: 4, paintOrder: 'stroke' }),
     ],
   });
 }

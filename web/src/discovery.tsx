@@ -15,14 +15,15 @@ export interface Question {
   open: { kind: 'lab' | 'coast' | 'magallanes' | 'case'; region?: string; x?: string; y?: string; index?: number };
 }
 type Res = { slope: number | null; r?: number; ci: [number, number] | null; p: number | null; q?: number | null; unit: string; period: string; count_main?: number; count_alt?: number };
-type Check = { source: string; kind: string; agreement: string; years: number; ours: number[] | null; theirs: number[]; dependency: string };
+type Check = { source: string; kind: string; agreement: string; years: number; ours: number[] | null; theirs: number[]; dependency: string; scope?: string };
 export interface Card {
   id: string; title: string; status: string; variable: string; territory: string; result: Res;
   source: { product: string; type: string; resolution: string; access: string };
   analysis: { method: string; correction: string; sensitivity: unknown };
   checks: Check[]; can: string; cannot: string; open?: string[]; limitations: string[];
+  question?: string; links?: { label: string; url: string }[];
 }
-export interface Discovery { generated_at: string; catalog: CatalogEntry[]; relation_types: Record<string, string>; questions: Question[]; cards: Card[] }
+export interface Discovery { generated_at: string; catalog: CatalogEntry[]; relation_types: Record<string, string>; questions: Question[]; cards: Card[]; agreement_note?: string }
 
 const STATUS_LABEL: Record<string, string> = {
   integrated: 'Integrated', available_not_processed: 'Available at NASA, not processed', planned: 'Planned',
@@ -91,7 +92,7 @@ const fmtRes = (r: Res) => {
   return `${est}${ci}${p}${q} · ${r.period}`;
 };
 
-export function EvidenceCard({ c }: { c: Card }) {
+export function EvidenceCard({ c, note }: { c: Card; note?: string }) {
   const sens = c.analysis.sensitivity as
     | { label: string; period: string; slope: number; ci: [number, number]; p: number; q?: number; main: boolean }[]
     | { range_restricted: Res; nearest_pairs: Res; thresholds: { rule: string; slope: number; ci: [number, number] }[] }
@@ -99,6 +100,7 @@ export function EvidenceCard({ c }: { c: Card }) {
   return (
     <article className="ecard" aria-labelledby={`ec-${c.id}`}>
       <header><h3 id={`ec-${c.id}`}>{c.title}</h3><span className={`tag-exp${c.status.startsWith('confirmatory') ? ' tag-conf' : ''}`}>{c.status}</span></header>
+      {c.question && <p className="ecard-q">Question: {c.question}</p>}
       <dl>
         <div><dt>A · Result</dt><dd>{c.variable}, {c.territory}: {fmtRes(c.result)}</dd></div>
         <div><dt>B · Source</dt><dd>{c.source.product} — {c.source.type}, {c.source.resolution}, via {c.source.access}</dd></div>
@@ -110,11 +112,12 @@ export function EvidenceCard({ c }: { c: Card }) {
         <div><dt>D · Cross-checks</dt><dd>{c.checks.length ? (
           <ul>{c.checks.map((k, i) => (
             <li key={i}>{k.source}: {k.ours ? `ours ${signed(k.ours[0])} vs ` : ''}theirs {signed(k.theirs[0])} ({num(k.theirs[1])} to {num(k.theirs[2])}), {pval(k.theirs[3])}
-              {' — '}<strong>{k.agreement}</strong>{k.years ? `, ${k.years} common years` : ''}. Dependency: {k.dependency}.</li>
-          ))}</ul>) : NE + ' (no independent product available in this version).'}</dd></div>
+              {' — '}<strong>{k.agreement}</strong>{k.years ? `, ${k.years} common years` : ''}. {k.scope ? `Scope: ${k.scope}. ` : ''}Dependency: {k.dependency}.</li>
+          ))}</ul>) : NE + ' (no independent product available in this version).'}{c.checks.length > 0 && note ? <span className="muted"> {note}</span> : null}</dd></div>
         <div><dt>E · Interpretation</dt><dd><strong>Supports:</strong> {c.can} <strong>Does not support:</strong> {c.cannot}
           {c.open?.length ? <> <strong>Open:</strong> {c.open.join('; ')}.</> : null}</dd></div>
         <div><dt>F · Limitations</dt><dd>{c.limitations.join('; ')}.</dd></div>
+        {c.links?.length ? <div><dt>G · Sources and method</dt><dd>{c.links.map((l, i) => <span key={l.url}>{i ? ' · ' : ''}<a href={l.url}>{l.label}</a></span>)}</dd></div> : null}
       </dl>
     </article>
   );
@@ -126,7 +129,7 @@ export function EvidenceCards({ d }: { d: Discovery }) {
       <h2 id="h-evidence"><span className="step">9</span> Evidence cards</h2>
       <p>The same six questions for every important result: what, from which source, how analysed, checked against what, what it
         supports and what it does not. Missing pieces say "{NE}". No confidence score is invented.</p>
-      {d.cards.map((c) => <EvidenceCard key={c.id} c={c} />)}
+      {d.cards.map((c) => <EvidenceCard key={c.id} c={c} note={d.agreement_note} />)}
     </section>
   );
 }
@@ -149,8 +152,10 @@ export function MagallanesCase({ d }: { d: Discovery }) {
       <p className="callout" role="note"><strong>A significant trend in one dataset does not guarantee that the conclusion is robust across datasets.</strong></p>
       {cards.map((c) => (
         <div key={c.id}>
-          <h3>{c.variable}</h3>
+          <h3>{c.title}</h3>
+          <p className="muted">{c.source.product} · {c.source.resolution} · regional mean {c.result.period}; ERA5 compared at five grid points, the station on its own months.</p>
           <PlotFigure make={make(c)} alt={`${c.variable} trends in Magallanes from several sources, each with its 95 % interval.`} />
+          <p><strong>Defensible:</strong> {c.can} <strong>Not defensible:</strong> {c.cannot}</p>
         </div>
       ))}
       <ul className="teach">

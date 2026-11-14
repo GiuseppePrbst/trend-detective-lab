@@ -306,17 +306,28 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
           Plot.dot(rows, { x: key, y: 'slope_per_decade', fill: 'cls', symbol: 'cls', r: 4 })],
       }));
     }
+    const joint = Plot.plot({
+      width: Math.min(w, 340), height: 260, marginLeft: 52, grid: true, style: { fontSize: '12px', color: INK },
+      x: { label: 'Distance to the coast (km)' }, y: { label: 'Mean elevation (m)' },
+      color: { type: 'diverging', scheme: 'RdBu', reverse: true, pivot: 0, legend: true, label: 'Trend (°C per decade)' },
+      symbol: { domain: ['coastal cell', 'interior cell'], range: ['square', 'circle'] },
+      marks: [Plot.dot(rows, { x: 'distance_to_coast_km', y: 'elevation_mean', fill: 'slope_per_decade', symbol: 'cls', r: 5, stroke: INK, strokeWidth: 0.4 })],
+    });
+    fig.append(joint);
     return fig;
   }, [A]);
   return (
     <ol className="steps">
+      <li><h4>The question</h4>
+        <p>Why do coastal and inland parts of Antofagasta show different warming trends? We can describe the difference and test how robust
+          it is; we cannot, with these data, prove what causes it.</p></li>
       <li><h4>Regional mean</h4>
         <p>The whole Antofagasta region (MERRA-2, 1980–2025): {ci(reg)}, {pval(reg.p_value)}.</p></li>
       <li><h4>The problem</h4>
         <p>{st.source}: {ci(st.station)}, {pval(st.station.p_value)}. On the same months, the regional mean gives {ci(st.ours_same_months)}.
           The coastal station does not show the regional warming.</p></li>
-      <li><h4>Split the region</h4><CoastPanel mv={mv} /></li>
-      <li><h4>Territorial context</h4>
+      <li><h4>Split the region: coast vs interior</h4><CoastPanel mv={mv} /></li>
+      <li><h4>Geomorphological context</h4>
         <p>Each MERRA-2 cell (about 50 km) was described in QGIS with a 12.5 m elevation model (CIREN; statistics only) and its distance to
           the coastline. The relief describes the cells; the climate data cannot resolve anything smaller.</p>
         <figure className="map-figure">
@@ -327,24 +338,26 @@ function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SS
             PALSAR RTC-derived; 12.5 m pixel spacing, not 12.5 m climate data). Climate trends: NASA MERRA-2 via Giovanni. Provenance:{' '}
             <a href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/gis/DATA_LICENSES.md">DATA_LICENSES.md</a>.</figcaption>
         </figure>
-        <PlotFigure make={scatter} alt="Each cell's warming trend against its mean elevation and against its distance to the coast." /></li>
-      <li><h4>External check</h4>
-        <p>ERA5, another reanalysis, shows the same contrast at the same points (rows in step 3). ERA5 and MERRA-2 share many assimilated
-          observations, so this is supporting, not fully independent, evidence. The station sits with the coastal cells.</p>
-        {sst && <SSTPanel sst={sst} />}</li>
-      <li><h4>Sensitivity</h4>
+        <PlotFigure make={scatter} alt="Each cell's warming trend against its mean elevation and against its distance to the coast, and elevation against distance coloured by trend." />
+        <p className="hint">Third panel: elevation and distance to the coast rise together, so the two cannot be fully separated with 51 cells.</p></li>
+      <li><h4>Sensitivity and a second reanalysis</h4>
         <ul>
+          <li><strong>ERA5</strong>, another reanalysis, shows the same contrast at the same cell centres (rows in step 4). ERA5 and MERRA-2 share
+            many assimilated observations, so this is supporting, not fully independent, evidence. The coastal station sits with the coastal cells.</li>
           <li><strong>Elevation-range-restricted comparison</strong> (interior cells inside the coastal elevation range; {t1.n_matched} cells averaging
             {' '}{Math.round(t1.matched_mean_elevation)} m vs {Math.round(t1.coastal_mean_elevation)} m on the coast — not the same height): coast − interior {ci(t1.difference)}.</li>
           <li><strong>Nearest-elevation pairs</strong> ({np.n_pairs} pairs; elevation gaps up to {Math.round(np.max_abs_elevation_gap_m)} m): {ci(np.difference)}.</li>
           <li><strong>Definition of "coastal"</strong>: {A.t3.map((r) => `${r.rule}: ${signed(r.difference.slope_per_decade)}`).join('; ')} °C per decade.</li>
           <li>Coast and altitude go together (ρ = {signed(rho('elevation_vs_distance'))}). Ranking the trend against distance after removing elevation leaves
             {' '}{signed(part('partial_trend_distance_given_elevation'))}; elevation after removing distance, {signed(part('partial_trend_elevation_given_distance'))} (descriptive; neighbouring cells are not independent).</li>
-        </ul></li>
-      <li><h4>Interpretation</h4>
+        </ul>
+        {sst && <SSTPanel sst={sst} />}</li>
+      <li><h4>Interpretation, uncertainty and open questions</h4>
         <p>The regional average hides an important spatial difference: in two reanalyses the coastal cells did not warm while the interior did,
           and the coastal station agrees. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
-          coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.</p></li>
+          coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.
+          "No statistically significant warming in the coastal cells" is not the same as "the coast did not warm". The causal mechanism remains
+          unproven.</p></li>
     </ol>
   );
 }

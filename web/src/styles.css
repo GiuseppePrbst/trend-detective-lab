@@ -231,3 +231,5 @@ button:disabled { cursor: not-allowed; }
 .steps > li { margin: 1rem 0; }
 .steps h4 { margin: 0 0 0.3rem; }
 .sens { margin: 0.5rem 0 1rem; }
+
+.ecard-q { margin: 0.4rem 0 0; font-style: italic; color: #374151; }
