@@ -20,6 +20,8 @@ from itertools import combinations
 from pathlib import Path
 
 import numpy as np
+import shapely
+import shapely.geometry
 
 from pipeline import trend
 from pipeline.fetch import BOUNDARIES, ROOT, VARIABLES, cell_path, fix_name, load_regions, parse_cell, region_cells
@@ -169,6 +171,9 @@ def main() -> None:
     for f in fc["features"]:
         full = fix_name(f["properties"]["shapeName"])
         f["properties"] = dict(id=ids[full], name=short_name(full))
+        # display-only simplification (~1 km) to keep the map file small; area weights use the original geometry
+        geom = shapely.set_precision(shapely.make_valid(shapely.geometry.shape(f["geometry"])).simplify(0.01), 0.001)
+        f["geometry"] = shapely.geometry.mapping(geom)
     (OUT / "regions.geojson").write_text(json.dumps(fc, ensure_ascii=False), encoding="utf-8")
 
     variables = []
@@ -188,6 +193,38 @@ def main() -> None:
     catalog = dict(generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), variables=variables,
                    regions=[dict(id=ids[f], name=short_name(f)) for f in order], guided=GUIDED, method=METHOD)
     (OUT / "catalog.json").write_text(json.dumps(catalog, ensure_ascii=False, indent=1), encoding="utf-8")
+    write_results(catalog)
+
+
+def write_results(catalog: dict) -> None:
+    """docs/results.md: the numbers the app shows, as a table, generated from the same JSON files."""
+    verdicts = dict(significant_robust="significant, robust", method_dependent="method-dependent", not_significant="not significant")
+    L = ["# Results", "", f"Generated {catalog['generated_at']} by `python -m pipeline.build`. Do not edit by hand.", ""]
+    for var in catalog["variables"]:
+        data = json.loads((OUT / f"{var['id']}.json").read_text(encoding="utf-8"))
+        L += [f"## {var['label']} — {var['product']} v{var['version']}, {var['period'][0]}–{var['period'][1]}", "",
+              f"{var['nature_label']}. Regions listed north to south. Slope in {var['trend_unit']}.", "",
+              "| Region | Grid cells | Mean | Slope (95 % CI) | p | p (BH-adjusted) | n_eff / n | Theil–Sen | MK p | Verdict |",
+              "|---|---|---|---|---|---|---|---|---|---|"]
+        for r in catalog["regions"]:
+            R = data["regions"].get(r["id"])
+            if R is None:
+                L.append(f"| {r['name']} | – | – | not available yet | – | – | – | – | – | – |")
+                continue
+            t = R["trend"]
+            L.append(f"| {r['name']} | {R['n_cells']} | {t['mean']:.2f} | {t['slope_per_decade']:+.3f} ({t['ci_low']:+.3f}, {t['ci_high']:+.3f}) | "
+                     f"{t['p_value']:.4f} | {t['p_adjusted']:.4f} | {t['n_eff']:.0f} / {t['n_months']} | {t['theil_sen_per_decade']:+.3f} | "
+                     f"{t['mk_p_value']:.4f} | {verdicts[t['verdict']]} |")
+        L.append("")
+        for g in catalog["guided"]:
+            key = "|".join(sorted((g["a"], g["b"])))
+            if g["variable"] == var["id"] and key in data["comparisons"]:
+                c = data["comparisons"][key]
+                first, second = sorted((g["a"], g["b"]))
+                L.append(f"- Difference {first} − {second}: {c['slope_per_decade']:+.3f} ({c['ci_low']:+.3f}, {c['ci_high']:+.3f}) {var['trend_unit']}, "
+                         f"p = {c['p_value']:.4f} → trends {'differ' if c['differs'] else 'cannot be said to differ'}.")
+        L.append("")
+    (ROOT / "docs" / "results.md").write_text("\n".join(L), encoding="utf-8")
 
 
 if __name__ == "__main__":
