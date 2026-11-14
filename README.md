@@ -109,9 +109,11 @@ Everything here was decided after the main results; families and corrections wer
 `docs/multivariable/MULTIVARIABLE_RESULTS.md`, `TERRITORIAL_RESULTS.md`; selection: `DISCOVERY_SELECTION.md`.
 
 - **Antofagasta, coast vs interior (MERRA-2, 1980–2025).** Coastal cells (land share < 0.99, classified in QGIS) show no
-  warming (−0.03 °C/decade, CI −0.19 to +0.14); interior cells warm +0.27 (CI +0.14 to +0.39). ERA5 at matching points shows
-  the same contrast (−0.03 vs +0.28), and the coastal Antofagasta station (−0.09) sits with the coast. Against interior cells
-  of similar elevation the coast still warms 0.20 °C/decade less (CI −0.25 to −0.14). Coast and elevation are strongly
+  warming (−0.03 °C/decade, CI −0.19 to +0.14); interior cells warm +0.27 (CI +0.14 to +0.39). ERA5 at the same points shows
+  the same contrast (−0.03 vs +0.28), and the coastal Antofagasta station (−0.09) sits with the coast. In an elevation-range-restricted
+  comparison (interior cells within the coastal elevation range, on average 361 m higher) the coast still warms 0.20
+  °C/decade less (CI −0.25 to −0.14); pairing each coastal cell with the interior cell of nearest elevation gives −0.19
+  (CI −0.28 to −0.11), with elevation gaps still up to 827 m. Coast and elevation are strongly
   correlated (ρ = 0.90); a cooler ocean-influenced coast is plausible but not proven. This largely explains the earlier
   station/region disagreement.
 - **Central Chile, rain and land water (GLDAS-2.1 model, 2000–2024).** Detrended yearly anomalies of IMERG precipitation and
@@ -228,6 +230,7 @@ Data
 - CIREN (2016), DEM ALOS PALSAR regional mosaics (Antofagasta, Los Lagos), geoportal.cl; derived from the ASF ALOS PALSAR RTC DEM (ASF DAAC, https://asf.alaska.edu). JAXA/METI ALOS PALSAR.
 - CONAF / MINAGRI, Catastro de los Recursos Vegetacionales y Uso de la Tierra: Antofagasta 2019, Los Lagos 2018, IDE MINAGRI (https://ide.minagri.gob.cl).
 - Natural Earth 10 m land (public domain), https://www.naturalearthdata.com.
+- USGS GMTED2010 (Danielson, J.J., and D.B. Gesch, 2011, USGS Open-File Report 2011-1073, doi:10.3133/ofr20111073), 15″ mean elevation, public domain: relief shown in maps. CIREN and CONAF data are used for per-cell statistics only; see `docs/gis/DATA_LICENSES.md`.
 - Region boundaries: geoBoundaries gbOpen CHL ADM1 (Runfola et al. 2020, doi:10.1371/journal.pone.0231866); source Biblioteca del Congreso Nacional de Chile / OCHA ROLAC; CC BY 3.0 IGO.
 - Data library handed out at the Quemchi venue (73 resources): audited in `docs/data/OFFICIAL_DATA_LIBRARY_AUDIT.md`.
 

@@ -71,13 +71,25 @@ def antofagasta():
     interior = [c for c in cells if c["coastal_e3"] != 1]
     lo, hi = min(c["elevation_mean"] for c in coastal), max(c["elevation_mean"] for c in coastal)
     matched = [c for c in interior if lo <= c["elevation_mean"] <= hi]
-    # T1: coastal vs elevation-matched interior (single exploratory test)
+    # T1: coastal vs interior cells restricted to the coastal elevation RANGE (not cell-by-cell matching; single exploratory test)
     sc, sm = group_series(coastal, weights), group_series(matched, weights)
     t1 = dict(coastal_elevation_range=[lo, hi], n_coastal=len(coastal), n_matched=len(matched),
               matched_mean_elevation=float(np.mean([c["elevation_mean"] for c in matched])),
               coastal_mean_elevation=float(np.mean([c["elevation_mean"] for c in coastal])),
               coastal=summary(trend.analyze(*sc)), matched_interior=summary(trend.analyze(*sm)),
               difference=summary(trend.difference(*sc, *sm)))
+    # T1b (sensitivity, added after review, exploratory): nearest-elevation pairing. Each coastal cell is paired with the
+    # interior cell of closest DEM mean elevation (with replacement); the series is the mean of the paired differences.
+    pairs = [(c, min(interior, key=lambda i: abs(i["elevation_mean"] - c["elevation_mean"]))) for c in coastal]
+    ser = {}
+    for c in [x for pair in pairs for x in pair]:
+        ser.setdefault((c["lat"], c["lon"]), parse_cell(cell_path("t2m", c["lat"], c["lon"]))[1])
+    dates = [d for d in sorted(ser[(coastal[0]["lat"], coastal[0]["lon"])]) if 1980 <= int(d[:4]) <= 2025]
+    pdiff = [float(np.mean([ser[(a["lat"], a["lon"])][d] - ser[(b["lat"], b["lon"])][d] for a, b in pairs])) for d in dates]
+    gaps = [b["elevation_mean"] - a["elevation_mean"] for a, b in pairs]
+    t1["nearest_elevation_pairs"] = dict(n_pairs=len(pairs), n_distinct_interior=len({(b["lat"], b["lon"]) for _, b in pairs}),
+                                         mean_elevation_gap_m=float(np.mean(gaps)), max_abs_elevation_gap_m=float(np.max(np.abs(gaps))),
+                                         difference=summary(trend.analyze(dates, pdiff)))
     # T2: continuous gradients (descriptive)
     sl = np.array([c["slope_per_decade"] for c in cells])
     el = np.array([c["elevation_mean"] for c in cells])
@@ -123,7 +135,7 @@ def main() -> None:
     OUT.joinpath("territory.json").write_text(json.dumps(rnd_deep(doc, 4), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     write_report(doc)
     a = doc["antofagasta"]["t1"]["difference"]
-    print("T1 coastal − matched interior:", round(a["slope_per_decade"], 3), round(a["ci_low"], 3), round(a["ci_high"], 3), round(a["p_value"], 4))
+    print("T1 coastal − range-restricted interior:", round(a["slope_per_decade"], 3), round(a["ci_low"], 3), round(a["ci_high"], 3), round(a["p_value"], 4))
 
 
 def write_report(doc) -> None:
@@ -134,13 +146,19 @@ def write_report(doc) -> None:
          "Unit of analysis: the native climate cell. DEM (CIREN, processed at 100 m) and CONAF land cover describe each cell; they add no "
          "climate observations. Hypotheses: `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`.", "",
          "## Antofagasta (51 MERRA-2 cells, T2M 1980–2025)", "",
-         f"### T1 · Coastal cells vs elevation-matched interior cells (one exploratory test)", "",
+         f"### T1 · Elevation-range-restricted comparison: coastal cells vs interior cells within the coastal elevation range (one exploratory test)", "",
+         "This is **not** cell-by-cell elevation matching: the selected interior cells are on average higher than the coastal cells.", "",
          f"Coastal cells: {t1['n_coastal']}, DEM mean elevation {t1['coastal_elevation_range'][0]:.0f}–{t1['coastal_elevation_range'][1]:.0f} m "
          f"(average {t1['coastal_mean_elevation']:.0f} m). Interior cells in the same elevation range: {t1['n_matched']} (average {t1['matched_mean_elevation']:.0f} m).", "",
          "| Group | Trend (°C/decade), 95 % CI | p | Verdict |", "|---|---|---|---|"]
     for g in ("coastal", "matched_interior", "difference"):
         t = t1[g]
-        L.append(f"| {g.replace('_', ' ')} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {t['p_value']:.4f} | {t['verdict']} |")
+        L.append(f"| {g.replace('matched_interior', 'range-restricted interior').replace('_', ' ')} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {t['p_value']:.4f} | {t['verdict']} |")
+    np_ = t1["nearest_elevation_pairs"]
+    d = np_["difference"]
+    L += ["", f"Sensitivity (added after review): nearest-elevation pairing, {np_['n_pairs']} pairs using {np_['n_distinct_interior']} distinct interior "
+          f"cells; mean elevation gap interior − coastal {np_['mean_elevation_gap_m']:+.0f} m (largest {np_['max_abs_elevation_gap_m']:.0f} m). "
+          f"Mean paired difference trend {f3(d['slope_per_decade'])} °C/decade ({f3(d['ci_low'])}, {f3(d['ci_high'])}), p = {d['p_value']:.4f}."]
     L += ["", "### T2 · Continuous gradients (Spearman ρ across 51 dependent cells — descriptive, no p-values)", "",
           f"- trend vs DEM mean elevation: ρ = {t2['trend_vs_elevation']['rho']:+.2f}",
           f"- trend vs distance from the cell centre to the coast: ρ = {t2['trend_vs_distance']['rho']:+.2f}",

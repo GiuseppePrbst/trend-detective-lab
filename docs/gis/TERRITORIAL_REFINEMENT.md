@@ -7,7 +7,7 @@
 | Climate observation | MERRA-2 0.5° × 0.625° (~50 km); GLDAS 0.25° (~25 km) | The resolution of the NASA data. Nothing smaller is resolved. |
 | Territorial characterisation | DEM 12.5 m pixels (processed at 100 m); CONAF catastro 1:50 000 (rasterised at 100 m) | Describes what lies inside each climate cell. |
 | Statistical analysis | One native climate cell = one trend | Terrain and land cover never add climate observations (no pseudoreplication). |
-| Visualisation | 250 m relief and land cover; cells drawn as their true boxes | Display only. |
+| Visualisation | GMTED2010 relief (~450 m); cells drawn as their true boxes | Display only. |
 
 A 12.5 m DEM does **not** turn MERRA-2 into a 12.5 m climate product.
 
@@ -20,11 +20,9 @@ A 12.5 m DEM does **not** turn MERRA-2 into a 12.5 m climate product.
 | Coastline | Natural Earth 10 m land | 5.x | Shapefile, EPSG:4326 | Public domain |
 | Land-use change 2001–2023, Los Lagos (`cut_2001_2023_r10`) | CONAF / IDE MINAGRI | – | RAR 635 MB | Found; **not** downloaded or used |
 
-Raw files stay in `data/gis_src/` (ignored by Git). Committed: per-cell tables (`data/processed/`), the refined
-GeoPackage (`qgis/layers_refined.gpkg`), 250 m display rasters (`qgis/terrain/`) and the maps. **Pending human check:**
-the redistribution terms of CIREN and CONAF derivatives (the portals ask to cite the providing institution; no explicit
-licence was found). If in doubt, remove `qgis/terrain/*landcover*` and `*dem*` from the public repository; the
-per-cell shares can stay.
+Raw files stay in `data/gis_src/` (ignored by Git). Committed: per-cell tables (`data/processed/`) and the refined
+GeoPackage (`qgis/layers_refined.gpkg`). CIREN- and CONAF-derived rasters are **not** published (redistribution not
+confirmed); the published relief comes from USGS GMTED2010 (public domain). Decisions per resource: `DATA_LICENSES.md`.
 
 ## DEM metadata (from the CIREN record) and what it means
 

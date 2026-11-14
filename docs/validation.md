@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-11-14T14:33:18+00:00 by `python -m pipeline.validate` from the real data files. Variable: MERRA-2 2-m air temperature, 1980–2025.
+Generated 2026-11-14T17:16:47+00:00 by `python -m pipeline.validate` from the real data files. Variable: MERRA-2 2-m air temperature, 1980–2025.
 
 ## 1. Is lag-1 autocorrelation enough?
 

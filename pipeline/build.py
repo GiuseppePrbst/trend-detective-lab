@@ -70,7 +70,8 @@ GUIDED = [
     dict(title="Is southern Chile warming as fast as the desert north?",
          question="Compare air temperature trends in Los Lagos and Antofagasta since 1980.",
          lesson="In MERRA-2 the difference between the two trends is itself significant, so this reanalysis says Antofagasta warmed faster. "
-                "ERA5 agrees; the Antofagasta weather station does not (see Independent checks) — a reanalysis result, not a settled fact.",
+                "ERA5 was compared at five grid points per region, not on the difference itself; the coastal Antofagasta station does not "
+                "confirm the regional warming. The multivariable lab shows why: the region's coast and interior behave differently.",
          variable="t2m", a="los-lagos", b="antofagasta", preregistered=True),
     dict(title="Two flat lines — or too little evidence?",
          question="Neither Los Lagos nor Magallanes shows a significant warming trend in MERRA-2. Does that mean neither is warming?",
@@ -78,7 +79,7 @@ GUIDED = [
                 "both show significant warming that MERRA-2 does not — one dataset is never the last word.",
          variable="t2m", a="los-lagos", b="magallanes", preregistered=True),
     dict(title="One significant, one not — are they different?",
-         question="Rainfall falls significantly in Magallanes but not in Los Lagos. Do the two regions behave differently?",
+         question="IMERG shows a significant decline in Magallanes, but not in Los Lagos. Do their trends differ? (Other sources do not fully confirm the Magallanes result.)",
          lesson="Not shown. The test of the difference is what answers that, and it cannot tell them apart. Also: several regions have p < 0.05 "
                 "on their own, but after adjusting for testing 16 regions only Magallanes remains — and neither ERA5 nor its station confirms it clearly.",
          variable="precip", a="los-lagos", b="magallanes", preregistered=True),

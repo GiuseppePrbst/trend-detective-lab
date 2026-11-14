@@ -46,6 +46,7 @@ def hypso(lay, stops):
     sh.setColorRampType(QgsColorRampShader.Type.Discrete)
     items = [QgsColorRampShader.ColorRampItem(stops[i + 1][0], QColor(c), f"{stops[i][0]}–{stops[i + 1][0]} m") for i, (_, c) in enumerate(stops[:-1])]
     items.append(QgsColorRampShader.ColorRampItem(float("inf"), QColor(stops[-1][1]), f"> {stops[-1][0]} m"))
+    items.insert(0, QgsColorRampShader.ColorRampItem(0.5, QColor(0, 0, 0, 0), "sea / no data"))   # ocean transparent
     sh.setColorRampItemList(items)
     rs = QgsRasterShader()
     rs.setRasterShaderFunction(sh)
@@ -148,43 +149,55 @@ def export(name, title, layers, extent, notes, legend_layers):
     ex.exportToPdf(str(MAPS / f"{name}.pdf"), QgsLayoutExporter.PdfExportSettings())
 
 
+# Display relief: USGS GMTED2010, 15 arc-second mean elevation (public domain), clipped per pilot in its native EPSG:4326
+# grid. The CIREN DEM and the CONAF catastro are used only for per-cell statistics; their derived rasters are not
+# published because redistribution permission could not be confirmed (docs/gis/DATA_LICENSES.md).
+from osgeo import gdal  # noqa: E402
 T = Q / "terrain"
-groups = {}
+T.mkdir(exist_ok=True)
+GMTED = {"antofagasta": (ROOT / "data" / "gis_src" / "gmted" / "30S090W_mea150.tif", (-73.0, -17.0, -64.5, -30.0)),
+         "los-lagos": (ROOT / "data" / "gis_src" / "gmted" / "50S090W_mea150.tif", (-77.0, -37.0, -69.5, -47.5))}
 built = {}
-for pilot in ("antofagasta", "los-lagos"):
-    hs = raster(T / f"{pilot}_hillshade_250m.tif", f"{pilot}: hillshade (CIREN DEM, 250 m display)")
-    dem = raster(T / f"{pilot}_dem_250m.tif", f"Elevation (m)|CIREN DEM, EGM2008")
+for pilot, (src, win) in GMTED.items():
+    dem_p, hs_p = T / f"{pilot}_gmted2010_dem.tif", T / f"{pilot}_gmted2010_hillshade.tif"
+    if src.exists():
+        d = gdal.Translate(str(dem_p), str(src), projWin=list(win), creationOptions=["COMPRESS=DEFLATE"])
+        # scale=111120: degrees to metres for the slope computation in a geographic grid
+        gdal.DEMProcessing(str(hs_p), d, "hillshade", multiDirectional=True, computeEdges=True, scale=111120,
+                           creationOptions=["COMPRESS=DEFLATE"])
+        d = None
+    hs = raster(hs_p, f"Relief (hillshade)|USGS GMTED2010, ~450 m")
+    dem = raster(dem_p, f"Elevation (m)|USGS GMTED2010")
     hypso(dem, HYPSO[pilot])
     built[pilot] = [hs, dem]
 reg = regions()
 c_a = cells("context_antofagasta_merra2_t2m", "Air temperature trend|°C per decade, 1980–2025|MERRA-2 cells 0.5° × 0.625°", "slope_per_decade", "°C", 0.36)
 co = coastal_outline("context_antofagasta_merra2_t2m")
-c_l = cells("context_los_lagos_gldas_soilm_root", "Root-zone soil moisture trend|mm per decade, 2000–2024|GLDAS-2.1 cells 0.25° (model)", "slope_per_decade", "mm", 48, outline_only=True)
+c_l = cells("context_los_lagos_gldas_soilm_root", "Root-zone soil moisture trend|mm per decade, 2000–2024|GLDAS-2.1 cells 0.25° (model)", "slope_per_decade", "mm", 48)
 c_lt = cells("context_los_lagos_merra2_t2m", "MERRA-2 T2M trend 1980–2025 (°C/decade), Los Lagos cells", "slope_per_decade", "°C", 0.36)
-lc_l = landcover(T / "los-lagos_landcover_250m.tif")
-lc_a = landcover(T / "antofagasta_landcover_250m.tif")
-for l in built["antofagasta"] + built["los-lagos"] + [lc_a, lc_l, c_a, co, c_l, c_lt, reg]:
+for l in built["antofagasta"] + built["los-lagos"] + [c_a, co, c_l, c_lt, reg]:
     proj.addMapLayer(l)
 
 note_a = ("Each square is one native MERRA-2 cell (~50 km): the climate data cannot resolve anything smaller. "
-          "Relief (CIREN DEM, EGM2008 heights; processed at 100 m, shown at 250 m) only describes the cells. "
-          "Exploratory result (docs/multivariable/TERRITORIAL_RESULTS.md): coastal cells show no warming; the trend grows "
-          "with distance from the coast, and the coast/interior difference remains when interior cells of similar elevation "
-          "are used. ERA5 and the coastal station agree. Coast and altitude are strongly correlated here; no cause is claimed.\n"
-          "CRS: EPSG:4326. Sources: NASA GMAO MERRA-2 M2IMNXASM v5.12.4 via Giovanni; CIREN DEM ALOS PALSAR (2016); "
-          "geoBoundaries ADM1; Natural Earth. ProGarLabs, NASA Space Apps 2026.")
+          "Background relief: USGS GMTED2010 (public domain). Cell elevations and distances used in the analysis come from the "
+          "CIREN DEM (statistics only). Exploratory result (docs/multivariable/TERRITORIAL_RESULTS.md): coastal cells show no "
+          "warming; the trend grows with distance from the coast, and the coast/interior difference remains in an "
+          "elevation-range-restricted comparison (not exact matching). ERA5 and the coastal station agree. Coast and altitude "
+          "are strongly correlated here; no cause is claimed.\n"
+          "CRS: EPSG:4326. Sources: NASA GMAO MERRA-2 M2IMNXASM v5.12.4 via Giovanni; USGS GMTED2010; geoBoundaries ADM1; "
+          "Natural Earth. ProGarLabs, NASA Space Apps 2026.")
 note_l = ("Squares: native GLDAS-2.1 cells (0.25°, ~25 km), root-zone soil moisture trend 2000–2024 (a model, driven partly "
-          "by observed rain). Land cover: CONAF catastro 2018 (a snapshot, not the whole period), shown at 250 m. "
-          "Descriptive: cells with more plantation and agriculture show steeper modelled drying (Spearman ρ ≈ −0.6), but GLDAS "
-          "does not use the CONAF map and these covers sit in the lowland central valley: location, not land use, may explain it.\n"
-          "CRS: EPSG:4326. Sources: NASA GLDAS-2.1 via Giovanni; CONAF/MINAGRI catastro; CIREN DEM; geoBoundaries. "
-          "ProGarLabs, NASA Space Apps 2026.")
+          "by observed rain). Background relief: USGS GMTED2010 (public domain). Per-cell land-cover shares (CONAF catastro "
+          "2018, statistics only) are in data/processed/. Descriptive: cells with more plantation and agriculture show steeper "
+          "modelled drying (Spearman ρ ≈ −0.6), but GLDAS does not use the CONAF map and these covers sit in the lowland "
+          "central valley: location, not land use, may explain it.\n"
+          "CRS: EPSG:4326. Sources: NASA GLDAS-2.1 via Giovanni; USGS GMTED2010; geoBoundaries. ProGarLabs, NASA Space Apps 2026.")
 export("antofagasta_territorial", "Antofagasta — relief and the warming trend of each MERRA-2 cell",
        [co, c_a, reg, built["antofagasta"][1], built["antofagasta"][0]], QgsRectangle(-71.4, -26.6, -66.3, -20.4), note_a,
        [c_a, co, built["antofagasta"][1]])
-export("los_lagos_territorial", "Los Lagos — land cover, relief and modelled soil-moisture trends",
-       [c_l, reg, lc_l, built["los-lagos"][0]], QgsRectangle(-75.2, -44.3, -71.3, -40.1), note_l,
-       [c_l, lc_l])
+export("los_lagos_territorial", "Los Lagos — relief and modelled soil-moisture trends",
+       [c_l, reg, built["los-lagos"][1], built["los-lagos"][0]], QgsRectangle(-75.2, -44.3, -71.3, -40.1), note_l,
+       [c_l, built["los-lagos"][1]])
 proj.write(str(Q / "trend_detective_chile_refined.qgz"))
 print("ok", [l.name() for l in proj.mapLayers().values()])
 app.exitQgis()

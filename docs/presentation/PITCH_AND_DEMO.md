@@ -59,8 +59,8 @@ change honestly — including when the honest answer is "we can't tell yet".
 1. **Regional mean** (main app, Antofagasta): +0.23 °C/decade, significant. The coastal weather station shows none.
 2. **Cells** (lab → coast panel): coastal MERRA-2 cells ≈ 0; interior ≈ +0.27 °C/decade.
 3. **Relief** (map `docs/gis/maps/antofagasta_territorial.png`): coastal escarpment and desert interior from the CIREN DEM.
-4. **Distance vs altitude** (two scatterplots): both rise inland; against interior cells of similar elevation the coast still
-   warms ~0.2 °C/decade less.
+4. **Distance vs altitude** (two scatterplots): both rise inland; restricting the interior to the coastal elevation range
+   (still ~360 m higher on average), the coast warms ~0.2 °C/decade less.
 5. **Second opinion**: ERA5 at the same points shows the same contrast; the station sits with the coast.
 6. **Careful reading**: an ocean-influenced coast is a plausible explanation, not a proven one; 50 km cells cannot separate
    coast from altitude completely. Exploratory.

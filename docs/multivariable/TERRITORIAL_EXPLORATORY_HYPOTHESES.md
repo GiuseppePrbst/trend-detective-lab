@@ -28,3 +28,10 @@ No new p-value from T2–T4 is interpreted. T1 is the only test; it is reported 
   products, re-referenced to mean sea level with EGM2008. Its 12.5 m pixel is a resampling; it is not an elevation
   measured by the PALSAR radar. It is processed at 100 m for cell statistics.
 - Coast and elevation are correlated along northern Chile's escarpment; T1 tries to separate them, with few cells.
+
+## Erratum (added 2026-11-14, ~14:30, after review; the table above is left as written)
+
+T1 was called "elevation-matched". It is an **elevation-range-restricted comparison**: interior cells whose mean
+elevation lies inside the coastal cells' range (169–1,601 m). Those 7 interior cells average 1,320 m against 959 m for the
+10 coastal cells, so the groups are not at the same elevation. A stricter sensitivity was added afterwards (nearest-
+elevation pairing, with replacement); it still leaves elevation gaps. Both are exploratory.

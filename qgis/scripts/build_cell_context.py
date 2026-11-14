@@ -30,7 +30,7 @@ gdal.UseExceptions()
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data" / "gis_src"
 PROC = ROOT / "data" / "processed"
-TERR = ROOT / "qgis" / "terrain"
+TERR = ROOT / "data" / "gis_src" / "derived"   # CIREN/CONAF derivatives stay local: redistribution not confirmed
 GPKG = ROOT / "qgis" / "layers_refined.gpkg"
 RES = 100.0                       # m: scale at which terrain and land cover are summarised per cell
 PILOTS = {

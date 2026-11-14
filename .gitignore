@@ -24,3 +24,5 @@ data/external/
 data/logs/
 data/gis_src/
 *.aux.xml
+qgis/terrain/*_250m.tif
+*.tif.aux.xml

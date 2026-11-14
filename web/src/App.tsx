@@ -138,7 +138,7 @@ export default function App() {
                       <button className={`case${g === activeCase ? ' is-on' : ''}`} onClick={() => startCase(g)} disabled={!ok}
                         aria-pressed={g === activeCase}>
                         <strong>{g.title}</strong>
-                        <span>{g.variable === 'precip' && g.a === 'los-lagos' && g.b === 'magallanes' ? 'IMERG shows a significant decline in Magallanes, but not Los Lagos. Do their trends differ? Other sources do not fully confirm the Magallanes result.' : g.question}</span>
+                        <span>{g.question}</span>
                         {!ok && <em>Data not available yet</em>}
                       </button>
                     </li>
@@ -149,7 +149,7 @@ export default function App() {
 
             <section aria-labelledby="h-var">
               <h2 id="h-var"><span className="step">2</span> Choose a variable</h2>
-              <p className="hint">Each product uses its full published period. Selecting a different period and recalculating the trend is not available yet.</p>
+              <p className="hint">Each product starts with its full published period. A few fixed alternative periods (computed by the pipeline) can be chosen in step 4 as a sensitivity check; free choice of period is not offered.</p>
               <fieldset className="vars">
                 <legend className="sr-only">Variable</legend>
                 {cat.variables.map((x) => (
@@ -601,7 +601,7 @@ function Compare(p: {
             Robustness: Theil–Sen {signed(c.theil_sen_per_decade)}, Mann–Kendall {pval(c.mk_p_value)}.
           </p>
           {guided?.lesson && (
-            <p className="lesson"><strong>What this case shows:</strong> {guided.variable === 't2m' && guided.a === 'los-lagos' && guided.b === 'antofagasta' ? 'In MERRA-2 the difference between the trends is significant. ERA5 checks individual regional samples, not the difference itself; the Antofagasta station does not confirm its regional warming estimate.' : guided.lesson}</p>
+            <p className="lesson"><strong>What this case shows:</strong> {guided.lesson}</p>
           )}
         </div>
       )}
