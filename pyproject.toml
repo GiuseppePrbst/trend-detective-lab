@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "pyproj>=3.6"]   # pyproj: only for the geodesic-area check in pipeline.validate
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

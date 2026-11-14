@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-11-14T12:18:00+00:00 by `python -m pipeline.validate` from the real data files. Variable: MERRA-2 2-m air temperature, 1980–2025.
+Generated 2026-11-14T14:18:25+00:00 by `python -m pipeline.validate` from the real data files. Variable: MERRA-2 2-m air temperature, 1980–2025.
 
 ## 1. Is lag-1 autocorrelation enough?
 
@@ -35,22 +35,22 @@ Slope in °C per decade (95 % CI) when two years are removed from either end.
 
 | Region | 1980–2025 | 1982–2025 | 1980–2023 |
 |---|---|---|---|
-| Arica y Parinacota | +0.252 (+0.160, +0.345) * | +0.266 (+0.166, +0.366) * | +0.218 (+0.133, +0.303) * |
-| Tarapacá | +0.195 (+0.092, +0.298) * | +0.211 (+0.100, +0.323) * | +0.155 (+0.061, +0.250) * |
-| Antofagasta | +0.230 (+0.120, +0.340) * | +0.247 (+0.129, +0.366) * | +0.191 (+0.089, +0.293) * |
-| Atacama | +0.117 (+0.004, +0.230) * | +0.136 (+0.014, +0.258) * | +0.086 (-0.023, +0.196)  |
-| Coquimbo | +0.126 (+0.018, +0.235) * | +0.144 (+0.026, +0.262) * | +0.088 (-0.022, +0.198)  |
-| Valparaíso | +0.059 (-0.036, +0.154)  | +0.078 (-0.025, +0.181)  | +0.031 (-0.071, +0.132)  |
-| Metropolitana de Santiago | +0.129 (+0.019, +0.240) * | +0.156 (+0.037, +0.275) * | +0.101 (-0.018, +0.220)  |
-| O'Higgins | +0.105 (+0.009, +0.201) * | +0.125 (+0.021, +0.229) * | +0.090 (-0.014, +0.194)  |
-| Maule | +0.133 (+0.036, +0.230) * | +0.153 (+0.047, +0.258) * | +0.124 (+0.018, +0.230) * |
-| Ñuble | +0.200 (+0.097, +0.302) * | +0.212 (+0.100, +0.323) * | +0.195 (+0.084, +0.307) * |
-| Bío-Bío | +0.195 (+0.102, +0.288) * | +0.203 (+0.101, +0.304) * | +0.191 (+0.090, +0.292) * |
-| La Araucanía | +0.168 (+0.074, +0.262) * | +0.172 (+0.070, +0.274) * | +0.163 (+0.062, +0.265) * |
-| Los Ríos | +0.137 (+0.047, +0.228) * | +0.143 (+0.045, +0.242) * | +0.135 (+0.037, +0.233) * |
-| Los Lagos | +0.048 (-0.033, +0.128)  | +0.063 (-0.024, +0.150)  | +0.049 (-0.038, +0.137)  |
-| Aysén | +0.026 (-0.069, +0.121)  | +0.044 (-0.058, +0.147)  | +0.034 (-0.068, +0.137)  |
-| Magallanes | +0.002 (-0.092, +0.096)  | +0.001 (-0.091, +0.092)  | +0.007 (-0.093, +0.107)  |
+| Arica y Parinacota | +0.252 (+0.159, +0.346) * | +0.266 (+0.166, +0.366) * | +0.218 (+0.144, +0.292) * |
+| Tarapacá | +0.195 (+0.081, +0.310) * | +0.211 (+0.089, +0.334) * | +0.155 (+0.069, +0.242) * |
+| Antofagasta | +0.230 (+0.106, +0.355) * | +0.248 (+0.116, +0.379) * | +0.191 (+0.092, +0.289) * |
+| Atacama | +0.117 (-0.012, +0.246)  | +0.136 (+0.001, +0.271) * | +0.086 (-0.028, +0.201)  |
+| Coquimbo | +0.126 (+0.004, +0.248) * | +0.144 (+0.016, +0.272) * | +0.088 (-0.022, +0.198)  |
+| Valparaíso | +0.059 (-0.045, +0.162)  | +0.078 (-0.030, +0.187)  | +0.031 (-0.071, +0.132)  |
+| Metropolitana de Santiago | +0.129 (+0.007, +0.251) * | +0.156 (+0.031, +0.282) * | +0.101 (-0.023, +0.226)  |
+| O'Higgins | +0.105 (+0.015, +0.195) * | +0.125 (+0.028, +0.222) * | +0.090 (-0.006, +0.187)  |
+| Maule | +0.133 (+0.042, +0.224) * | +0.153 (+0.055, +0.251) * | +0.124 (+0.026, +0.222) * |
+| Ñuble | +0.200 (+0.104, +0.295) * | +0.212 (+0.108, +0.316) * | +0.195 (+0.092, +0.299) * |
+| Bío-Bío | +0.195 (+0.105, +0.285) * | +0.203 (+0.104, +0.301) * | +0.191 (+0.093, +0.289) * |
+| La Araucanía | +0.168 (+0.074, +0.261) * | +0.172 (+0.070, +0.275) * | +0.163 (+0.061, +0.265) * |
+| Los Ríos | +0.138 (+0.044, +0.231) * | +0.143 (+0.041, +0.245) * | +0.135 (+0.033, +0.237) * |
+| Los Lagos | +0.048 (-0.042, +0.137)  | +0.063 (-0.032, +0.158)  | +0.050 (-0.048, +0.147)  |
+| Aysén | +0.026 (-0.093, +0.145)  | +0.044 (-0.083, +0.172)  | +0.034 (-0.093, +0.161)  |
+| Magallanes | +0.002 (-0.101, +0.105)  | +0.001 (-0.112, +0.113)  | +0.007 (-0.103, +0.117)  |
 
 \* p < 0.05 with the main method.
 
@@ -63,3 +63,20 @@ NASA POWER re-serves MERRA-2 meteorology on the same grid, from the hourly colle
 | Los Lagos | 540 | -0.001 | 0.021 | 1.0000 | +0.055 | +0.056 |
 | Antofagasta | 540 | +0.004 | 0.015 | 1.0000 | +0.240 | +0.240 |
 | Magallanes | 540 | -0.001 | 0.018 | 1.0000 | -0.003 | -0.003 |
+
+## 4. Spatial aggregation
+
+The regional series is a weighted mean of native grid cells. The pipeline's weight is the planar area (in degrees²) of the part of the cell inside the region polygon, multiplied by cos(latitude of the cell centre). Here it is compared with the true geodesic area (WGS84 ellipsoid) of the same intersection. No raster is reprojected or resampled; polygons and cells are both in geographic coordinates (EPSG:4326), and areas are never measured in degrees without the latitude correction.
+
+| Variable | Region | Cells | Cells fully inside | Largest difference in a cell's share of the region | Largest relative difference of one weight |
+|---|---|---|---|---|---|
+| t2m | los-lagos | 36 | 2 | 3.5e-05 | 0.39 % |
+| t2m | antofagasta | 51 | 18 | 9.4e-06 | 0.19 % |
+| t2m | magallanes | 118 | 1 | 2.2e-05 | 0.66 % |
+| precip | los-lagos | 709 (sample of 237) | 118 | 2.3e-06 | 0.11 % |
+| precip | antofagasta | 1228 (sample of 205) | 171 | 2.2e-06 | 0.07 % |
+| precip | magallanes | 2611 (sample of 201) | 61 | 5.9e-06 | 0.19 % |
+
+Geodesic area of the 16 polygons together: 754,585 km² (all polygons valid). The weights agree with true areas to better than 1 % per cell, and to about one part in ten thousand of a region.
+
+What the weighting does **not** solve: with MERRA-2 most cells straddle the region border or the coast (for Los Lagos only 2 of 36 cells lie fully inside), and a coastal cell's value already mixes land and ocean. MERRA-2 does not mask the ocean. A regional mean of ~50 km cells is a coarse description of a region, not a high-resolution climate measurement. Months count only when at least 80 % of the region's weighted area has valid data; no month was excluded for either variable.

@@ -169,7 +169,9 @@ def analyze(dates, values, alpha: float = ALPHA) -> dict:
 
     # --- robustness: Theil-Sen slope + Mann-Kendall test on the same yearly values ----------------
     ts = float(stats.theilslopes(ya, ta)[0])
-    mk_p = float(mk.original_test(ya, alpha=alpha).p)
+    # Mann-Kendall z, with its variance inflated by the same yearly effective sample size: the uncorrected
+    # yearly test gave up to 27 % false positives in docs/calibration.md.
+    mk_p = float(2 * stats.norm.sf(abs(mk.original_test(ya, alpha=alpha).z) * math.sqrt(n_eff_a / na)))
 
     main_sig, rob_sig = p < alpha, mk_p < alpha
     same_sign = (fit.slope > 0) == (ts > 0)

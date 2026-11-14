@@ -120,6 +120,19 @@ def annual_mk(t, y):
     return float(stats.theilslopes(ya, ta)[0]), np.nan, np.nan, float(mk.original_test(ya).p)
 
 
+def annual_mk_ess(t, y):
+    """Mann-Kendall on yearly means with its variance inflated by the lag-1 effective sample size of the yearly residuals."""
+    import pymannkendall as mk
+    k = len(y) // 12
+    ya = y[: k * 12].reshape(k, 12).mean(axis=1)
+    ta = t[: k * 12].reshape(k, 12).mean(axis=1)
+    _, res, _, _ = _ols(ta, ya)
+    r1 = _rho(res)[1]
+    ne = max(k * (1 - r1) / (1 + r1) if r1 > 0 else k, 3.0)
+    z = mk.original_test(ya).z * np.sqrt(ne / k)
+    return float(stats.theilslopes(ya, ta)[0]), np.nan, np.nan, float(2 * stats.norm.sf(abs(z)))
+
+
 def block_boot(t, y, block=24, boot=BOOT, rng=None):
     """Circular moving-block bootstrap of the residuals; standard error from the resampled slopes."""
     rng = rng or np.random.default_rng(0)
@@ -140,7 +153,8 @@ METHODS = {
     "Newey–West HAC, long bandwidth": hac_long,
     "Moving-block bootstrap, 24-month blocks": block_boot,
     "Annual means + lag-1 effective sample size": annual,
-    "Annual means, Theil–Sen + Mann–Kendall (robustness check; no interval)": annual_mk,
+    "Annual means, Theil–Sen + Mann–Kendall, uncorrected (no interval)": annual_mk,
+    "Annual means, Theil–Sen + Mann–Kendall with lag-1 correction (robustness check in the app; no interval)": annual_mk_ess,
 }
 
 
