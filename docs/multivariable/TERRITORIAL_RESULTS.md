@@ -1,6 +1,6 @@
 # Territorial results (exploratory)
 
-Generated 2026-11-14T17:10:41+00:00 by `python -m pipeline.territory`. Do not edit by hand.
+Generated 2026-11-14T17:22:36+00:00 by `python -m pipeline.territory`. Do not edit by hand.
 
 Unit of analysis: the native climate cell. DEM (CIREN, processed at 100 m) and CONAF land cover describe each cell; they add no climate observations. Hypotheses: `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`.
 

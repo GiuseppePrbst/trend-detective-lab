@@ -289,8 +289,11 @@ export interface Territory {
       coastal: MVTrend;
       matched_interior: MVTrend;
       difference: MVTrend;
+      nearest_elevation_pairs: { n_pairs: number; n_distinct_interior: number; mean_elevation_gap_m: number; max_abs_elevation_gap_m: number; difference: MVTrend };
     };
     t2: Record<string, { rho: number; n: number } | number>;
+    t3: { rule: string; n_coastal: number; n_interior: number; difference: MVTrend }[];
+    context: { regional: MVTrend; station: { source: string; years: number; ours_same_months: MVTrend; station: MVTrend } };
     cells: TerrCell[];
   };
 }

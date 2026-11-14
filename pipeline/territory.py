@@ -108,7 +108,11 @@ def antofagasta():
         t3.append(dict(rule=label, n_coastal=len(a), n_interior=len(b), difference=summary(d)))
     keep = ("cell_id", "lat", "lon", "slope_per_decade", "slope_ci_lower", "slope_ci_upper", "p_value", "elevation_mean", "elevation_std",
             "distance_to_coast_km", "land_share", "coastal_e3", "dem_coverage", "bare_share", "grassland_shrubland_share", "urban_industrial_share")
-    return dict(t1=t1, t2=t2, t3=t3, cells=[{k: c.get(k) for k in keep} for c in cells])
+    reg = json.loads((OUT / "t2m.json").read_text(encoding="utf-8"))["regions"]["antofagasta"]["trend"]
+    st = next(c for c in json.loads((OUT / "validation.json").read_text(encoding="utf-8"))["checks"]
+              if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
+    context = dict(regional=summary(reg), station=dict(source=st["source"], years=st["n_years"], ours_same_months=st["ours"], station=st["other"]))
+    return dict(t1=t1, t2=t2, t3=t3, context=context, cells=[{k: c.get(k) for k in keep} for c in cells])
 
 
 def los_lagos():

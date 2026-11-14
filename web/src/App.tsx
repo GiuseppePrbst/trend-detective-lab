@@ -6,6 +6,7 @@ import { FIXTURE, load } from './data';
 import {
   GLOSSARY, level, MAP_STATUS, mapStatus, num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHORT, WARNING,
 } from './format';
+import { EvidenceCards, MagallanesCase, QuestionStart, type Discovery, type Question } from './discovery';
 import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
 import type {
@@ -60,6 +61,8 @@ export default function App() {
   const cellsT = useFile<CellMap>('cells_t2m.json');
   const cellsS = useFile<CellMap>('cells_soilm_root.json');
   const terrFile = useFile<Territory>('territory.json');
+  const discFile = useFile<Discovery>('discovery.json');
+  const [labFocus, setLabFocus] = useState<{ region: string; x: string; y: string; n: number }>();
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
   const [varId, setVarId] = useState<string | null>(null);
@@ -127,6 +130,14 @@ export default function App() {
         <Status what="the catalogue" s={catalog} />
         {cat && (
           <>
+            {discFile.state === 'ok' && (
+              <QuestionStart d={discFile.data} onOpen={(q: Question) => {
+                const o = q.open;
+                if (o.kind === 'lab' && o.region && o.x && o.y) setLabFocus({ region: o.region, x: o.x, y: o.y, n: Date.now() });
+                else if (o.kind === 'case' && o.index != null && cat.guided[o.index]) startCase(cat.guided[o.index]);
+                else document.getElementById(o.kind === 'coast' ? 'h-coast' : 'h-magallanes')?.scrollIntoView({ block: 'start' });
+              }} />
+            )}
             <section aria-labelledby="h-cases">
               <h2 id="h-cases"><span className="step">1</span> Start with a case</h2>
               <p>Each case sets a variable and two regions to compare. Or choose your own below.</p>
@@ -186,8 +197,10 @@ export default function App() {
             )}
             {mvFile.state === 'ok' ? (
               <Lab mv={mvFile.data} names={names} geo={geo} cellsT2m={cellsT.state === 'ok' ? cellsT.data : null}
-                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} />
+                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} focus={labFocus} />
             ) : <Status what="the multivariable lab" s={mvFile} />}
+            {discFile.state === 'ok' && <MagallanesCase d={discFile.data} />}
+            {discFile.state === 'ok' ? <EvidenceCards d={discFile.data} /> : <Status what="the evidence cards" s={discFile} />}
           </>
         )}
       </main>
@@ -301,6 +314,27 @@ function Workspace(p: {
                 </label>
               )}
               {wid !== 'full' && <p className="hint">Shorter periods are a sensitivity check: the trend, its interval and the anomalies are recomputed by the pipeline for {wins?.[wid]?.start}–{wins?.[wid]?.end} (adjusted p across the 16 regions for this period). Comparisons below always use the full record.</p>}
+              {wins && p.ra && (
+                <details className="sens">
+                  <summary>How does the conclusion change with the period? (sensitivity, {Object.keys(wins).length} fixed windows)</summary>
+                  <table className="region-table">
+                    <caption>Same test on each window for {nameA}. Only the full record is the main analysis; the others are sensitivity checks, not new findings. q = adjusted across the 16 regions within each window.</caption>
+                    <thead><tr><th scope="col">Window</th><th scope="col">Role</th><th scope="col">Change per decade (95 % CI)</th><th scope="col">p</th><th scope="col">q</th></tr></thead>
+                    <tbody>
+                      {Object.entries(wins).map(([k, w]) => {
+                        const t = w.regions[a]?.trend;
+                        return t ? (
+                          <tr key={k} className={k === wid ? 'is-a' : undefined}>
+                            <th scope="row">{w.label} ({w.start}–{w.end})</th><td>{k === 'full' ? 'Main analysis' : 'Sensitivity'}</td>
+                            <td>{signed(t.slope_per_decade)} {v.trend_unit} ({num(t.ci_low)} to {num(t.ci_high)})</td>
+                            <td>{pval(t.p_value)}</td><td>{t.p_adjusted != null ? pval(t.p_adjusted).replace('p', 'q') : '—'}</td>
+                          </tr>
+                        ) : null;
+                      })}
+                    </tbody>
+                  </table>
+                </details>
+              )}
               <div className="toggle" role="group" aria-label="What to plot">
                 <button aria-pressed={mode === 'values'} onClick={() => setMode('values')}>Monthly values</button>
                 <button aria-pressed={mode === 'anomalies'} onClick={() => setMode('anomalies')}>Anomalies (seasonal cycle removed)</button>

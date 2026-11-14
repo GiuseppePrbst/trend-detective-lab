@@ -132,6 +132,11 @@ def agreement(a: dict, b: dict) -> str:
 
 
 def check(var, region, kind, independent, source, url, licence, ours_series, other_series, caveat):
+    # Same sample on both sides: keep only the months where both series have a value (a station with gaps would otherwise
+    # be compared with our complete record over a different set of years).
+    shared = set(ours_series) & set(other_series)
+    ours_series = {d: v for d, v in ours_series.items() if d in shared}
+    other_series = {d: v for d, v in other_series.items() if d in shared}
     try:
         ours, ya = analyse(ours_series, var)
         other, yb = analyse(other_series, var)
