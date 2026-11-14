@@ -136,5 +136,45 @@ def main() -> None:
         print(k, round(x["slope_per_decade"], 3), round(x["ci_low"], 3), round(x["ci_high"], 3), trend.p_eq(x["p_value"], 4))
 
 
+
+
+
+def validate() -> bool:
+    """Gate before publishing sst.json: complete manifest, readable files, units, physical range, temporal coverage."""
+    import h5py
+    files = sorted((CACHE / "daily").glob("*.nc4"))
+    expected = (dt.date(Y1, 12, 31) - dt.date(Y0, 1, 1)).days + 1
+    checks, bad_units, unreadable, out_of_range = [], 0, 0, 0
+    per_month = {}
+    for p in files:
+        try:
+            with h5py.File(p) as h:
+                u = h["analysed_sst"].attrs.get("units", b"")
+                u = u.decode() if isinstance(u, bytes) else str(u)
+                bad_units += u != "kelvin"
+        except OSError:
+            unreadable += 1
+            continue
+        day, v, frac = daily_mean(p)
+        out_of_range += not (5.0 <= v <= 30.0)
+        if frac >= 0.5:
+            per_month[day[:7]] = per_month.get(day[:7], 0) + 1
+    months = [f"{y}-{m:02d}" for y in range(Y0, Y1 + 1) for m in range(1, 13)]
+    short = [m for m in months if per_month.get(m, 0) < 20]
+    checks = [("files", len(files) >= expected, f"{len(files)} files for {expected} days (Harmony may add a boundary granule)"),
+              ("readable", unreadable == 0, f"{unreadable} unreadable"),
+              ("units", bad_units == 0, f"{bad_units} files not in kelvin"),
+              ("range", out_of_range == 0, f"{out_of_range} daily box means outside 5–30 °C"),
+              ("coverage", not short, f"{len(short)} months with < 20 valid days" + (f": {short[:6]}" if short else ""))]
+    L = ["# Coastal SST (MUR v4.1) — validation gate", "", f"Checked {dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}.", "",
+         "| Check | Passed | Detail |", "|---|---|---|"] + [f"| {n} | {'yes' if ok else '**no**'} | {d} |" for n, ok, d in checks]
+    (ROOT / "docs" / "validation" / "SST_VALIDATION.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+    print("\n".join(L))
+    return all(ok for _, ok, _ in checks)
+
+
 if __name__ == "__main__":
+    import sys
+    if "--validate" in sys.argv:
+        sys.exit(0 if validate() else 1)
     main()
