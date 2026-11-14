@@ -1,0 +1,20 @@
+# internal Spanish-language planning notes and agent configuration (not part of the submission)
+preparacion/
+.claude/
+CLAUDE.md
+
+# python / node
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+web/dist/
+
+# secrets — never commit
+.netrc
+*.token
+*token*.txt
+.env
+
+# raw per-cell downloads are a cache; regional series and cell weights are committed instead
+data/raw/
