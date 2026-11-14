@@ -317,9 +317,9 @@ def write_report(doc, windows, cells, names) -> None:
             if n not in s:
                 return "n/a"
             t = s[n]["trend"]
-            extra = f", q={t['p_adjusted']:.3f}" if q and "p_adjusted" in t else ""
+            extra = f", {trend.p_eq(t['p_adjusted'], 3, "q")}" if q and "p_adjusted" in t else ""
             neg = " (negligible snow)" if s[n].get("negligible") else (" (glacier cells accumulate: not seasonal snow)" if s[n].get("accumulating") else "")
-            return f"{f3(t['slope_per_decade'])} p={t['p_value']:.3f}{extra}{neg}"
+            return f"{f3(t['slope_per_decade'])} {trend.p_eq(t['p_value'], 3)}{extra}{neg}"
         L.append(f"| {names[rid]} | {cell('precip', False)} | {cell('soilm_root')} | {cell('soilm_surface')} | {cell('evap')} | {cell('swe')} | {cell('t2m', False)} |")
     L += ["", "## E2 · Year-to-year association (detrended yearly anomalies; r [95 % CI], p, q; BH over all pairs × regions)", "",
           "| Region | " + " | ".join(f"{a} – {b}" for a, b in doc["pairs"]) + " |", "|---|" + "---|" * len(doc["pairs"])]
@@ -330,7 +330,7 @@ def write_report(doc, windows, cells, names) -> None:
             if not x or not x.get("computable"):
                 row.append("n/a")
             else:
-                row.append(f"{x['r']:+.2f} [{x['ci_low']:+.2f}, {x['ci_high']:+.2f}] p={x['p_value']:.3f} q={x['p_adjusted']:.3f} n_eff={x['n_eff']:.0f}"
+                row.append(f"{x['r']:+.2f} [{x['ci_low']:+.2f}, {x['ci_high']:+.2f}] {trend.p_eq(x['p_value'], 3)} {trend.p_eq(x['p_adjusted'], 3, "q")} n_eff={x['n_eff']:.0f}"
                            + (" (negligible snow)" if x.get("negligible_snow") else ""))
         L.append(f"| {names[rid]} | " + " | ".join(row) + " |")
     ci = doc["coast_interior"]
@@ -339,18 +339,18 @@ def write_report(doc, windows, cells, names) -> None:
           "| Group | Trend (°C/decade) 95 % CI | p | Theil–Sen | MK p | Verdict |", "|---|---|---|---|---|---|"]
     for g in ("coastal", "interior", "difference"):
         t = ci[g]
-        L.append(f"| {g} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {t['p_value']:.4f} | {f3(t['theil_sen_per_decade'])} | {t['mk_p_value']:.4f} | {t['verdict']} |")
+        L.append(f"| {g} | {f3(t['slope_per_decade'])} ({f3(t['ci_low'])}, {f3(t['ci_high'])}) | {trend.fmt_p(t['p_value'], 4)} | {f3(t['theil_sen_per_decade'])} | {trend.fmt_p(t['mk_p_value'], 4)} | {t['verdict']} |")
     L += ["", "Second opinion at points (ERA5 via Open-Meteo vs MERRA-2 at the same cell centres; coastal points "
           f"{ci['points']['coastal']}, interior points {ci['points']['interior']}):", "",
           "| Source | Coastal trend | Interior trend | Coastal − interior (95 % CI), p |", "|---|---|---|---|"]
     for src, v in ci["point_check"].items():
         d = v["difference"]
         L.append(f"| {src} | {f3(v['coastal']['slope_per_decade'])} | {f3(v['interior']['slope_per_decade'])} | "
-                 f"{f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}), p={d['p_value']:.4f} |")
+                 f"{f3(d['slope_per_decade'])} ({f3(d['ci_low'])}, {f3(d['ci_high'])}), {trend.p_eq(d['p_value'], 4)} |")
     st = next(c for c in json.loads((OUT / "validation.json").read_text(encoding="utf-8"))["checks"]
               if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
     L += ["", f"Weather station for comparison: {st['source']}: {f3(st['other']['slope_per_decade'])} °C/decade, "
-          f"p={st['other']['p_value']:.3f} (`docs/validation_external.md`).", "",
+          f"{trend.p_eq(st['other']['p_value'], 3)} (`docs/validation_external.md`).", "",
           "## E4 · Cell maps (descriptive)", ""]
     for k, c in cells.items():
         sl = np.array([r[2] for r in c["cells"]])

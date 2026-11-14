@@ -134,33 +134,32 @@ def main() -> None:
     OUTDIR.mkdir(parents=True, exist_ok=True)
     tv, pv = cat["variables"][0], cat["variables"][1]
     with PdfPages(OUTDIR / "TrendDetectiveLab_demo.pdf") as pdf:
-        # 1 ------------------------------------------------------------------------------- title
-        fig = slide("", "NASA Space Apps Challenge 2026 · Be An Earth System Trend Detective!")
-        fig.text(0.05, 0.62, "Trend Detective Lab", color=INK, fontsize=54, weight="bold")
-        fig.text(0.05, 0.52, "What is changing, where, how fast — and how certain are we?", color=PURPLE, fontsize=24)
-        fig.text(0.05, 0.36, "Team ProGarLabs — Giuseppe Proboste · Fabiana García", color=INK, fontsize=18)
-        fig.text(0.05, 0.305, "Local Event: Quemchi, Chiloé, Chile", color=GREY, fontsize=15)
-        fig.text(0.05, 0.2, "Live app: giuseppeprbst.github.io/trend-detective-lab", color=INK, fontsize=15)
-        fig.text(0.05, 0.155, "Code and methods: github.com/GiuseppePrbst/trend-detective-lab", color=INK, fontsize=15)
+        # 1 ---------------------------------------------------------------------------- the challenge
+        shots = OUTDIR / "app_screens"
+        fig = slide("Detecting a trend is easy. Knowing what it means is not.", "The challenge · Be An Earth System Trend Detective!")
+        bullets(fig, ["Regional averages hide where change happens.",
+                      "Products can disagree; short records depend\non their start year.",
+                      "“Significant” is routinely over-read;\n“not significant” is not “no change”."], y=0.7, dy=0.14, size=15)
+        fig.text(0.05, 0.2, "Trend Detective Lab · Team ProGarLabs (Giuseppe Proboste, Fabiana García) · Quemchi, Chile", fontsize=13, color=INK)
+        fig.text(0.05, 0.15, "giuseppeprbst.github.io/trend-detective-lab", fontsize=14, color=PURPLE, weight="bold")
+        if (shots / "02_antofagasta_steps.png").exists():
+            ax = fig.add_axes([0.5, 0.08, 0.47, 0.74]); ax.imshow(plt.imread(shots / "02_antofagasta_steps.png")); ax.axis("off")
+            ax.set_title("Real app: a regional mean vs its coastal and interior cells", fontsize=10, color=GREY)
         pdf.savefig(fig); plt.close(fig)
 
-        # 2 ----------------------------------------------------------------------------- problem
+        # 2 ----------------------------------------------------------------------------- our solution
         rows = calibration_rows()
-        fig = slide("A trend line is easy. Knowing if it is real is not.", "The problem")
-        bullets(fig, ["Months are not independent measurements:\nstandard tests raise false alarms.",
-                      "“Significant here, not significant there”\nis misread as “the regions differ”.",
-                      "Most tools draw the line and leave\nthe statistics to the user."], y=0.7, dy=0.15, size=15)
-        ax = fig.add_axes([0.52, 0.16, 0.44, 0.56])
-        pick = [r for r in rows if r[0] in (0, 1, 3, 5, 6)]
-        labels = {0: "Months treated as\nindependent", 1: "Our pre-registered\nmonthly test", 3: "Newey–West\n(standard)",
-                  5: "Block bootstrap", 6: "Yearly means\n(what we use)"}
-        cols = [PURPLE if r[0] == 6 else "#b9b4c7" for r in pick]
-        ax.barh([labels[r[0]] for r in pick][::-1], [r[2] for r in pick][::-1], color=cols[::-1])
-        for i, r in enumerate(pick[::-1]):
-            ax.text(r[2] + 1, i, f"{r[2]:.0f} %", va="center", fontsize=13, color=INK)
-        ax.axvline(5, color=RED, lw=1.5, ls="--"); ax.text(5.6, len(pick) - 0.45, "promised: 5 %", color=RED, fontsize=11)
-        ax.set_xlabel("False alarms when there is NO trend (worst case in our simulations, synthetic series)", fontsize=10, color=GREY)
-        ax.set_xlim(0, max(r[2] for r in pick) * 1.18)
+        fig = slide("From an environmental question to a reproducible answer", "Our solution")
+        steps = ["Ask a\nquestion", "Get suggested\nvariables", "Pick region\nand period", "Test the\ntrend", "Compare and\ncross-check", "Read the\nevidence card"]
+        for i, s_ in enumerate(steps):
+            x = 0.05 + i * 0.155
+            fig.add_artist(plt.Rectangle((x, 0.68), 0.135, 0.1, color="#f3effa", transform=fig.transFigure))
+            fig.text(x + 0.0675, 0.73, s_, ha="center", va="center", fontsize=12, color=INK)
+        if (shots / "01_question.png").exists():
+            ax = fig.add_axes([0.05, 0.06, 0.55, 0.58]); ax.imshow(plt.imread(shots / "01_question.png")); ax.axis("off")
+        bullets(fig, ["Variables suggested by documented rules,\nwith their status: integrated, planned,\nvalidation only — no language model",
+                      "Every number comes from a tested,\nreproducible pipeline",
+                      "Every key result has an evidence card:\nwhat it supports and what it does not"], x=0.63, y=0.55, dy=0.15, size=12.5)
         pdf.savefig(fig); plt.close(fig)
 
         # 3 -------------------------------------------------------------------------------- data
@@ -180,42 +179,18 @@ def main() -> None:
         fig.text(0.6, 0.07, "Hatched: not significant after adjusting for 16 regions", fontsize=9.5, color=GREY)
         pdf.savefig(fig); plt.close(fig)
 
-        # 4 ------------------------------------------------------------------------ how it works
-        fig = slide("An investigation, not a dashboard", "How it works")
-        steps = ["Choose a\nvariable", "Select a\nregion", "Explore the\ntimeline", "Test the\ntrend", "Compare\nregions", "Review the\nevidence"]
-        for i, s in enumerate(steps):
-            x = 0.05 + i * 0.155
-            fig.add_artist(plt.Rectangle((x, 0.63), 0.135, 0.12, color="#f3effa", transform=fig.transFigure))
-            fig.text(x + 0.0675, 0.69, s, ha="center", va="center", fontsize=13, color=INK)
-            fig.text(x + 0.008, 0.735, str(i + 1), fontsize=11, color=PURPLE, weight="bold")
-        shots = sorted((OUTDIR / "screens").glob("*.png")) + sorted((OUTDIR / "screens").glob("*.jpg"))
-        if shots:
-            w = 0.9 / len(shots[:2])
-            for i, s in enumerate(shots[:2]):
-                ax = fig.add_axes([0.05 + i * w, 0.08, w - 0.02, 0.5]); ax.imshow(plt.imread(s)); ax.axis("off")
-        else:
-            bullets(fig, ["NASA Giovanni → Python pipeline → QGIS (cell grids, land mask, coastal cells) → statistics → static app.",
-                          "Main study pre-registered; the multivariable lab is labelled exploratory, with its own corrections.",
-                          "The web app computes nothing: it displays what a reproducible, tested pipeline calculated.",
-                          "Results that are not significant, or that depend on the method, are shown as such."], y=0.5, dy=0.095, size=15)
-        pdf.savefig(fig); plt.close(fig)
-
-        # 5 ------------------------------------------- confirmatory finding + exploratory coast/interior split
+        # 4 ------------------------------------------- confirmatory finding + exploratory coast/interior split
         a, b = "los-lagos", "antofagasta"
         d = comp(T, b, a)
         ci = MV["coast_interior"]
-        fig = slide("Antofagasta warmed faster — but not its coast", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
-        ax = fig.add_axes([0.03, 0.08, 0.2, 0.7])
-        cells = [c for c in CT["cells"] if -26.3 < c[0] < -20.7 and c[1] > -71.2 and c[1] < -66.5]
-        coastal = {tuple(x) for x in ci["coastal_cells"]}
-        vmax = max(abs(c[2]) for c in cells)
-        for c in cells:
-            col = plt.get_cmap("RdBu_r")((c[2] / vmax + 1) / 2)
-            ax.add_patch(plt.Rectangle((c[1] - 0.3125, c[0] - 0.25), 0.625, 0.5, color=col,
-                                       ec=INK if (c[0], c[1]) in coastal else "white", lw=1.6 if (c[0], c[1]) in coastal else 0.4))
-        ax.set_xlim(-71.3, -66.4); ax.set_ylim(-26.4, -20.6); ax.set_aspect(1.1); ax.axis("off")
-        ax.set_title("MERRA-2 cells near Antofagasta\n(black outline: coastal)", fontsize=11, color=INK)
-        ax = fig.add_axes([0.42, 0.3, 0.3, 0.46])
+        fig = slide("Coast and interior of Antofagasta: different trends", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
+        mp = ROOT / "docs" / "gis" / "maps" / "antofagasta_territorial.png"
+        if mp.exists():
+            img = plt.imread(mp)
+            h, w = img.shape[:2]
+            ax = fig.add_axes([0.02, 0.06, 0.27, 0.66]); ax.imshow(img[int(h * 0.07):int(h * 0.86), int(w * 0.03):int(w * 0.62)]); ax.axis("off")
+            ax.set_title("QGIS map: CIREN relief, MERRA-2 cells\n(outlined: coastal)", fontsize=9, color=GREY)
+        ax = fig.add_axes([0.47, 0.3, 0.28, 0.44])
         ta, tb = T["regions"][a]["trend"], T["regions"][b]["trend"]
         st = next(c for c in VAL["checks"] if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
         e5 = ci["point_check"]["ERA5"]
@@ -225,13 +200,13 @@ def main() -> None:
                             ("ERA5, coastal points", e5["coastal"]["slope_per_decade"], e5["coastal"]["ci_low"], e5["coastal"]["ci_high"], TEAL),
                             ("ERA5, interior points", e5["interior"]["slope_per_decade"], e5["interior"]["ci_low"], e5["interior"]["ci_high"], BROWN),
                             ("Antofagasta station", st["other"]["slope_per_decade"], st["other"]["ci_low"], st["other"]["ci_high"], GREY)], "°C")
-        fig.text(0.27, 0.08, f"Confirmatory (pre-registered): Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).\n"
-                 f"Exploratory (QGIS cell classes): coast {fmt(ci['coastal']['slope_per_decade'])} vs interior "
-                 f"{fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 and the station agree.\n"
-                 f"The regional mean hid this contrast; coast and altitude are entangled at 50 km.", fontsize=11, color=INK)
+        fig.text(0.31, 0.08, f"Confirmatory (pre-registered): Antofagasta − Los Lagos is significant (p = {d['p']:.3f}).\n"
+                 f"Exploratory: no significant warming in coastal cells ({fmt(ci['coastal']['slope_per_decade'])}, CI includes 0);\n"
+                 f"interior {fmt(ci['interior']['slope_per_decade'])} °C/decade; ERA5 shows the same contrast. Coast and altitude\n"
+                 f"are entangled at 50 km; no cause is claimed.", fontsize=10.5, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
-        # 6 ------------------------------------------------------------------ multivariable (exploratory)
+        # 5 ------------------------------------------------------------------ multivariable (exploratory)
         g = MV["guided"][0]
         R = MV["regions"][g["region"]]
         x, y = g["x"], g["y"]
@@ -257,19 +232,36 @@ def main() -> None:
                  f"{MV['families']['E1']} trends and {MV['families']['E2']} associations.", fontsize=11.5, color=INK)
         pdf.savefig(fig); plt.close(fig)
 
+        # 6 ----------------------------------------------------------------------- when data disagree
+        D = json.loads((DATA / "discovery.json").read_text(encoding="utf-8"))
+        fig = slide("When data disagree: Magallanes", "Scientific integrity · same-sample comparisons")
+        for k, cid in enumerate(("magallanes-precip", "magallanes-t2m")):
+            c = next(x for x in D["cards"] if x["id"] == cid)
+            rows_ = [(f"NASA, regional mean", c["result"]["slope"], c["result"]["ci"][0], c["result"]["ci"][1], BLUE)]
+            for ch in c["checks"]:
+                who = "Punta Arenas station" if ch["kind"] == "station" else "ERA5 (5 grid points)"
+                rows_.append((who, ch["theirs"][0], ch["theirs"][1], ch["theirs"][2], BROWN))
+            ax = fig.add_axes([0.17 + k * 0.45, 0.32, 0.22, 0.42])
+            interval_chart(ax, rows_, c["result"]["unit"].split(" per")[0])
+            ax.set_title("Precipitation (IMERG)" if k == 0 else "Air temperature (MERRA-2)", fontsize=12, color=INK)
+        fig.text(0.05, 0.1, "IMERG: significant drying; MERRA-2: no significant warming. Neither conclusion is reproduced by ERA5 or the station.\n"
+                 "Significance inside one product is not confirmation across products. ERA5 shares observations with MERRA-2; a station is one point.",
+                 fontsize=12, color=INK)
+        pdf.savefig(fig); plt.close(fig)
+
         # 7 ----------------------------------------------------------------- impact and limitations
         m6 = next(r for r in rows if r[0] == 6)
         fig = slide("What a user takes away — and what we do not claim", "Impact and limitations")
         fig.text(0.05, 0.74, "Impact", color=PURPLE, fontsize=16, weight="bold")
         bullets(fig, ["Anyone can test a climate trend and see how certain it is",
-                      "Teaches three ideas that are routinely misused: autocorrelation,\nsignificance of a difference, multiple comparisons",
+                      "Shows when NASA datasets disagree (Magallanes)\ninstead of hiding it: significance is not certainty",
                       "Open and reproducible: pre-registration, tests, simulations\nand every number traceable to a NASA grid cell"], y=0.67, dy=0.12, size=13.5)
         fig.text(0.55, 0.74, "Limits we state openly", color=PURPLE, fontsize=16, weight="bold")
         bullets(fig, ["MERRA-2: reanalysis, ~50 km cells.\nIMERG: only 27 years",
                       "Linear trends only — no causes, no forecasts",
                       f"Still not perfect: {m6[2]:.1f} % false alarms ({m6[3]:.1f} %\nat 27 years) in our worst case; 5 % promised",
                       "Method changed twice after pre-registration;\nboth documented, both made significance harder"], x=0.55, y=0.67, dy=0.12, size=13.5)
-        fig.text(0.05, 0.17, "Use of SI: coding tools (Claude) wrote most of the code and documentation under the team's direction; "
+        fig.text(0.05, 0.17, "Use of SI: coding tools (Claude; OpenAI Codex for the independent review) wrote most of the code and documentation under the team's direction; "
                  "all figures come from reproducible code.\nNo images were generated with SI. NASA does not endorse this project.", fontsize=11, color=GREY)
         fig.text(0.05, 0.09, "giuseppeprbst.github.io/trend-detective-lab   ·   github.com/GiuseppePrbst/trend-detective-lab", fontsize=14, color=INK, weight="bold")
         pdf.savefig(fig); plt.close(fig)

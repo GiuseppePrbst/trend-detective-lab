@@ -203,3 +203,33 @@ button:disabled { cursor: not-allowed; }
 .cellmap .plot { max-width: 320px; }
 .map-figure img { max-width: 100%; height: auto; border: 1px solid #e5e7eb; }
 .map-figure figcaption { font-size: 0.8rem; color: #6b7280; }
+
+/* Discovery engine */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0 1rem; }
+.chip { border: 1px solid #c4b5fd; background: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; cursor: pointer; font: inherit; }
+.chip[aria-pressed="true"] { background: #5b21b6; color: #fff; border-color: #5b21b6; }
+.chip:focus-visible, .primary:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+.question-panel { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.var-suggest { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.var-suggest li { display: grid; gap: 0.15rem; padding-left: 0.6rem; border-left: 4px solid #5b21b6; }
+.var-suggest li.status-available_not_processed, .var-suggest li.status-planned { border-left-color: #9ca3af; color: #4b5563; }
+.var-suggest li.status-validation_only { border-left-color: #0f766e; }
+.sbadge { font-size: 0.75rem; padding: 0.05rem 0.4rem; border-radius: 4px; background: #ede9fe; color: #4c1d95; justify-self: start; }
+.s-available_not_processed, .s-planned { background: #f3f4f6; color: #374151; }
+.s-validation_only { background: #ccfbf1; color: #134e4a; }
+.primary { background: #5b21b6; color: #fff; border: 0; border-radius: 6px; padding: 0.55rem 1rem; font: inherit; cursor: pointer; }
+.table-scroll { overflow-x: auto; }
+.ecard { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.9rem 1rem; margin: 0.9rem 0; }
+.ecard header { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: baseline; justify-content: space-between; }
+.ecard h3 { margin: 0; font-size: 1.05rem; }
+.ecard dl { display: grid; gap: 0.45rem; margin: 0.6rem 0 0; }
+.ecard dt { font-weight: 700; font-size: 0.8rem; color: #5b21b6; }
+.ecard dd { margin: 0; font-size: 0.92rem; }
+.tag-conf { background: #dbeafe; color: #1e3a8a; }
+.teach li { margin: 0.3rem 0; }
+.steps { padding-left: 1.4rem; }
+.steps > li { margin: 1rem 0; }
+.steps h4 { margin: 0 0 0.3rem; }
+.sens { margin: 0.5rem 0 1rem; }
+
+.ecard-q { margin: 0.4rem 0 0; font-style: italic; color: #374151; }

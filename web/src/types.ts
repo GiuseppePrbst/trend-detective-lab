@@ -263,6 +263,15 @@ export interface WindowEntry {
 }
 export type Windows = Record<string, Record<string, WindowEntry>>;
 
+export interface SST {
+  generated_at: string;
+  box: string;
+  period: [number, number];
+  series: Record<string, { label: string; kind: string; giovanni_query: string; trend: MVTrend; missing_share: number }>;
+  air_coastal: { label: string; trend: MVTrend };
+  air_interior: { label: string; trend: MVTrend };
+}
+
 export interface TerrCell {
   cell_id: string;
   lat: number;
@@ -289,8 +298,11 @@ export interface Territory {
       coastal: MVTrend;
       matched_interior: MVTrend;
       difference: MVTrend;
+      nearest_elevation_pairs: { n_pairs: number; n_distinct_interior: number; mean_elevation_gap_m: number; max_abs_elevation_gap_m: number; difference: MVTrend };
     };
     t2: Record<string, { rho: number; n: number } | number>;
+    t3: { rule: string; n_coastal: number; n_interior: number; difference: MVTrend }[];
+    context: { regional: MVTrend; station: { source: string; years: number; ours_same_months: MVTrend; station: MVTrend } };
     cells: TerrCell[];
   };
 }

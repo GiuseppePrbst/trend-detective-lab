@@ -132,6 +132,11 @@ def agreement(a: dict, b: dict) -> str:
 
 
 def check(var, region, kind, independent, source, url, licence, ours_series, other_series, caveat):
+    # Same sample on both sides: keep only the months where both series have a value (a station with gaps would otherwise
+    # be compared with our complete record over a different set of years).
+    shared = set(ours_series) & set(other_series)
+    ours_series = {d: v for d, v in ours_series.items() if d in shared}
+    other_series = {d: v for d, v in other_series.items() if d in shared}
     try:
         ours, ya = analyse(ours_series, var)
         other, yb = analyse(other_series, var)
@@ -169,7 +174,7 @@ def main() -> None:
             mean = lambda group: {d: float(np.mean([s[d] for s in group])) for d in set.intersection(*(set(s) for s in group))}
             product = "MERRA-2" if var == "t2m" else "IMERG"
             checks.append(check(
-                var, rid, "other_reanalysis", True,
+                var, rid, "other_reanalysis", False,   # partially dependent: shares observations (see caveat)
                 f"ERA5 (ECMWF reanalysis) at 5 grid points, compared with {product} at the same points",
                 "https://open-meteo.com/en/docs/historical-weather-api", "ERA5: Copernicus licence; served by Open-Meteo (CC BY 4.0)",
                 mean(nasa), mean([e[var] for e in era]),
@@ -185,7 +190,7 @@ def main() -> None:
          "Agreement rule (fixed beforehand): *consistent* = intervals overlap and same conclusion; *partly* = intervals overlap, "
          "conclusions differ; *inconsistent* = intervals do not overlap or opposite significant signs.", "",
          "| Variable | Region | Check | Our slope (95 % CI), p | Their slope (95 % CI), p | Yearly corr. | Years | Agreement |", "|---|---|---|---|---|---|---|---|"]
-    fmt = lambda d: f"{d['slope_per_decade']:+.3f} ({d['ci_low']:+.3f}, {d['ci_high']:+.3f}), p={d['p_value']:.3f}"
+    fmt = lambda d: f"{d['slope_per_decade']:+.3f} ({d['ci_low']:+.3f}, {d['ci_high']:+.3f}), {trend.p_eq(d['p_value'], 3)}"
     for c in checks:
         if "unavailable" in c:
             L.append(f"| {c['variable']} | {names[c['region']]} | {kinds[c['kind']]} | – | not enough data: {c['unavailable']} | – | – | – |")

@@ -1,4 +1,4 @@
-// SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
+// SI disclosure: developed with Claude and revised with OpenAI Codex; human team review is pending for the revision.
 // Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline, type Interval } from './charts';
@@ -6,11 +6,12 @@ import { FIXTURE, load } from './data';
 import {
   GLOSSARY, level, MAP_STATUS, mapStatus, num, orient, pval, sentence, signed, sourceShort, VERDICT, VERDICT_SHORT, WARNING,
 } from './format';
+import { EvidenceCards, MagallanesCase, QuestionStart, type Discovery, type Question } from './discovery';
 import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
 import type {
   Alt, Catalog, CellMap, Check, GuidedCase, MultiVar, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
-  Territory, WindowEntry, Windows,
+  SST, Territory, WindowEntry, Windows,
 } from './types';
 
 export const REPO_URL = 'https://github.com/GiuseppePrbst/trend-detective-lab';
@@ -60,6 +61,9 @@ export default function App() {
   const cellsT = useFile<CellMap>('cells_t2m.json');
   const cellsS = useFile<CellMap>('cells_soilm_root.json');
   const terrFile = useFile<Territory>('territory.json');
+  const discFile = useFile<Discovery>('discovery.json');
+  const sstFile = useFile<SST>('sst.json');
+  const [labFocus, setLabFocus] = useState<{ region: string; x: string; y: string; n: number }>();
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
   const [varId, setVarId] = useState<string | null>(null);
@@ -127,6 +131,14 @@ export default function App() {
         <Status what="the catalogue" s={catalog} />
         {cat && (
           <>
+            {discFile.state === 'ok' && (
+              <QuestionStart d={discFile.data} onOpen={(q: Question) => {
+                const o = q.open;
+                if (o.kind === 'lab' && o.region && o.x && o.y) setLabFocus({ region: o.region, x: o.x, y: o.y, n: Date.now() });
+                else if (o.kind === 'case' && o.index != null && cat.guided[o.index]) startCase(cat.guided[o.index]);
+                else document.getElementById(o.kind === 'coast' ? 'h-coast' : 'h-magallanes')?.scrollIntoView({ block: 'start' });
+              }} />
+            )}
             <section aria-labelledby="h-cases">
               <h2 id="h-cases"><span className="step">1</span> Start with a case</h2>
               <p>Each case sets a variable and two regions to compare. Or choose your own below.</p>
@@ -149,6 +161,7 @@ export default function App() {
 
             <section aria-labelledby="h-var">
               <h2 id="h-var"><span className="step">2</span> Choose a variable</h2>
+              <p className="hint">Each product starts with its full published period. A few fixed alternative periods (computed by the pipeline) can be chosen in step 4 as a sensitivity check; free choice of period is not offered.</p>
               <fieldset className="vars">
                 <legend className="sr-only">Variable</legend>
                 {cat.variables.map((x) => (
@@ -185,8 +198,11 @@ export default function App() {
             )}
             {mvFile.state === 'ok' ? (
               <Lab mv={mvFile.data} names={names} geo={geo} cellsT2m={cellsT.state === 'ok' ? cellsT.data : null}
-                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} />
+                cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} focus={labFocus}
+                sst={sstFile.state === 'ok' ? sstFile.data : null} />
             ) : <Status what="the multivariable lab" s={mvFile} />}
+            {discFile.state === 'ok' && <MagallanesCase d={discFile.data} />}
+            {discFile.state === 'ok' ? <EvidenceCards d={discFile.data} /> : <Status what="the evidence cards" s={discFile} />}
           </>
         )}
       </main>
@@ -194,7 +210,7 @@ export default function App() {
       <footer className="site-footer">
         <div className="wrap">
           <p>Team ProGarLabs · Built during NASA Space Apps Challenge 2026 · License Apache-2.0 · <a href={REPO_URL}>Source repository</a></p>
-          <p>Use of SI: Parts of this code were written with SI coding tools (Claude) and reviewed by the team.</p>
+          <p>Use of SI: Parts of this code were written with SI coding tools (Claude and OpenAI Codex); the team is responsible for review.</p>
           {cat && <p className="muted">Data files generated {cat.generated_at}.</p>}
         </div>
       </footer>
@@ -300,6 +316,27 @@ function Workspace(p: {
                 </label>
               )}
               {wid !== 'full' && <p className="hint">Shorter periods are a sensitivity check: the trend, its interval and the anomalies are recomputed by the pipeline for {wins?.[wid]?.start}–{wins?.[wid]?.end} (adjusted p across the 16 regions for this period). Comparisons below always use the full record.</p>}
+              {wins && p.ra && (
+                <details className="sens">
+                  <summary>How does the conclusion change with the period? (sensitivity, {Object.keys(wins).length} fixed windows)</summary>
+                  <table className="region-table">
+                    <caption>Same test on each window for {nameA}. Only the full record is the main analysis; the others are sensitivity checks, not new findings. q = adjusted across the 16 regions within each window.</caption>
+                    <thead><tr><th scope="col">Window</th><th scope="col">Role</th><th scope="col">Change per decade (95 % CI)</th><th scope="col">p</th><th scope="col">q</th></tr></thead>
+                    <tbody>
+                      {Object.entries(wins).map(([k, w]) => {
+                        const t = w.regions[a]?.trend;
+                        return t ? (
+                          <tr key={k} className={k === wid ? 'is-a' : undefined}>
+                            <th scope="row">{w.label} ({w.start}–{w.end})</th><td>{k === 'full' ? 'Main analysis' : 'Sensitivity'}</td>
+                            <td>{signed(t.slope_per_decade)} {v.trend_unit} ({num(t.ci_low)} to {num(t.ci_high)})</td>
+                            <td>{pval(t.p_value)}</td><td>{t.p_adjusted != null ? pval(t.p_adjusted).replace('p', 'q') : '—'}</td>
+                          </tr>
+                        ) : null;
+                      })}
+                    </tbody>
+                  </table>
+                </details>
+              )}
               <div className="toggle" role="group" aria-label="What to plot">
                 <button aria-pressed={mode === 'values'} onClick={() => setMode('values')}>Monthly values</button>
                 <button aria-pressed={mode === 'anomalies'} onClick={() => setMode('anomalies')}>Anomalies (seasonal cycle removed)</button>
@@ -622,8 +659,9 @@ function Compare(p: {
 }
 
 const KIND: Record<string, string> = {
-  station: 'Independent observation (station)',
-  other_reanalysis: 'Another reanalysis',
+  station: 'Point observation (station) — different spatial support',
+  other_reanalysis: 'Another reanalysis — partially dependent (shared observations)',
+  same_source: 'Same underlying source — consistency check only',
 };
 const AGREEMENT: Record<string, string> = {
   consistent: 'Consistent: same verdict and overlapping intervals',
@@ -638,12 +676,12 @@ function CheckCard({ c, name }: { c: Check; name: string }) {
       if (x.slope_per_decade != null && x.ci_low != null && x.ci_high != null)
         r.push({ name: label, slope: x.slope_per_decade, lo: x.ci_low, hi: x.ci_high, color });
     };
-    add(`Ours (${name} regional mean)`, c.ours, COLOR_A);
+    add(c.kind === 'other_reanalysis' ? `Ours (same five grid points in ${name})` : `Ours (${name} regional mean)`, c.ours, COLOR_A);
     add(c.source, c.other, '#374151');
     return r;
   }, [c, name]);
   const make = useCallback((w: number) => intervals(rows, c.unit, w), [rows, c.unit]);
-  const kind = c.independent ? KIND[c.kind] ?? c.kind : 'Same underlying source — consistency check only';
+  const kind = KIND[c.kind] ?? c.kind;
   return (
     <div className="result check">
       <p>
@@ -659,7 +697,7 @@ function CheckCard({ c, name }: { c: Check; name: string }) {
         {c.correlation_annual != null && (
           <div><dt>Correlation of yearly anomalies</dt><dd>{c.correlation_annual.toFixed(2)}</dd></div>
         )}
-        <div><dt>Agreement</dt><dd>{AGREEMENT[c.agreement] ?? c.agreement}</dd></div>
+        <div><dt>Agreement</dt><dd>{AGREEMENT[c.agreement] ?? c.agreement} <span className="muted">(overlapping intervals are not a formal test of equivalence)</span></dd></div>
       </dl>
       {c.caveat && <p className="muted">{c.caveat}</p>}
     </div>
@@ -722,11 +760,11 @@ function Evidence(p: {
         {rs && <div><dt>Grid cells in {name}</dt><dd>{rs.n_cells}</dd></div>}
       </dl>
 
-      <h3>Independent checks</h3>
-      {p.validation.state === 'loading' ? (
-        <Status what="the independent checks" s={p.validation} />
+      <h3>External and consistency checks</h3>
+      {p.validation.state !== 'ok' ? (
+        <Status what="the external checks" s={p.validation} />
       ) : checks.length === 0 ? (
-        <p className="status">No independent check for this selection yet.</p>
+        <p className="status">No external check for this selection yet.</p>
       ) : (
         checks.map((c) => <CheckCard key={c.source} c={c} name={name} />)
       )}

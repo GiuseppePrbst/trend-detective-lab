@@ -1,10 +1,10 @@
 // SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team.
 // Multivariable lab: shows the EXPLORATORY results written by pipeline/multivar.py. It computes no statistics.
 import * as Plot from '@observablehq/plot';
-import { useCallback, useMemo, useState } from 'react';
-import { COLOR_A, COLOR_B, intervals, PlotFigure } from './charts';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { COLOR_A, COLOR_B, intervals, PlotFigure, type Interval } from './charts';
 import { num, pval, signed, VERDICT_SHORT } from './format';
-import type { Assoc, CellMap, MultiVar, MVSeries, Regions, Territory } from './types';
+import type { Assoc, CellMap, MultiVar, MVSeries, Regions, SST, Territory } from './types';
 
 const INK = '#1f2937';
 
@@ -29,8 +29,10 @@ export const PHENOMENA: Record<string, { label: string; vars: string[]; why: str
 
 type Info = { label: string; unit: string; trend_unit: string; product?: string; nature_label?: string };
 
-export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr }: {
+export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr, focus, sst }: {
   mv: MultiVar; names: Record<string, string>; geo: Regions | null; cellsT2m: CellMap | null; cellsSm: CellMap | null; terr: Territory | null;
+  focus?: { region: string; x: string; y: string; n: number };
+  sst?: SST | null;
 }) {
   const info: Record<string, Info> = useMemo(() => ({
     ...mv.reference,
@@ -40,6 +42,13 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr }: {
   const [region, setRegion] = useState('metropolitana-de-santiago');
   const [x, setX] = useState('precip');
   const [y, setY] = useState('soilm_root');
+  useEffect(() => {
+    if (!focus) return;
+    setRegion(focus.region); setX(focus.x); setY(focus.y);
+    const p = Object.entries(PHENOMENA).find(([, v]) => v.vars.includes(focus.x) && v.vars.includes(focus.y));
+    if (p) setPhen(p[0]);
+    requestAnimationFrame(() => document.getElementById('h-explore-lab')?.scrollIntoView({ block: 'start' }));
+  }, [focus]);
   const R = mv.regions[region];
   const avail = (id: string) => !!R?.series[id];
   const choosePhen = (p: string) => {
@@ -83,7 +92,7 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr }: {
         </>
       )}
 
-      <h3>Explore</h3>
+      <h3 id="h-explore-lab" tabIndex={-1}>Explore</h3>
       <div className="lab-controls">
         <label className="field">Phenomenon
           <select value={phen} onChange={(e) => choosePhen(e.target.value)}>
@@ -122,8 +131,7 @@ export function Lab({ mv, names, geo, cellsT2m, cellsSm, terr }: {
       <CellMaps geo={geo} t2m={cellsT2m} sm={cellsSm} />
 
       <h3 id="h-coast">Guided discovery: why does Antofagasta's coast behave differently from its interior? <span className="tag-exp">exploratory</span></h3>
-      <CoastPanel mv={mv} />
-      {terr && <TerrainPanel terr={terr} />}
+      {terr ? <CoastSteps mv={mv} terr={terr} sst={sst} /> : <CoastPanel mv={mv} />}
     </section>
   );
 }
@@ -261,25 +269,29 @@ function CoastPanel({ mv }: { mv: MultiVar }) {
   return (
     <div>
       <p>
-        The weather station at Antofagasta (on the coast) shows no warming, while the regional mean of MERRA-2 does. Is the coast
+        The weather station at Antofagasta (on the coast) shows no statistically significant warming, while the regional mean of MERRA-2 does. Is the coast
         different from the desert interior? Cells were classified in QGIS: {c.rule}.
       </p>
       <PlotFigure make={make} alt="Trend of coastal cells, interior cells and their difference, with 95 % intervals." />
       <p className="result-line">
         Difference coastal − interior: {signed(c.difference.slope_per_decade)} °C per decade (95 % CI {num(c.difference.ci_low)} to{' '}
-        {num(c.difference.ci_high)}), {pval(c.difference.p_value)} — {c.differs ? 'the two parts of the region warmed at different rates in MERRA-2.' : 'MERRA-2 cannot tell the two parts apart.'}{' '}
+        {num(c.difference.ci_high)}), {pval(c.difference.p_value)} — {c.differs ? 'the trends of the two parts of the region differ in MERRA-2.' : 'MERRA-2 cannot tell the two parts apart.'}{' '}
         A coastal MERRA-2 cell is still about 50 km wide and mixes ocean and land, so it is not the same as a coastal station.
       </p>
     </div>
   );
 }
 
-function TerrainPanel({ terr }: { terr: Territory }) {
+function CoastSteps({ mv, terr, sst }: { mv: MultiVar; terr: Territory; sst?: SST | null }) {
   const A = terr.antofagasta;
-  const t1 = A.t1;
+  const { t1, context } = A;
+  const reg = context.regional;
+  const st = context.station;
   const rho = (k: string) => (A.t2[k] as { rho: number }).rho;
   const part = (k: string) => A.t2[k] as number;
-  const make = useCallback((w: number) => {
+  const np = t1.nearest_elevation_pairs;
+  const ci = (t: { slope_per_decade: number; ci_low: number; ci_high: number }) => `${signed(t.slope_per_decade)} °C per decade (95 % CI ${num(t.ci_low)} to ${num(t.ci_high)})`;
+  const scatter = useCallback((w: number) => {
     const fig = document.createElement('div');
     fig.className = 'lab-pair';
     const rows = A.cells.map((c) => ({ ...c, cls: c.coastal_e3 === 1 ? 'coastal cell' : 'interior cell' }));
@@ -288,35 +300,83 @@ function TerrainPanel({ terr }: { terr: Territory }) {
         width: Math.min(w, 340), height: 260, marginLeft: 48, grid: true, style: { fontSize: '12px', color: INK },
         x: { label: lab }, y: { label: 'Trend (°C per decade)' },
         color: { domain: ['coastal cell', 'interior cell'], range: [COLOR_A, COLOR_B], legend: key === 'elevation_mean' },
+        symbol: { domain: ['coastal cell', 'interior cell'], range: ['square', 'circle'] },
         marks: [Plot.ruleY([0], { stroke: '#6b7280' }),
           Plot.ruleX(rows, { x: key, y1: 'slope_ci_lower', y2: 'slope_ci_upper', stroke: 'cls', strokeOpacity: 0.35 }),
-          Plot.dot(rows, { x: key, y: 'slope_per_decade', fill: 'cls', r: 4 })],
+          Plot.dot(rows, { x: key, y: 'slope_per_decade', fill: 'cls', symbol: 'cls', r: 4 })],
       }));
     }
+    const joint = Plot.plot({
+      width: Math.min(w, 340), height: 260, marginLeft: 52, grid: true, style: { fontSize: '12px', color: INK },
+      x: { label: 'Distance to the coast (km)' }, y: { label: 'Mean elevation (m)' },
+      color: { type: 'diverging', scheme: 'RdBu', reverse: true, pivot: 0, legend: true, label: 'Trend (°C per decade)' },
+      symbol: { domain: ['coastal cell', 'interior cell'], range: ['square', 'circle'] },
+      marks: [Plot.dot(rows, { x: 'distance_to_coast_km', y: 'elevation_mean', fill: 'slope_per_decade', symbol: 'cls', r: 5, stroke: INK, strokeWidth: 0.4 })],
+    });
+    fig.append(joint);
     return fig;
   }, [A]);
   return (
-    <div className="terrain">
-      <p>
-        Each MERRA-2 cell (about 50 km) was described in QGIS with a 12.5 m elevation model (CIREN, processed at 100 m) and its
-        distance to the coastline. The relief only <em>describes</em> the cells: the climate data cannot resolve anything smaller.
-      </p>
-      <figure className="map-figure">
-        <img src={`${import.meta.env.BASE_URL}img/antofagasta_territorial.png`} loading="lazy" width={620}
-          alt="Map of Antofagasta: hillshaded relief with the MERRA-2 cells coloured by their warming trend; coastal cells outlined." />
-        <figcaption>Map exported from the project's QGIS workflow (qgis/scripts/export_territorial_maps.py).</figcaption>
-      </figure>
-      <PlotFigure make={make} alt="Each cell's warming trend against its mean elevation and against its distance to the coast." />
-      <p className="result-line">
-        Coast and altitude go together here (ρ = {signed(rho('elevation_vs_distance'))}), so we cannot fully separate them. Two checks
-        point to distance from the sea rather than altitude: (1) compared with interior cells of <strong>similar elevation</strong>{' '}
-        ({t1.n_matched} cells, average {Math.round(t1.matched_mean_elevation)} m vs {Math.round(t1.coastal_mean_elevation)} m for the coast), coastal
-        cells still warmed {num(Math.abs(t1.difference.slope_per_decade))} °C per decade less (95 % CI {num(t1.difference.ci_low)} to {num(t1.difference.ci_high)},{' '}
-        {pval(t1.difference.p_value)}); (2) ranking the trend against distance after removing elevation leaves an association of{' '}
-        {signed(part('partial_trend_distance_given_elevation'))}, while elevation after removing distance gives {signed(part('partial_trend_elevation_given_distance'))}.
-        Neighbouring cells are not independent, so these correlations are descriptive. A cooler ocean-influenced coast is a plausible physical
-        explanation, but this analysis does not prove it.
-      </p>
+    <ol className="steps">
+      <li><h4>The question</h4>
+        <p>Why do coastal and inland parts of Antofagasta show different warming trends? We can describe the difference and test how robust
+          it is; we cannot, with these data, prove what causes it.</p></li>
+      <li><h4>Regional mean</h4>
+        <p>The whole Antofagasta region (MERRA-2, 1980–2025): {ci(reg)}, {pval(reg.p_value)}.</p></li>
+      <li><h4>The problem</h4>
+        <p>{st.source}: {ci(st.station)}, {pval(st.station.p_value)}. On the same months, the regional mean gives {ci(st.ours_same_months)}.
+          The coastal station does not show the regional warming.</p></li>
+      <li><h4>Split the region: coast vs interior</h4><CoastPanel mv={mv} /></li>
+      <li><h4>Geomorphological context</h4>
+        <p>Each MERRA-2 cell (about 50 km) was described in QGIS with the CIREN elevation model (12.5 m pixel spacing; used for cell statistics and the map relief) and its distance to
+          the coastline. The relief describes the cells; the climate data cannot resolve anything smaller.</p>
+        <figure className="map-figure">
+          <img src={`${import.meta.env.BASE_URL}img/antofagasta_territorial.png`} loading="lazy" width={620}
+            alt="Map of Antofagasta: shaded relief with the MERRA-2 cells coloured by their warming trend; coastal cells outlined in black." />
+          <figcaption>Exported from the project's QGIS workflow (qgis/scripts/export_territorial_maps.py). Terrain context:{' '}
+            <a href="https://geoportal.cl/geoportal/catalog/35426/DEM%20Alos%20Palsar%20Regi%C3%B3n%20de%20Antofagasta">CIREN DEM ALOS PALSAR</a> (ASF ALOS
+            PALSAR RTC-derived; 12.5 m pixel spacing, not 12.5 m climate data). Climate trends: NASA MERRA-2 via Giovanni. Provenance:{' '}
+            <a href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/gis/DATA_LICENSES.md">DATA_LICENSES.md</a>.</figcaption>
+        </figure>
+        <PlotFigure make={scatter} alt="Each cell's warming trend against its mean elevation and against its distance to the coast, and elevation against distance coloured by trend." />
+        <p className="hint">Third panel: elevation and distance to the coast rise together, so the two cannot be fully separated with 51 cells.</p></li>
+      <li><h4>Sensitivity and a second reanalysis</h4>
+        <ul>
+          <li><strong>ERA5</strong>, another reanalysis, shows the same contrast at the same cell centres (rows in step 4). ERA5 and MERRA-2 share
+            many assimilated observations, so this is supporting, not fully independent, evidence. The coastal station sits with the coastal cells.</li>
+          <li><strong>Elevation-range-restricted comparison</strong> (interior cells inside the coastal elevation range; {t1.n_matched} cells averaging
+            {' '}{Math.round(t1.matched_mean_elevation)} m vs {Math.round(t1.coastal_mean_elevation)} m on the coast — not the same height): coast − interior {ci(t1.difference)}.</li>
+          <li><strong>Nearest-elevation pairs</strong> ({np.n_pairs} pairs; elevation gaps up to {Math.round(np.max_abs_elevation_gap_m)} m): {ci(np.difference)}.</li>
+          <li><strong>Definition of "coastal"</strong>: {A.t3.map((r) => `${r.rule}: ${signed(r.difference.slope_per_decade)}`).join('; ')} °C per decade.</li>
+          <li>Coast and altitude go together (ρ = {signed(rho('elevation_vs_distance'))}). Ranking the trend against distance after removing elevation leaves
+            {' '}{signed(part('partial_trend_distance_given_elevation'))}; elevation after removing distance, {signed(part('partial_trend_elevation_given_distance'))} (descriptive; neighbouring cells are not independent).</li>
+        </ul>
+        {sst && <SSTPanel sst={sst} />}</li>
+      <li><h4>Interpretation, uncertainty and open questions</h4>
+        <p>The regional average hides an important spatial difference: in two reanalyses no statistically significant warming was detected in the
+          coastal cells, while the interior warmed, and the coastal station is consistent with the coastal cells. This does not prove the cause. A cool, ocean-influenced coast is a plausible explanation (a related
+          coast–inland contrast was reported for 1979–2006 by Falvey and Garreaud, doi:10.1029/2008JD010519), but our analysis does not test it.
+          "No statistically significant warming in the coastal cells" is not the same as "the coast did not warm". The causal mechanism remains
+          unproven.</p></li>
+    </ol>
+  );
+}
+
+function SSTPanel({ sst }: { sst: SST }) {
+  const rows: Interval[] = [
+    ...Object.values(sst.series).map((s, i) => ({ name: s.label, slope: s.trend.slope_per_decade, lo: s.trend.ci_low, hi: s.trend.ci_high, color: i ? '#6b7280' : '#01665e' })),
+    { name: sst.air_coastal.label, slope: sst.air_coastal.trend.slope_per_decade, lo: sst.air_coastal.trend.ci_low, hi: sst.air_coastal.trend.ci_high, color: COLOR_A },
+    { name: sst.air_interior.label, slope: sst.air_interior.trend.slope_per_decade, lo: sst.air_interior.trend.ci_low, hi: sst.air_interior.trend.ci_high, color: COLOR_B },
+  ];
+  const make = useCallback((w: number) => intervals(rows, '°C per decade', w), [rows]);
+  return (
+    <div>
+      <h5>The ocean next to the coast ({sst.period[0]}–{sst.period[1]}) <span className="tag-exp">exploratory, registered before computing</span></h5>
+      <p>Sea-surface temperature averaged by NASA Giovanni over the ocean within ~100 km of the coast (box {sst.box}), compared with the
+        MERRA-2 air temperature of the coastal and interior cells over the same years. MODIS-Aqua is an independent satellite
+        observation; MERRA-2's sea surface is a boundary condition it shares with its own air temperature.</p>
+      <PlotFigure make={make} alt="Trends of sea-surface temperature and of coastal and interior air temperature over the same years." />
+      <p className="hint">Different variables (water skin vs air at 2 m) and a shorter period than the main analysis: compare directions and sizes, not as proof of a cause.</p>
     </div>
   );
 }

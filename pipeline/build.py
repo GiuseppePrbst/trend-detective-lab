@@ -70,7 +70,8 @@ GUIDED = [
     dict(title="Is southern Chile warming as fast as the desert north?",
          question="Compare air temperature trends in Los Lagos and Antofagasta since 1980.",
          lesson="In MERRA-2 the difference between the two trends is itself significant, so this reanalysis says Antofagasta warmed faster. "
-                "ERA5 agrees; the Antofagasta weather station does not (see Independent checks) — a reanalysis result, not a settled fact.",
+                "ERA5 was compared at five grid points per region, not on the difference itself; the coastal Antofagasta station does not "
+                "confirm the regional warming. The multivariable lab shows why: the region's coast and interior behave differently.",
          variable="t2m", a="los-lagos", b="antofagasta", preregistered=True),
     dict(title="Two flat lines — or too little evidence?",
          question="Neither Los Lagos nor Magallanes shows a significant warming trend in MERRA-2. Does that mean neither is warming?",
@@ -78,7 +79,7 @@ GUIDED = [
                 "both show significant warming that MERRA-2 does not — one dataset is never the last word.",
          variable="t2m", a="los-lagos", b="magallanes", preregistered=True),
     dict(title="One significant, one not — are they different?",
-         question="Rainfall falls significantly in Magallanes but not in Los Lagos. Do the two regions behave differently?",
+         question="IMERG shows a significant decline in Magallanes, but not in Los Lagos. Do their trends differ? (Other sources do not fully confirm the Magallanes result.)",
          lesson="Not shown. The test of the difference is what answers that, and it cannot tell them apart. Also: several regions have p < 0.05 "
                 "on their own, but after adjusting for testing 16 regions only Magallanes remains — and neither ERA5 nor its station confirms it clearly.",
          variable="precip", a="los-lagos", b="magallanes", preregistered=True),
@@ -257,9 +258,9 @@ def write_results(catalog: dict) -> None:
             t = R["trend"]
             s = t["sensitivity"]
             L.append(f"| {r['name']} | {R['n_cells']} | {t['mean']:.2f} | {t['slope_per_decade']:+.3f} ({t['ci_low']:+.3f}, {t['ci_high']:+.3f}) | "
-                     f"{t['p_value']:.4f} | {t['p_adjusted']:.4f} | {t['n_eff_annual']:.0f} / {t['n_years_used']} | {t['theil_sen_per_decade']:+.3f} | "
-                     f"{t['mk_p_value']:.4f} | {verdicts[t['verdict']]} | {s['preregistered_monthly_ar1']['p_value']:.4f} | "
-                     f"{s['first_revision_monthly_multilag']['p_value']:.4f} |")
+                     f"{trend.fmt_p(t['p_value'], 4)} | {trend.fmt_p(t['p_adjusted'], 4)} | {t['n_eff_annual']:.0f} / {t['n_years_used']} | {t['theil_sen_per_decade']:+.3f} | "
+                     f"{trend.fmt_p(t['mk_p_value'], 4)} | {verdicts[t['verdict']]} | {trend.fmt_p(s['preregistered_monthly_ar1']['p_value'], 4)} | "
+                     f"{trend.fmt_p(s['first_revision_monthly_multilag']['p_value'], 4)} |")
         n_nom = sum(R["trend"]["p_value"] < 0.05 for R in data["regions"].values())
         n_fdr = sum(R["trend"]["significant_after_fdr"] for R in data["regions"].values())
         c_all = data["comparisons"].values()
@@ -272,7 +273,7 @@ def write_results(catalog: dict) -> None:
                 c = data["comparisons"][key]
                 first, second = sorted((g["a"], g["b"]))
                 L.append(f"- Difference {first} − {second}: {c['slope_per_decade']:+.3f} ({c['ci_low']:+.3f}, {c['ci_high']:+.3f}) {var['trend_unit']}, "
-                         f"p = {c['p_value']:.4f} (adjusted across all pairs: {c['p_adjusted']:.4f}) → trends {'differ' if c['differs'] else 'cannot be said to differ'}.")
+                         f"{trend.p_eq(c['p_value'], 4)} (adjusted across all pairs: {trend.fmt_p(c['p_adjusted'], 4)}) → trends {'differ' if c['differs'] else 'cannot be said to differ'}.")
         L.append("")
     (ROOT / "docs" / "results.md").write_text("\n".join(L), encoding="utf-8")
 

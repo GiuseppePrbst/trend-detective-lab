@@ -4,18 +4,18 @@ The deck is `TrendDetectiveLab_demo.pdf` (7 slides including the title, built by
 generated result files). Official demo limit: **7 slides or a video of 30 s or less** (Project Submission Guide). Check
 with the Local Lead whether Quemchi also wants a live presentation.
 
-Central message: *Trend Detective Lab helps people discover how Earth's systems are changing — by connecting NASA
-datasets, spatial context and transparent statistical evidence.*
+Central message: *Trend Detective Lab reveals what regional climate averages hide — while showing what the evidence can
+and cannot prove.*
 
 ## 30-second demo video (optional; record the real app)
 
 | Time | On screen (https://giuseppeprbst.github.io/trend-detective-lab/) | Voice-over / subtitle |
 |---|---|---|
-| 0–5 s | Landing page, guided case 1 | "Is southern Chile warming as fast as the desert north? NASA MERRA-2, 1980 to 2025." |
-| 5–10 s | "Compare regions": difference Antofagasta − Los Lagos | "Yes — and the difference itself is significant." |
-| 10–17 s | Lab → "Coast versus interior" chart | "But not on the coast. The regional mean hid it; ERA5 and the coastal station agree." |
-| 17–25 s | Lab → Water availability, a central region, rain vs root-zone soil moisture | "Rain and soil moisture move together year to year — an association, from a model, not a cause." |
-| 25–30 s | Period selector switching to 2000–2024 | "And change the start year, and precipitation trends change. We show how confident we can be." |
+| 0–5 s | Step 0: click "Coastal climate" → suggested variables with their status | "Start with a question; the app suggests which NASA data can answer it." |
+| 5–12 s | Antofagasta case, steps 1–3: regional mean, station, coast vs interior chart | "Antofagasta is warming — but its coast is not. The regional average hid it." |
+| 12–18 s | Step 4–5: relief map and ERA5 rows | "Relief and a second reanalysis support the contrast; the cause is not proven." |
+| 18–25 s | Magallanes case: bars for IMERG, station, ERA5 | "Here datasets disagree, and we say so: significant is not certain." |
+| 25–30 s | An evidence card | "Every result shows what it supports — and what it does not." |
 
 Read every number off the screen when recording; they come from `docs/results.md` and
 `docs/multivariable/MULTIVARIABLE_RESULTS.md`.
@@ -36,7 +36,7 @@ the method when it gave too many false alarms, and checked our numbers against N
 they match to a few ten-thousandths of a degree.
 
 Then we used QGIS to look inside the regions. Antofagasta warmed faster than Los Lagos — that was our pre-registered
-question. But its coast did not warm at all; the interior did. A second reanalysis and the coastal weather station
+question. But in its coastal cells we detect no significant warming; the interior warmed. A second reanalysis and the coastal weather station
 agree. A regional average can hide the most interesting part of the story.
 
 In central Chile, rainfall and soil moisture rise and fall together from year to year. But the soil moisture comes from
@@ -59,8 +59,8 @@ change honestly — including when the honest answer is "we can't tell yet".
 1. **Regional mean** (main app, Antofagasta): +0.23 °C/decade, significant. The coastal weather station shows none.
 2. **Cells** (lab → coast panel): coastal MERRA-2 cells ≈ 0; interior ≈ +0.27 °C/decade.
 3. **Relief** (map `docs/gis/maps/antofagasta_territorial.png`): coastal escarpment and desert interior from the CIREN DEM.
-4. **Distance vs altitude** (two scatterplots): both rise inland; against interior cells of similar elevation the coast still
-   warms ~0.2 °C/decade less.
+4. **Distance vs altitude** (two scatterplots): both rise inland; restricting the interior to the coastal elevation range
+   (still ~360 m higher on average), the coast warms ~0.2 °C/decade less.
 5. **Second opinion**: ERA5 at the same points shows the same contrast; the station sits with the coast.
 6. **Careful reading**: an ocean-influenced coast is a plausible explanation, not a proven one; 50 km cells cannot separate
    coast from altitude completely. Exploratory.

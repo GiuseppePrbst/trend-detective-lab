@@ -41,20 +41,28 @@ def bbox(lats, lons) -> str:
     return f"{min(lons) - v['dlon'] / 2},{min(lats) - v['dlat'] / 2},{max(lons) + v['dlon'] / 2},{max(lats) + v['dlat'] / 2}"
 
 
-def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[str, float], str]:
-    """Run ArAvTs on Giovanni (cached) and return ({'YYYY-MM': deg C}, query string)."""
-    query = f"service=ArAvTs&starttime={START}&endtime={END}&bbox={box}&data={DATA_ID}&portal=GIOVANNI&format=json"
-    out = CACHE / f"{name.split()[0].lower()}_box.nc"
+def arav(data_id: str, box: str, start: str, end: str, cache_name: str, sess: requests.Session) -> tuple[dict[str, float], str]:
+    """Giovanni 'Time Series, Area-Averaged' (ArAvTs) for any variable and box (cached NetCDF). Returns ({'YYYY-MM': raw value}, query)."""
+    query = f"service=ArAvTs&starttime={start}&endtime={end}&bbox={box}&data={data_id}&portal=GIOVANNI&format=json"
+    out = CACHE / cache_name
     if not out.exists():
-        j = sess.get(f"{GIOVANNI}?{query}", timeout=120).json()["session"]
+        for _ in range(90):   # an identical workflow may already be running server-side: wait and ask again
+            j = sess.get(f"{GIOVANNI}?{query}", timeout=120).json()["session"]
+            msg = j["resultset"][0]["result"][0]["status"][0]["message"][0]["value"]
+            if "already running" not in msg:
+                break
+            time.sleep(60)
         ids = dict(session=j["id"], resultset=j["resultset"][0]["id"], result=j["resultset"][0]["result"][0]["id"])
-        for _ in range(120):
+        for _ in range(540):
             time.sleep(10)
             try:
                 r = sess.get(GIOVANNI, params={**ids, "portal": "GIOVANNI", "format": "json"}, timeout=120).json()
             except (requests.RequestException, ValueError):   # transient non-JSON answers happen while it works
                 continue
             res = r["session"]["resultset"][0]["result"][0]
+            st = res["status"][0]
+            if st["code"][0]["value"] not in ("0", "1"):   # Giovanni reports a failed workflow: stop instead of waiting
+                raise RuntimeError(f"Giovanni workflow failed for {data_id}: {st['message'][0]['value'][:120]}")
             urls = [f["dataUrl"][0]["value"] for g in res.get("data", [{}])[0].get("fileGroup", []) for f in g["dataFile"]]
             if urls:
                 CACHE.mkdir(parents=True, exist_ok=True)
@@ -63,12 +71,19 @@ def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[s
                 out.write_bytes(f.content)
                 break
         else:
-            raise RuntimeError(f"Giovanni did not finish for {name}")
+            raise RuntimeError(f"Giovanni did not finish for {data_id} {box}")
     import h5py
     with h5py.File(out) as h:
-        vals = h[DATA_ID][:].astype(float)
+        vals = h[data_id][:].astype(float)
+        fill = float(h[data_id].attrs.get("_FillValue", [1e15])[0])
         months = [m.decode() if isinstance(m, bytes) else str(m) for m in h["datamonth"][:]]
-    return {m[:4] + "-" + m[-2:]: (np.nan if v >= 1e14 else v - 273.15) for m, v in zip(months, vals)}, query
+    return {m[:4] + "-" + m[-2:]: (np.nan if (v >= 1e14 or v == fill) else float(v)) for m, v in zip(months, vals)}, query
+
+
+def giovanni_series(name: str, box: str, sess: requests.Session) -> tuple[dict[str, float], str]:
+    """MERRA-2 T2M area average from Giovanni, in deg C."""
+    raw, query = arav(DATA_ID, box, START, END, f"{name.split()[0].lower()}_box.nc", sess)
+    return {k: v - 273.15 for k, v in raw.items()}, query
 
 
 def our_series(lats, lons) -> dict[str, float]:
@@ -103,7 +118,7 @@ def main() -> None:
         to, tg = trend.analyze(common, [o[d] for d in common]), trend.analyze(common, [g[d] for d in common])
         L.append(f"| {name} | {box} | {len(lats) * len(lons)} | {len(common)} | {np.abs(diff).max():.4f} | {diff.mean():+.4f} | "
                  f"{to['slope_per_decade']:+.4f} ({to['ci_low']:+.3f}, {to['ci_high']:+.3f}) | {tg['slope_per_decade']:+.4f} "
-                 f"({tg['ci_low']:+.3f}, {tg['ci_high']:+.3f}) | {to['p_value']:.4f} / {tg['p_value']:.4f} |")
+                 f"({tg['ci_low']:+.3f}, {tg['ci_high']:+.3f}) | {trend.fmt_p(to['p_value'], 4)} / {trend.fmt_p(tg['p_value'], 4)} |")
         queries.append(f"- {name}: `{q}`")
     L += ["", "Reproduce: the Giovanni requests below are the ones the web interface issues "
           "(`https://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?<query>`; an Earthdata login is required). "

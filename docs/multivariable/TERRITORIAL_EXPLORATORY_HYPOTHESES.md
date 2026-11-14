@@ -28,3 +28,25 @@ No new p-value from T2–T4 is interpreted. T1 is the only test; it is reported 
   products, re-referenced to mean sea level with EGM2008. Its 12.5 m pixel is a resampling; it is not an elevation
   measured by the PALSAR radar. It is processed at 100 m for cell statistics.
 - Coast and elevation are correlated along northern Chile's escarpment; T1 tries to separate them, with few cells.
+
+## Erratum (added 2026-11-14, ~14:30, after review; the table above is left as written)
+
+T1 was called "elevation-matched". It is an **elevation-range-restricted comparison**: interior cells whose mean
+elevation lies inside the coastal cells' range (169–1,601 m). Those 7 interior cells average 1,320 m against 959 m for the
+10 coastal cells, so the groups are not at the same elevation. A stricter sensitivity was added afterwards (nearest-
+elevation pairing, with replacement); it still leaves elevation gaps. Both are exploratory.
+
+## T5 · Coastal sea-surface temperature off Antofagasta (registered 2026-11-14 ~14:50, before computing)
+
+- **Question.** Did the coastal ocean off Antofagasta warm over the period it can be compared?
+- **Data.** MODIS-Aqua night SST, 11 µm, monthly 9 km (`MODISA_L3m_NSST_Monthly_9km` R2019.0, OB.DAAC), area-averaged by NASA
+  Giovanni (ArAvTs) over the box 71.5–70.5° W, 26–21.5° S (ocean within ~100 km of the coast). Period: complete years
+  2003–2025. Second series: MERRA-2 open-water skin temperature (`M2TMNXOCN_5_12_4_TSKINWTR`), same box, same years.
+- **Method.** Main trend test of the app (yearly means of monthly anomalies, lag-1 effective sample size). Descriptive
+  comparison with the trend of the MERRA-2 coastal-cell air temperature over the same years.
+- **Expected sign.** No strong expectation; a weak or no warming would be consistent with the coastal-cell result, a clear
+  warming would not.
+- **What would contradict "a cool ocean explains the coast".** SST warming similar to the interior air (~+0.27 °C/decade).
+- **Family.** One test per SST series (2), exploratory; no correction claimed beyond reporting both.
+- **Dependencies.** MERRA-2 prescribes its sea-surface temperature from satellite analyses, so MERRA-2 skin temperature and
+  coastal air temperature share inputs; MODIS SST is an independent observation but 2003–2025 only.
