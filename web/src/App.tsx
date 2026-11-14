@@ -64,7 +64,7 @@ export default function App() {
   const discFile = useFile<Discovery>('discovery.json');
   // Coastal SST is not generated yet (Giovanni area-averaging failed; docs/submission/FINAL_READINESS.md). It is not requested,
   // so the console has no 404. Restore useFile<SST>('sst.json') once pipeline.sst has produced the file.
-  const sstFile: Loaded<SST> = { state: 'missing' };
+  const sstFile = { state: 'missing' } as Loaded<SST>;
   const [labFocus, setLabFocus] = useState<{ region: string; x: string; y: string; n: number }>();
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
