@@ -18,3 +18,6 @@ web/dist/
 
 # raw per-cell downloads are a cache; regional series and cell weights are committed instead
 data/raw/
+
+# cached third-party validation downloads
+data/external/

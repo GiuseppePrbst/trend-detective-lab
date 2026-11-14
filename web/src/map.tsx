@@ -4,7 +4,7 @@ import * as Plot from '@observablehq/plot';
 import { geoArea, geoMercator, geoPath } from 'd3-geo';
 import type { Feature, MultiPolygon, Polygon, Position } from 'geojson';
 import { useEffect, useMemo, useRef } from 'react';
-import { num, VERDICT_SHORT } from './format';
+import { MAP_STATUS, mapStatus, num } from './format';
 import type { Regions, Trend, VariableInfo } from './types';
 
 /** d3-geo expects clockwise outer rings; GeoJSON (RFC 7946) is counter-clockwise. Flip polygons that cover > half the globe. */
@@ -47,9 +47,10 @@ export function ChileMap(props: {
   trends: Record<string, Trend>;
   a: string;
   b: string;
+  alpha: number;
   onSelect: (id: string) => void;
 }) {
-  const { geo, v, trends, a, b, onSelect } = props;
+  const { geo, v, trends, a, b, alpha, onSelect } = props;
   const { path, height } = useMemo(() => {
     const proj = geoMercator().fitWidth(W, FRAME as never);
     const h = Math.ceil(geoPath(proj).bounds(FRAME as never)[1][1]);
@@ -64,8 +65,9 @@ export function ChileMap(props: {
     legendRef.current?.replaceChildren(Plot.legend({ color: { ...scale, label: v.trend_unit }, width: 240, ticks: 4 }));
   }, [scale, v.trend_unit]);
 
+  const status = (t: Trend) => mapStatus(t, alpha);
   const fill = (t: Trend | undefined) =>
-    !t ? '#ffffff' : t.verdict === 'not_significant' ? 'url(#hatch-ns)' : String(color.apply(t.slope_per_decade));
+    !t ? '#ffffff' : status(t) === 'ns' ? 'url(#hatch-ns)' : String(color.apply(t.slope_per_decade));
 
   return (
     <div className="map">
@@ -85,7 +87,7 @@ export function ChileMap(props: {
           const t = trends[id];
           const d = path(f) ?? '';
           const label = t
-            ? `${name}: ${num(t.slope_per_decade)} ${v.trend_unit}, ${VERDICT_SHORT[t.verdict]}`
+            ? `${name}: ${num(t.slope_per_decade)} ${v.trend_unit}, ${MAP_STATUS[status(t)]}`
             : `${name}: not available yet`;
           const sel = id === a ? ' is-a' : id === b ? ' is-b' : '';
           return (
@@ -108,7 +110,7 @@ export function ChileMap(props: {
               >
                 <title>{label}</title>
               </path>
-              {t?.verdict === 'method_dependent' && <path d={d} fill="url(#dots-md)" pointerEvents="none" />}
+              {t && status(t) === 'unadjusted' &&<path d={d} fill="url(#dots-md)" pointerEvents="none" />}
             </g>
           );
         })}
@@ -116,9 +118,9 @@ export function ChileMap(props: {
       <div className="legend">
         <div ref={legendRef} />
         <ul className="legend-keys">
-          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="#c9372c" stroke="#374151" /></svg> Solid colour: significant and robust</li>
-          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="#c9372c" /><rect width="22" height="14" fill="url(#dots-md)" stroke="#374151" /></svg> Dotted: depends on the method</li>
-          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="url(#hatch-ns)" stroke="#374151" /></svg> Grey hatched: not significant</li>
+          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="#c9372c" stroke="#374151" /></svg> Solid colour: {MAP_STATUS.fdr}</li>
+          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="#c9372c" /><rect width="22" height="14" fill="url(#dots-md)" stroke="#374151" /></svg> Colour with white dots: {MAP_STATUS.unadjusted}</li>
+          <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="url(#hatch-ns)" stroke="#374151" /></svg> Grey hatched: {MAP_STATUS.ns}</li>
           <li><svg width="22" height="14" aria-hidden="true"><rect width="22" height="14" fill="#fff" stroke="#374151" strokeDasharray="2 2" /></svg> White: not available yet</li>
           <li><svg width="22" height="14" aria-hidden="true"><rect x="1.5" y="1.5" width="19" height="11" fill="none" stroke="#111827" strokeWidth="3" /></svg> Thick outline: region A; dashed: region B</li>
         </ul>

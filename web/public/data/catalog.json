@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-14T13:35:16+00:00",
+ "generated_at": "2026-11-14T14:36:03+00:00",
  "variables": [
   {
    "label": "Air temperature at 2 m",
@@ -44,7 +44,8 @@
     "The IMERG Final Run V07 monthly record ends in September 2025; we use complete years 1998–2024.",
     "27 years is short for precipitation, which varies strongly from year to year; in central Chile the period is dominated by the drought that began in 2010.",
     "Satellite precipitation is less accurate over steep mountains such as the Andes.",
-    "Monthly precipitation is strongly skewed: a few very wet months weigh heavily on the least-squares slope, so it can differ clearly from the rank-based Theil–Sen slope. Where the two disagree the verdict is 'method-dependent'. In arid regions the series is dominated by rare events and trends are especially fragile."
+    "Monthly precipitation is strongly skewed (a few very wet months, many dry ones). The test therefore works on yearly means, which are much less skewed; in arid regions the series is still dominated by rare events and trends are especially fragile.",
+    "Percent change per decade = slope divided by the mean monthly precipitation of the whole analysed period (shown next to it)."
    ],
    "citation": "Huffman, G.J., E.F. Stocker, D.T. Bolvin, E.J. Nelkin, Jackson Tan (2023), GPM IMERG Final Precipitation L3 1 month 0.1 degree x 0.1 degree V07, Greenbelt, MD, Goddard Earth Sciences Data and Information Services Center (GES DISC), doi:10.5067/GPM/IMERG/3B-MONTH/07. Accessed through the NASA Giovanni time-series service.",
    "id": "precip",
@@ -125,37 +126,51 @@
   {
    "title": "Is southern Chile warming as fast as the desert north?",
    "question": "Compare air temperature trends in Los Lagos and Antofagasta since 1980.",
+   "lesson": "In MERRA-2 the difference between the two trends is itself significant, so this reanalysis says Antofagasta warmed faster. ERA5 agrees; the Antofagasta weather station does not (see Independent checks) — a reanalysis result, not a settled fact.",
    "variable": "t2m",
    "a": "los-lagos",
-   "b": "antofagasta"
+   "b": "antofagasta",
+   "preregistered": true
   },
   {
-   "title": "Los Lagos versus the far south",
-   "question": "Do Los Lagos and Magallanes show the same temperature trend?",
+   "title": "Two flat lines — or too little evidence?",
+   "question": "Neither Los Lagos nor Magallanes shows a significant warming trend in MERRA-2. Does that mean neither is warming?",
+   "lesson": "No. 'Not significant' means the record cannot tell, not that nothing changed. For Magallanes, ERA5 and the Punta Arenas station both show significant warming that MERRA-2 does not — one dataset is never the last word.",
    "variable": "t2m",
    "a": "los-lagos",
-   "b": "magallanes"
+   "b": "magallanes",
+   "preregistered": true
   },
   {
-   "title": "Is it raining less in Los Lagos?",
-   "question": "Look at precipitation in Los Lagos since 1998 and compare it with Magallanes.",
+   "title": "One significant, one not — are they different?",
+   "question": "Rainfall falls significantly in Magallanes but not in Los Lagos. Do the two regions behave differently?",
+   "lesson": "Not shown. The test of the difference is what answers that, and it cannot tell them apart. Also: several regions have p < 0.05 on their own, but after adjusting for testing 16 regions only Magallanes remains — and neither ERA5 nor its station confirms it clearly.",
    "variable": "precip",
    "a": "los-lagos",
-   "b": "magallanes"
+   "b": "magallanes",
+   "preregistered": true
   }
  ],
  "method": {
   "alpha": 0.05,
-  "main": "We remove the seasonal cycle (each month minus the average of that calendar month), then fit a straight line by least squares. Because each month resembles the months before it, the uncertainty is widened using an effective sample size computed from the autocorrelation of the residuals (the approach of Santer et al. 2000, 2008, extended beyond lag 1 because our real residuals keep more memory than a lag-1 model assumes). This gives the change per decade, its 95 % confidence interval and a two-sided p-value.",
-  "robustness": "As a second opinion with different assumptions we compute the Theil–Sen slope (Sen 1968) and the Mann–Kendall test with the Hamed & Rao (1998) correction for autocorrelation. If the two approaches disagree we say so.",
-  "comparison": "To ask whether two regions differ we analyse the difference between their series with the same method. Two separately significant trends do not show that the trends are different.",
-  "multiple": "When all 16 regions are shown together, p-values are adjusted with the Benjamini–Hochberg procedure to limit false discoveries.",
+  "main": "We remove the seasonal cycle (each month minus the average of that calendar month), average the result over each calendar year, and fit a straight line through the yearly values by least squares. Months resemble their neighbours, so 552 months are far fewer than 552 independent measurements; working with years, and widening the uncertainty for any year-to-year persistence that remains (Santer et al. 2000, 2008), keeps the test honest. This gives the change per decade, its 95 % confidence interval and a two-sided p-value.",
+  "robustness": "As a second opinion with different assumptions we compute, on the same yearly values, the Theil–Sen slope (Sen 1968) and the Mann–Kendall test (Mann 1945), which use ranks instead of magnitudes, with the same allowance for year-to-year persistence. If the two approaches disagree we say so.",
+  "comparison": "To ask whether two regions differ we analyse the difference between their series with the same method. Two separately significant trends do not show that the trends are different — and one significant plus one non-significant trend does not either.",
+  "multiple": "Looking at many regions at once makes chance findings likely. Across the 16 regional trends of a variable, and separately across the 120 pairwise differences, we report Benjamini–Hochberg adjusted p-values. The guided comparisons were chosen before seeing any data, so their unadjusted p-value applies; for any other pair, use the adjusted one.",
+  "calibration": "We chose the main method by simulation (docs/calibration.md in the repository): nine procedures, eleven kinds of synthetic series, acceptance criteria fixed beforehand. In the worst case — slowly decaying memory like that of our real temperature residuals — our pre-registered monthly test gave 47 % false positives where 5 % is promised, our first revision 13 %, Newey–West 21–43 %, a block bootstrap 20 %, and the yearly-means test 9 %. No method reached the nominal 5 % in every scenario; we use the best calibrated one and still show what the earlier ones would have concluded.",
+  "changes": [
+   "Pre-registered (14 Nov, 09:05): least squares on monthly anomalies with a lag-1 effective sample size.",
+   "Revision 1 (14 Nov, morning): validation on the real data showed more memory than lag-1 assumes; effective sample size extended to the leading positive autocorrelations. Wider intervals.",
+   "Revision 2 (14 Nov, midday): a calibration study showed revision 1 still gave 10–13 % false positives; the main test now runs on yearly means. Wider intervals again. Both earlier results remain visible as a sensitivity analysis."
+  ],
   "limitations": [
    "The test looks for a straight-line trend over the whole period; it does not describe changes of direction.",
    "A significant trend says nothing about its cause, and it is not a forecast.",
-   "Not significant does not mean no change: the record may be too short or too variable to tell.",
-   "Significance depends on how well the autocorrelation of the residuals is estimated; with very persistent variables the test is still somewhat optimistic (about 8–9 % false positives instead of 5 % in our simulations).",
-   "Measurement uncertainty of the data products is not propagated into the confidence interval."
+   "Not significant does not mean no change: the record may be too short or too variable to tell. The yearly-means test is cautious and will miss some real trends.",
+   "The test is still not perfectly calibrated: in our worst simulated case it gave about 9 % false positives instead of 5 % (about 10 % for 27-year records).",
+   "Measurement uncertainty of the data products is not propagated into the confidence interval.",
+   "A regional mean hides differences inside the region; MERRA-2 cells are about 50 km wide.",
+   "For Magallanes, another reanalysis (ERA5) and the Punta Arenas station do not confirm our results (they show warming, and no clear drying). Treat Magallanes as product-dependent."
   ]
  }
 }

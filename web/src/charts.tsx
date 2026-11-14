@@ -26,10 +26,20 @@ export function PlotFigure({ make, alt }: { make: (width: number) => Element; al
 
 const fracYear = (d: string) => +d.slice(0, 4) + (+d.slice(5, 7) - 0.5) / 12;
 
-/** Two points of the trend line: slope × (t − t_mid), anchored at the middle of the analysed period. */
-export function trendLine(t: Trend) {
+const yearDate = (f: number) => new Date(Date.UTC(Math.floor(f), 0, 1) + (f - Math.floor(f)) * 365.25 * 864e5);
+
+/**
+ * Trend line and its 95 % band, both drawn from the pipeline's slope and CI bounds:
+ * value = slope × (t − t_mid), pivoting at the middle of the analysed period (anomalies average ≈ 0).
+ */
+export function trendGeometry(t: Trend) {
   const mid = (fracYear(t.start) + fracYear(t.end)) / 2;
-  return [t.start, t.end].map((d) => ({ date: monthDate(d), y: (t.slope_per_decade / 10) * (fracYear(d) - mid) }));
+  return [fracYear(t.start), mid, fracYear(t.end)].map((f) => ({
+    date: yearDate(f),
+    y: (t.slope_per_decade / 10) * (f - mid),
+    lo: (t.ci_low / 10) * (f - mid),
+    hi: (t.ci_high / 10) * (f - mid),
+  }));
 }
 
 export function timeline(
@@ -42,9 +52,12 @@ export function timeline(
   const ys = mode === 'values' ? rs.values : rs.anomalies;
   const rows = rs.dates.map((d, i) => ({ date: monthDate(d), y: ys[i] }));
   const anom = mode === 'anomalies';
+  const color = opts.color ?? INK;
+  const annual = (rs.annual?.years ?? []).map((y, i) => ({ date: new Date(Date.UTC(y, 6, 1)), y: rs.annual!.anomalies[i] }));
+  const geom = anom ? trendGeometry(rs.trend) : [];
   return Plot.plot({
     width,
-    height: opts.height ?? 280,
+    height: opts.height ?? 300,
     marginLeft: 48,
     style: { fontSize: '12px', color: INK },
     x: { type: 'utc', label: null },
@@ -55,15 +68,12 @@ export function timeline(
       nice: !opts.yDomain,
     },
     marks: [
+      anom ? Plot.areaY(geom, { x: 'date', y1: 'lo', y2: 'hi', fill: color, fillOpacity: 0.16 }) : null,
       anom ? Plot.ruleY([0], { stroke: '#6b7280' }) : null,
-      Plot.lineY(rows, {
-        x: 'date',
-        y: 'y',
-        stroke: opts.color ?? '#6b7280',
-        strokeWidth: 1,
-        strokeDasharray: opts.dash,
-      }),
-      anom ? Plot.lineY(trendLine(rs.trend), { x: 'date', y: 'y', stroke: opts.color ?? INK, strokeWidth: 3 }) : null,
+      Plot.lineY(rows, { x: 'date', y: 'y', stroke: anom ? '#a3abb8' : '#6b7280', strokeWidth: 1 }),
+      anom ? Plot.lineY(annual, { x: 'date', y: 'y', stroke: color, strokeWidth: 1.5, strokeDasharray: opts.dash }) : null,
+      anom ? Plot.dot(annual, { x: 'date', y: 'y', fill: color, stroke: '#fff', r: 3.5 }) : null,
+      anom ? Plot.lineY(geom, { x: 'date', y: 'y', stroke: color, strokeWidth: 3 }) : null,
     ],
   });
 }
@@ -76,20 +86,24 @@ export interface Interval {
   color: string;
 }
 
-/** Dot-and-interval chart: each slope with its 95 % confidence interval. */
+/** Dot-and-interval chart: every row shares ONE x-axis, with a vertical zero line. */
 export function intervals(rows: Interval[], unit: string, width: number) {
+  const label = (r: Interval) => `${r.name}: ${num(r.slope)} (${num(r.lo)} to ${num(r.hi)})`;
   return Plot.plot({
     width,
-    height: 50 + rows.length * 44,
-    marginLeft: Math.min(200, width / 3),
+    height: 50 + rows.length * 58,
+    marginTop: 34,
+    marginLeft: 16,
+    marginRight: 16,
+    marginBottom: 46,
     style: { fontSize: '12px', color: INK },
-    x: { label: `Change (${unit}), 95 % confidence interval`, grid: true, nice: true },
-    y: { label: null, domain: rows.map((r) => r.name) },
+    x: { label: `Change (${unit}) with 95 % confidence interval`, labelAnchor: 'center', labelArrow: 'none', labelOffset: 40, grid: true, nice: true },
+    y: { axis: null, domain: rows.map((r) => r.name), padding: 0.1 },
     marks: [
-      Plot.ruleX([0], { stroke: '#6b7280' }),
+      Plot.ruleX([0], { stroke: INK, strokeWidth: 1.5 }),
       Plot.ruleY(rows, { y: 'name', x1: 'lo', x2: 'hi', stroke: 'color', strokeWidth: 3 }),
       Plot.dot(rows, { y: 'name', x: 'slope', fill: 'color', r: 6 }),
-      Plot.text(rows, { y: 'name', x: 'slope', text: (r: Interval) => num(r.slope), dy: -14 }),
+      Plot.text(rows, { y: 'name', text: label, frameAnchor: 'left', textAnchor: 'start', dy: -16, fontWeight: 600, fill: INK, stroke: '#fff', strokeWidth: 4, paintOrder: 'stroke' }),
     ],
   });
 }

@@ -4,7 +4,11 @@ Single-page static app that lets a non-specialist review the evidence for a clim
 
 **This app computes no statistics.** Every number (slopes, confidence intervals, p-values, verdicts, comparisons) is read from
 the JSON files written by the Python pipeline to `public/data/` (see `../docs/data-contract.md`). The app only formats and
-plots them; the CSV download re-formats the published series.
+plots them; the CSV download re-formats the published series (monthly values and anomalies, plus the yearly means the
+test uses). Trend lines and their 95 % bands are drawn from the published slope and CI bounds, pivoting at mid-period.
+
+Optional `public/data/validation.json` adds an "Independent checks" card when it has an entry for the selected
+variable and region; without it the app says that no independent check exists yet.
 
 ## Run
 
