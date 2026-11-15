@@ -1,0 +1,85 @@
+{
+ "antofagasta": {
+  "bounds_utm": [
+   154000.0,
+   7042000.0,
+   814000.0,
+   7754000.0
+  ],
+  "grid": [
+   330,
+   356
+  ],
+  "gmted_spikes_masked": 0,
+  "z_max": 6150,
+  "land_share": 0.693,
+  "ciren_vs_gmted": {
+   "whole_mosaic": {
+    "n": 32099,
+    "median_m": -1.2,
+    "mean_m": -49.5,
+    "rmse_m": 379.9,
+    "p95_abs_m": 34.8,
+    "r": 0.9526,
+    "n_ciren_1000m_lower": 502
+   },
+   "inside_region": {
+    "n": 31464,
+    "median_m": -1.0,
+    "mean_m": -7.5,
+    "rmse_m": 79.7,
+    "p95_abs_m": 27.9,
+    "r": 0.9978,
+    "n_ciren_1000m_lower": 66
+   }
+  },
+  "sizes_bytes": {
+   "height.bin": 234960,
+   "relief.jpg": 480551,
+   "scene.json": 50068,
+   "sea.png": 26228
+  }
+ },
+ "los_lagos": {
+  "bounds_utm": [
+   500000.0,
+   5086000.0,
+   842000.0,
+   5584000.0
+  ],
+  "grid": [
+   171,
+   249
+  ],
+  "gmted_spikes_masked": 0,
+  "z_max": 2972,
+  "land_share": 0.636,
+  "ciren_vs_gmted": {
+   "whole_mosaic": {
+    "n": 12485,
+    "median_m": 0.2,
+    "mean_m": -26.2,
+    "rmse_m": 157.2,
+    "p95_abs_m": 135.7,
+    "r": 0.9434,
+    "n_ciren_1000m_lower": 120
+   },
+   "inside_region": {
+    "n": 11739,
+    "median_m": 0.2,
+    "mean_m": -3.1,
+    "rmse_m": 51.6,
+    "p95_abs_m": 93.3,
+    "r": 0.9934,
+    "n_ciren_1000m_lower": 0
+   }
+  },
+  "sizes_bytes": {
+   "height.bin": 85158,
+   "landcover.jpg": 657816,
+   "relief.jpg": 478901,
+   "scene.json": 66620,
+   "sea.png": 27694
+  }
+ }
+}

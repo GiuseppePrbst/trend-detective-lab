@@ -233,3 +233,30 @@ button:disabled { cursor: not-allowed; }
 .sens { margin: 0.5rem 0 1rem; }
 
 .ecard-q { margin: 0.4rem 0 0; font-style: italic; color: #374151; }
+
+/* 3D terrain view */
+.t3d-bar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; margin: 0.5rem 0 0.75rem; font-size: 0.9rem; }
+.t3d-bar select, .t3d-bar input[type="range"] { margin-left: 0.3rem; }
+.t3d-view { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #e9edf2; }
+.t3d-canvas canvas { display: block; width: 100%; touch-action: none; }
+.t3d-labels { position: absolute; inset: 0; pointer-events: none; }
+.t3d-labels span { position: absolute; left: 0; top: 0; font-size: 12px; font-weight: 600; color: #1f2937; white-space: nowrap;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff; margin: -8px 0 0 6px; }
+.t3d-labels span::before { content: ""; position: absolute; left: -6px; top: 5px; width: 4px; height: 4px; border-radius: 50%; background: #1f2937; box-shadow: 0 0 0 1.5px #fff; }
+.t3d-tip { position: absolute; max-width: 300px; background: rgba(255,255,255,0.96); border: 1px solid var(--line); border-radius: 6px;
+  padding: 0.4rem 0.55rem; font-size: 0.8rem; line-height: 1.35; pointer-events: none; box-shadow: 0 2px 8px rgba(16,24,40,0.12); }
+.t3d-loading { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--muted); }
+.t3d-cams { position: absolute; right: 0.5rem; bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
+.t3d-cams button { font-size: 0.78rem; padding: 0.25rem 0.55rem; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+.t3d-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.5rem 1.5rem; margin-top: 0.75rem; }
+.t3d-ramp { height: 12px; border-radius: 2px; margin-top: 0.35rem; border: 1px solid rgba(0,0,0,0.15); }
+.t3d-ticks { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
+.t3d-story p { margin: 0.3rem 0; }
+.t3d-sources { grid-column: 1 / -1; }
+.t3d-fallback { padding: 1rem; border: 1px dashed var(--line); }
+.embed3d { padding-top: 0.75rem; }
+.shot .t3d-bar, .shot .t3d-cams { display: none; }
+@media (max-width: 600px) {
+  .t3d-cams { position: static; padding: 0.4rem; justify-content: flex-start; background: #fff; }
+  .t3d-labels span { font-size: 11px; }
+}
