@@ -8,9 +8,9 @@
 | --- | --- |
 | Mix of five Epidemic Sound effects (`film_audio.py`) | **Rejected by the team.** Not to be published or rebuilt. Kept only as a local, labelled backup. |
 | MiniMax track with a beat join at 22 s (candidate 1) | **Rejected by Giuseppe**: the join at 0:22 is noticeable. |
-| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6d50217e…`). Fabiana's approval not recorded. **Publication still waits for the MiniMax rights** to be confirmed by the account holder. |
+| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6d50217e…`). Rights **confirmed by Giuseppe** (the track is his; use in the film and its publication approved, 2026-11-15). This is the film to publish. |
 | MiniMax track, the last 30 s of the piece (candidate 2b) | Not chosen. |
-| Silent V2 | Safe delivery until the MiniMax rights are confirmed. The approved V1 film is unchanged. |
+| Silent V2 | Fallback. The approved V1 film is unchanged. |
 
 The web application is not affected: its interface cues are synthesised in the browser and ship no audio file.
 
@@ -59,7 +59,11 @@ Both: 900 frames, 30.000 s, AAC 48 kHz stereo, decode clean, gain only (no limit
 
 **Listening:** Giuseppe listened to candidates 2 and 2b and approved 2. The tool did not listen to either. Listen for: in 2, whether the fade-out under the hand-off feels natural; in 2b, whether a pulse from the first frame suits the whole-Earth opening.
 
-## Rights — what must be confirmed before publishing the film with music
+## Rights
+
+**Confirmed on 2026-11-15 by Giuseppe Proboste**, team member and holder of the MiniMax account: the track is his and he approves its use in the film, including YouTube and the Space Apps project page. Credit to use: *"Original instrumental music generated with MiniMax Music 3.0; edited and reviewed by ProGarLabs."*, also declared in the contest's AI-use form.
+
+### Background read before that confirmation
 
 Not legal advice; read on 2026-11-15:
 
