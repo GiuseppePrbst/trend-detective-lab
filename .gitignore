@@ -26,3 +26,8 @@ data/gis_src/
 *.aux.xml
 qgis/terrain/*_250m.tif
 *.tif.aux.xml
+
+# Cesium runtime files, copied from node_modules by web/scripts/copy-cesium.mjs
+web/public/cesium/
+# film renders (rebuilt from code by web/scripts/render.mjs)
+web/out/
