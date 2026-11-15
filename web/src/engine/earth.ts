@@ -42,8 +42,77 @@ export async function createEarth(el: HTMLElement, regions: RegionShape[]) {
   });
   let outlineKey = '';
 
+  // ---- data layers on the curved globe: polygons on the ellipsoid, coloured per instance (no texture, no flat sheet) ----
+  type Poly = [number, number][][];                    // rings, outer first
+  type Layer = { fill: InstanceType<typeof C.Primitive>; line: InstanceType<typeof C.Primitive>; ids: string[][]; want: { fill: (string | null)[]; line: (string | null)[]; alpha: number } | null; key: string };
+  const layers = new Map<string, Layer>();
+  const hier = (rings: Poly) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(rings[0].flat()), rings.slice(1).map((h) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(h.flat()))));
+  const clear = () => C.ColorGeometryInstanceAttribute.fromColor(new C.Color(0, 0, 0, 0));
+  /** items[i] = the polygons of feature i (a native cell clipped to land, or a region). */
+  function addLayer(name: string, items: Poly[][], asynchronous = false) {
+    const ids = items.map((polys, i) => polys.map((_, j) => `${name}:${i}:${j}`));
+    const inst = (outline: boolean) => items.flatMap((polys, i) => polys.map((rings, j) => new C.GeometryInstance({
+      id: ids[i][j],
+      geometry: outline
+        ? new C.PolygonOutlineGeometry({ polygonHierarchy: hier(rings), arcType: C.ArcType.RHUMB, height: 0 })
+        : new C.PolygonGeometry({ polygonHierarchy: hier(rings), arcType: C.ArcType.RHUMB, height: 0, vertexFormat: C.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT }),
+      attributes: { color: clear() },
+    })));
+    const mk = (outline: boolean) => scene.primitives.add(new C.Primitive({
+      geometryInstances: inst(outline), asynchronous, show: false,
+      appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }),
+    })) as InstanceType<typeof C.Primitive>;
+    layers.set(name, { fill: mk(false), line: mk(true), ids, want: null, key: '' });
+  }
+  /** Colours per feature (null = not drawn: no data is never zero) and one opacity for the fills. */
+  function setLayer(name: string, version: string, fill: (string | null)[], line: (string | null)[], alpha: number) {
+    const l = layers.get(name);
+    if (!l) return;
+    const key = alpha < 0.005 ? 'off' : `${version}|${Math.round(alpha * 100)}`;
+    if (key === l.key) return;
+    l.key = key; l.want = { fill, line, alpha };
+  }
+  function flush() {
+    let pending = false;
+    for (const l of layers.values()) {
+      if (!l.want) continue;
+      const on = l.want.alpha >= 0.005;
+      l.fill.show = on; l.line.show = on;
+      if (!on) { l.want = null; continue; }
+      if (!l.fill.ready || !l.line.ready) { pending = true; continue; }
+      l.ids.forEach((js, i) => js.forEach((id) => {
+        const f = l.want!.fill[i], s = l.want!.line[i];
+        l.fill.getGeometryInstanceAttributes(id).color = C.ColorGeometryInstanceAttribute.toValue(f ? C.Color.fromCssColorString(f).withAlpha(l.want!.alpha) : new C.Color(0, 0, 0, 0));
+        l.line.getGeometryInstanceAttributes(id).color = C.ColorGeometryInstanceAttribute.toValue(s ? C.Color.fromCssColorString(s).withAlpha(Math.min(1, l.want!.alpha * 1.6)) : new C.Color(0, 0, 0, 0));
+      }));
+      l.want = null;
+    }
+    return pending;
+  }
+  let busy = false;
+  const occluder = new C.EllipsoidalOccluder(C.Ellipsoid.WGS84, camera.positionWC);
+  const scratch = new C.Cartesian2();
+
   return {
     basemap: online ? 'gibs' as const : 'bundled' as const,
+    addLayer, setLayer,
+    hasLayer: (name: string) => layers.has(name),
+    /** lon/lat → canvas pixel, or null when the point is behind the planet or off screen */
+    project(lon: number, lat: number): [number, number] | null {
+      const c = C.Cartesian3.fromDegrees(lon, lat, 0);
+      occluder.cameraPosition = camera.positionWC;
+      if (!occluder.isPointVisible(c)) return null;
+      const w = C.SceneTransforms.worldToWindowCoordinates(scene, c);
+      return w ? [w.x, w.y] : null;
+    },
+    /** canvas pixel → lon/lat on the ellipsoid, or null in space */
+    pick(x: number, y: number): [number, number] | null {
+      scratch.x = x; scratch.y = y;
+      const c = camera.pickEllipsoid(scratch, C.Ellipsoid.WGS84);
+      if (!c) return null;
+      const g = C.Cartographic.fromCartesian(c);
+      return [g.longitude / R, g.latitude / R];
+    },
     setPose(p: Pose) {
       camera.lookAt(C.Cartesian3.fromDegrees(p.lon, p.lat, 0), new C.HeadingPitchRange(p.heading * R, p.pitch * R, p.range * 1000));
       camera.lookAtTransform(C.Matrix4.IDENTITY);
@@ -65,15 +134,17 @@ export async function createEarth(el: HTMLElement, regions: RegionShape[]) {
       const a = scene.canvas.clientWidth / Math.max(1, scene.canvas.clientHeight);
       const f = camera.frustum as InstanceType<typeof C.PerspectiveFrustum>;
       f.fov = a >= 1 ? 2 * Math.atan(Math.tan((FOV_Y * R) / 2) * a) : FOV_Y * R;   // Cesium's fov is along the larger side
+      busy = flush();
       viewer.render();
+      if (!busy && [...layers.values()].some((l) => l.want)) { busy = flush(); viewer.render(); }
     },
-    loaded: () => scene.globe.tilesLoaded,
+    loaded: () => scene.globe.tilesLoaded && !busy,
     /** render until every tile for the current view has arrived (capture only) */
     async settle(maxMs = 20000) {
       const t0 = performance.now();
       for (;;) {
         this.render();
-        if (scene.globe.tilesLoaded || performance.now() - t0 > maxMs) return;
+        if ((scene.globe.tilesLoaded && !busy) || performance.now() - t0 > maxMs) return;
         await new Promise((r) => setTimeout(r, 40));
       }
     },

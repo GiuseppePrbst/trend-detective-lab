@@ -73,7 +73,25 @@ export type Overlay = {
   reveal?: number;
   /** index of the selected cell: outlined, never recoloured */
   selected?: number;
+  /** visible footprint of each cell in texture coordinates (native cell ∩ region), polygons of rings; default: the native footprint */
+  clip?: [number, number][][][][];
+  /** indices of the cells with the highest and the lowest trend of the period: marked with a double outline, never recoloured */
+  marks?: number[];
 };
+export const EARTH_R = 6371;   // km, mean radius: the terrain bends with the planet when it is drawn on the globe
+
+/** Alpha mask of the terrain on the globe: the region's land (and the SST box while it is drawn). White = drawn. */
+export function paintMask(data: Loaded, land: [number, number][][], sst: boolean, into: HTMLCanvasElement) {
+  const W = 1024, H = Math.round((1024 * data.scene.grid.ny) / data.scene.grid.nx);
+  if (into.width !== W || into.height !== H) { into.width = W; into.height = H; }
+  const g = into.getContext('2d')!;
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff';
+  const add = (uv: [number, number][]) => { uv.forEach(([u, v], i) => (i ? g.lineTo(u * W, v * H) : g.moveTo(u * W, v * H))); g.closePath(); };
+  g.beginPath(); land.forEach(add); g.fill();
+  if (sst && data.scene.sst_box) { g.beginPath(); add(data.scene.sst_box); g.fill(); }
+  return into;
+}
 
 /** Texture = baked relief + draped overlays. Cells keep their native footprint. */
 export function paintOverlay(data: Loaded, o: Overlay, into?: HTMLCanvasElement): HTMLCanvasElement {
@@ -106,15 +124,22 @@ export function paintOverlay(data: Loaded, o: Overlay, into?: HTMLCanvasElement)
       const order = cells.map((_, i) => i).sort((a, b) => cells[a].lon - cells[b].lon || cells[b].lat - cells[a].lat);
       rank = []; order.forEach((ci, r) => { rank![ci] = r; });
     }
+    // the drawn shape of a cell: its clipped footprint when there is one, else the native footprint
+    const shape = (i: number) => {
+      const polys = o.clip?.[i];
+      if (!polys) { path(cells[i].uv); return; }
+      g.beginPath();
+      for (const rings of polys) for (const r of rings) { r.forEach(([u, v], n) => (n ? g.lineTo(u * W, v * H) : g.moveTo(u * W, v * H))); g.closePath(); }
+    };
     cells.forEach((cell, i) => {
       const t = cell.trends[o.period];
       if (!t) return;
       const k = rank ? Math.min(1, Math.max(0, o.reveal! * (cells.length + 4) - rank[i])) : 1;
       if (k <= 0) return;
-      path(cell.uv);
+      shape(i);
       g.globalAlpha = o.opacity * k;
       g.fillStyle = ramp(o.stops, (t.slope / o.D + 1) / 2).getStyle();
-      g.fill();
+      g.fill('evenodd');
       g.globalAlpha = k;
       g.strokeStyle = cell.coastal ? 'rgba(15,15,15,0.95)' : 'rgba(40,40,40,0.45)';
       g.lineWidth = cell.coastal ? 5 : 1.5;
@@ -122,13 +147,14 @@ export function paintOverlay(data: Loaded, o: Overlay, into?: HTMLCanvasElement)
     });
     g.globalAlpha = 1;
     const sel = o.selected != null ? cells[o.selected] : undefined;
-    if (sel?.trends[o.period]) { path(sel.uv); g.strokeStyle = '#4CD9E6'; g.lineWidth = 9; g.stroke(); g.strokeStyle = '#060D1A'; g.lineWidth = 2; g.stroke(); }
+    for (const m of o.marks ?? []) if (cells[m]?.trends[o.period] && (!rank || o.reveal! >= 1)) { shape(m); g.strokeStyle = '#EFF6FF'; g.lineWidth = 7; g.stroke(); g.strokeStyle = '#060D1A'; g.lineWidth = 2.5; g.stroke(); }
+    if (sel?.trends[o.period]) { shape(o.selected!); g.strokeStyle = '#4CD9E6'; g.lineWidth = 9; g.stroke(); g.strokeStyle = '#060D1A'; g.lineWidth = 2; g.stroke(); }
   }
   return c;
 }
 
 /** Terrain mesh, block-diagram base and the north-west light. Axes: x east, y up, z south, in km; origin = scene centre at sea level. */
-export function buildTerrain(data: Loaded, scene: THREE.Scene, anisotropy: number) {
+export function buildTerrain(data: Loaded, scene: THREE.Scene, anisotropy: number, onGlobe = false) {
   const { nx, ny, res_m } = data.scene.grid;
   const W = ((nx - 1) * res_m) / KM, H = ((ny - 1) * res_m) / KM;
   const geo = new THREE.PlaneGeometry(W, H, nx - 1, ny - 1);
@@ -140,17 +166,22 @@ export function buildTerrain(data: Loaded, scene: THREE.Scene, anisotropy: numbe
     base[k] = h === -32768 ? 0 : h / KM;                  // sea: flat surface at 0, not terrain
     uv.setXY(k, (j + 0.5) / nx, 1 - (i + 0.5) / ny);     // vertices sit at the 2 km cell centres
   }
+  // on the globe the mesh follows the planet's curvature: each vertex drops by d²/2R from the tangent plane at the scene centre
+  const dropAt = (x: number, z: number) => (onGlobe ? (x * x + z * z) / (2 * EARTH_R) : 0);
   let exag = -1;
   const setExag = (e: number) => {
     if (e === exag) return;
     exag = e;
-    for (let k = 0; k < base.length; k++) pos.setZ(k, base[k] * e);
+    for (let k = 0; k < base.length; k++) pos.setZ(k, base[k] * e - dropAt(pos.getX(k), pos.getY(k)));
     pos.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingSphere();
   };
   const tex = new THREE.CanvasTexture(document.createElement('canvas'));
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = anisotropy;
   const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1, metalness: 0 });
+  // on the globe only the region is drawn (alpha mask): no rectangular sheet and no block under it
+  const mask = onGlobe ? new THREE.CanvasTexture(document.createElement('canvas')) : null;
+  if (mask) { mat.alphaMap = mask; mat.alphaTest = 0.5; }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.x = -Math.PI / 2;                          // +y (north) -> -z; west = -x
   // block-diagram base under the scene (neutral; it is not data and not bathymetry)
@@ -159,11 +190,13 @@ export function buildTerrain(data: Loaded, scene: THREE.Scene, anisotropy: numbe
   const hemi = new THREE.HemisphereLight('#f6f3ec', '#5b5f66', 0.95);
   const sun = new THREE.DirectionalLight('#fffaf0', 1.25);
   sun.position.set(-W, Math.max(W, H) * 0.8, -H * 0.8);    // from the north-west, the cartographic convention
-  scene.add(mesh, block, hemi, sun);
+  scene.add(mesh, hemi, sun);
+  if (!onGlobe) scene.add(block);
   return {
-    W, H, mesh, setExag,
+    W, H, mesh, setExag, dropAt,
+    setMask: (c: HTMLCanvasElement) => { if (mask) { mask.image = c; mask.needsUpdate = true; } },
     exag: () => exag,
     setMap: (c: HTMLCanvasElement) => { tex.image = c; tex.needsUpdate = true; },
-    dispose: () => { scene.remove(mesh, block, hemi, sun); geo.dispose(); mat.dispose(); tex.dispose(); block.geometry.dispose(); (block.material as THREE.Material).dispose(); },
+    dispose: () => { scene.remove(mesh, block, hemi, sun); geo.dispose(); mat.dispose(); tex.dispose(); mask?.dispose(); block.geometry.dispose(); (block.material as THREE.Material).dispose(); },
   };
 }

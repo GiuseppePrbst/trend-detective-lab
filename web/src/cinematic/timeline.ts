@@ -18,6 +18,8 @@ export const SHOTS = [
 export const CELLS_IN = [13.4, 17.6] as const;     // native cells appear west to east
 export const PERIOD_SWAP = 22;                      // 1980–2025 result → 2003–2025 result (two computed windows; nothing in between)
 export const PERIOD_A = '1980-2025', PERIOD_B = '2003-2025';
+// V2: the yearly values behind the trends are drawn year by year (1980 → 2025) while the cells are on screen; camera and shots unchanged
+export const CHART = { in: 14.2, draw: [14.8, 21.4], out: 24.4 } as const;
 export const TITLE = [25.2, 27.5] as const;         // end title in / out
 export const UI_IN = [27.3, 29.6] as const;         // interface panels arrive while the camera settles
 
@@ -70,6 +72,19 @@ export function lerpPose(a: Pose, b: Pose, k: number): Pose {
   return { lon: l(a.lon, b.lon), lat: l(a.lat, b.lat), heading: l(a.heading, b.heading), pitch: l(a.pitch, b.pitch), range: Math.exp(l(Math.log(a.range), Math.log(b.range))) };
 }
 
+/** An interactive flight: straight on the ground (lon/lat), an arc in height. The camera rises enough to see the way,
+ *  travels and descends — it never cuts through the planet and never jumps. Pure functions: the same k gives the same pose. */
+export type Flight = { from: Pose; to: Pose; dur: number; lift: number };
+export function planFlight(from: Pose, to: Pose, km: number, reduced = false): Flight {
+  const f = { ...from, heading: to.heading + ((((from.heading - to.heading) % 360) + 540) % 360) - 180 };   // turn the short way
+  const peak = Math.min(9000, km * 2.2);
+  return { from: f, to, dur: reduced ? 0 : Math.min(7000, Math.max(2400, 2200 + km * 1.7)), lift: Math.max(0, Math.log(peak) - Math.max(Math.log(f.range), Math.log(to.range))) };
+}
+export function flightPose(f: Flight, k: number): Pose {
+  const p = lerpPose(f.from, f.to, k), hop = Math.sin(Math.PI * smooth(0, 1, k));
+  return f.lift ? { ...p, range: Math.exp(Math.log(p.range) + f.lift * hop), pitch: p.pitch + (-82 - p.pitch) * 0.85 * hop } : p;
+}
+
 // What the scene shows depends on how close the camera is — the same rule for the film and for free navigation.
 export const terrainAlpha = (range: number) => 1 - smooth(Math.log(1750), Math.log(2900), Math.log(range));   // regional terrain fades in on approach
 export const reliefRise = (range: number) => 1 - smooth(Math.log(1520), Math.log(2500), Math.log(range));     // 0 = flat, 1 = the declared exaggeration
@@ -96,6 +111,6 @@ export function stateAt(t: number): FilmState {
 /** Beat list for sound design (name, seconds). */
 export const EVENTS = [
   { name: 'open', t: 0 }, ...SHOTS.slice(1).map((s) => ({ name: `shot${s.n}`, t: s.t0 })),
-  { name: 'terrain-rise', t: 9.6 }, { name: 'cells-in', t: CELLS_IN[0] }, { name: 'period-swap', t: PERIOD_SWAP },
+  { name: 'terrain-rise', t: 9.6 }, { name: 'cells-in', t: CELLS_IN[0] }, { name: 'chart-draw', t: CHART.draw[0] }, { name: 'chart-end', t: CHART.draw[1] }, { name: 'period-swap', t: PERIOD_SWAP },
   { name: 'title', t: TITLE[0] }, { name: 'interface', t: UI_IN[0] }, { name: 'end', t: TOTAL },
 ];
