@@ -27,6 +27,11 @@ shown under the view are the existing T4 results.
 2D maps before/after compared (`CARTOGRAPHIC_DESIGN.md`). QGIS project: reopened headless, 13 layers, none broken,
 terrain scale 2.0, three period themes.
 
+**Depth fix (fix/terrain3d-final-polish):** the grey speckle and dark band on the ocean were z-fighting between the flat sea
+(0 km) and the neutral base block (top at −0.05 km) with camera near plane 1. Raising only the near plane to 10 removed it
+(controlled test); the block top was also lowered to −0.5 km for margin. Geometry, heights, UVs and cell footprints are
+unchanged. Default view: oblique from the south-west, cell opacity 55 %, exaggeration still 2× (3× tested: no clear gain).
+
 **Not verified:** the QGIS 3D map *view* (needs the desktop GUI); Qgis2threejs; rendering on a physical low-end phone (only
 the 375 px emulation and software WebGL in headless Edge); CIREN/CONAF layers are local, so they appear as missing
 layers in the project for anyone without those downloads.

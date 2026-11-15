@@ -73,7 +73,7 @@ export default function Terrain3D({ terr, sst }: { terr: Territory | null; sst: 
   const [showCells, setShowCells] = useState(Q.get('cells') !== '0');
   const [showSst, setShowSst] = useState(Q.get('sst') !== '0');
   const [showLabels, setShowLabels] = useState(Q.get('labels') !== '0');
-  const [opacity, setOpacity] = useState(0.75);
+  const [opacity, setOpacity] = useState(0.55);
   const [exag, setExag] = useState(Number(Q.get('exag') ?? 2));
   const [data, setData] = useState<Loaded | null>(null);
   const [err, setErr] = useState('');
@@ -156,7 +156,7 @@ export default function Terrain3D({ terr, sst }: { terr: Territory | null; sst: 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#e9edf2');
     scene.fog = new THREE.Fog('#e9edf2', Math.max(W, H) * 1.6, Math.max(W, H) * 3.2);
-    const camera = new THREE.PerspectiveCamera(35, 1, 1, 10000);
+    const camera = new THREE.PerspectiveCamera(35, 1, 10, 10000);   // near 10 (not 1): with near 1 the 24-bit depth buffer could not separate the sea from the base block (z-fighting speckle)
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI * 0.47;
@@ -182,7 +182,7 @@ export default function Terrain3D({ terr, sst }: { terr: Territory | null; sst: 
     scene.add(mesh);
     // block-diagram base under the scene (neutral; it is not data and not bathymetry)
     const block = new THREE.Mesh(new THREE.BoxGeometry(W, 12, H), new THREE.MeshStandardMaterial({ color: '#4a525c', roughness: 1 }));
-    block.position.y = -6.05;
+    block.position.y = -6.5;                                  // top 0.5 km below the flat sea, well above depth precision
     scene.add(block);
     scene.add(new THREE.HemisphereLight('#f6f3ec', '#5b5f66', 0.95));
     const sun = new THREE.DirectionalLight('#fffaf0', 1.25);
@@ -190,12 +190,15 @@ export default function Terrain3D({ terr, sst }: { terr: Territory | null; sst: 
     scene.add(sun);
 
     const presets: Record<string, () => void> = {
-      overview: () => { camera.position.set(-W * 0.15, Math.max(W, H) * 1.05, H * 0.75); controls.target.set(0, 0, 0); },
+      overview: () => {                                     // oblique from the south-west: ocean, coast and Andes in one frame
+        const k = Math.max(1, 1.3 / camera.aspect);           // narrow (phone) views step back so the whole region fits
+        controls.target.set(W * 0.04, 0, H * 0.2);
+        camera.position.set(W * 0.04 - W * 0.44 * k, Math.max(W, H) * 0.7 * k, H * 0.2 + H * 0.98 * k);
+      },
       coast: () => { camera.position.set(-W * 0.86, Math.max(W, H) * 0.3, H * 0.3); controls.target.set(W * 0.08, 0, H * 0.02); },
       andes: () => { camera.position.set(W * 0.9, Math.max(W, H) * 0.35, -H * 0.15); controls.target.set(-W * 0.1, 0, 0); },
       south: () => { camera.position.set(-W * 0.1, Math.max(W, H) * 0.3, H * 1.05); controls.target.set(0, 0, -H * 0.05); },
     };
-    (presets[Q.get('cam') ?? ''] ?? presets.overview)();
     let curExag = exag;
     api.current = {
       preset: (k) => { presets[k]?.(); controls.update(); },
@@ -208,6 +211,7 @@ export default function Terrain3D({ terr, sst }: { terr: Territory | null; sst: 
       renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
     };
     resize();
+    (presets[Q.get('cam') ?? ''] ?? presets.overview)();     // after resize: the overview depends on the aspect ratio
     const ro = new ResizeObserver(resize); ro.observe(el);
 
     // place labels follow the terrain
