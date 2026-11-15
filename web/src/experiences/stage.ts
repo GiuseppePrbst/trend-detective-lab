@@ -441,7 +441,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     async play() {
       flight = null;
       await ensureScene('antofagasta');
-      set({ ...DEFAULTS, film: true, t: 0, hideUi: false, tip: null, picked: null, region: null });
+      set({ ...DEFAULTS, film: true, t: 0, hideUi: false, tip: null, picked: null, region: null, scaleMode: 'fixed' });   // the film compares windows: fixed scale in every panel
       filmT0 = performance.now();
     },
     /** Stop: the film ends where it is and the camera is yours. Skip: jump to the film's last frame, the interactive state. */
@@ -452,7 +452,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     async renderAt(t: number, flush: (f: () => void) => void) {
       await ensureScene('antofagasta');
       const fs = stateAt(t);
-      flush(() => set({ ...DEFAULTS, film: true, t, period: fs.period }));
+      flush(() => set({ ...DEFAULTS, film: true, t, period: fs.period, scaleMode: 'fixed' }));
       frameKey = ''; apply(fs);
       await earth.settle();
       frameKey = ''; apply(fs);
