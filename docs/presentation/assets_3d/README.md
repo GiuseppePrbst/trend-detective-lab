@@ -15,3 +15,5 @@ Shot sequence (all real results; each image is a URL of the app, re-created by `
 
 Credits: USGS GMTED2010 (public domain), Natural Earth, geoBoundaries (CC BY 3.0 IGO), CONAF catastro Los Lagos 2018 (with
 attribution), NASA MERRA-2, GLDAS-2.1 and MUR v4.1.
+
+Before/after of the final polish (ocean depth fix, oblique default camera, cells 55 %): `before_after_terrain3d.jpg`.
