@@ -30,17 +30,17 @@ Errors: no console error in any of the 29 checks (a console error fails the chec
 | No WebGL | Research Lab and its 2D maps open with a notice (smoke 17) |
 | Screen reader | **Not tested** with a real screen reader (none available to the agent) |
 
-**Open (P2):** keyboard focus visits the map markers (flags, study pins) before the header, because they come first in the page structure; reordering it would change the visual stacking, so it was left as is.
+**Fixed later the same evening (PR #32):** keyboard focus used to visit the map markers before the header; the marker layer now comes last in the page and keeps its place below the panels, verified with real Tab presses.
 
 ## Performance (one desktop machine)
 
 | Measure | Value |
 | --- | --- |
 | Globe usable, warm network | 3.3–3.8 s |
-| Globe usable, cold cache, 1.6 Mb/s + 150 ms | 16.0 s (Cesium is about 1.4 MB gzipped) |
+| Globe usable, cold cache, 1.6 Mb/s + 150 ms | 16.0 s at this audit; 11.8–11.9 s after PR #31 (relief loaded after the globe, Cesium in parallel) |
 | Flights | Earth → Antofagasta 5.4 s; Antofagasta ↔ Los Lagos 3.9–4.2 s |
 | Frame rate | 137–144 fps idle and during flights (the display's rate) |
-| JS heap after six flights | 202–434 MB over several runs (355 MB in the last) (varies with garbage collection; not a leak test) |
+| JS heap after six flights | 202–458 MB over several runs (458 MB after PR #31, which keeps the relief loading in the background; varies with garbage collection) (varies with garbage collection; not a leak test) |
 
 Not measured: GPU memory, phones, other browsers.
 
