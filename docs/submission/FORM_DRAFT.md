@@ -1,5 +1,7 @@
 # Submission form — draft answers (v3)
 
+> **Superseded on 2026-11-15 by [`FINAL_FORM_COPY_EN.md`](FINAL_FORM_COPY_EN.md)** (real field names, current numbers, corrected AI disclosure: the film's music was generated with MiniMax Music 3.0). Kept for the record.
+
 Builds on Fabiana's `docs/review/SUBMISSION_FORM_MATRIX.md`. **The real form was not inspected**: field names, required
 fields and character limits must be checked on the authenticated page. A team member fills, ticks the declarations
 (Terms and Conditions, original work) and clicks "Submit for Judging". Nothing here is submitted.
@@ -17,7 +19,7 @@ fields and character limits must be checked on the authenticated page. A team me
 | Tools | Python (NumPy, SciPy, Shapely, pyMannKendall), QGIS 4.2 / GDAL, React, TypeScript, Vite, Observable Plot; GitHub Actions; GitHub Pages. | README §12 |
 | Links | App: https://giuseppeprbst.github.io/trend-detective-lab/ · Code: https://github.com/GiuseppePrbst/trend-detective-lab · Demo: *public link to the PDF deck or ≤ 30 s video* | test in a private window |
 | Team | Giuseppe Proboste (data, GIS, statistics), Fabiana García (design, texts, independent review) — ProGarLabs, Local Event Quemchi. | team page |
-| AI disclosure (team to confirm in its own words) | "We used SI coding assistants (Anthropic Claude via Claude Code; OpenAI Codex for an independent review) to write most of the code and documentation and to run analyses, under our direction. The idea, the scientific choices and the review are ours. Every number shown comes from our reproducible code, not from a language model. Files written with SI carry a disclosure note; commits are marked. No images, video or audio were generated with SI." | README §11 |
+| AI disclosure (team to confirm in its own words) | "We used SI coding assistants (Anthropic Claude via Claude Code; OpenAI Codex for an independent review) to write most of the code and documentation and to run analyses, under our direction. The idea, the scientific choices and the review are ours. Every number shown comes from our reproducible code, not from a language model. Files written with SI carry a disclosure note; commits are marked. [Out of date: the film's music was later generated with MiniMax Music 3.0 — see FINAL_FORM_COPY_EN.md.]" | README §11 |
 | Limitations to state | Trends only (no causes, no forecasts); the main test's worst simulated false-positive rate is 8.6 % (46 years) and 10.1 % (27 years) instead of 5 %; ERA5 and MERRA-2 share observations; 25–50 km cells cannot resolve finer terrain; exploratory analyses decided after the main results. | README §7 |
 
 Before submitting: re-run `uv run pytest`, check the live site in a private window, and confirm every number against
