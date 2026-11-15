@@ -89,6 +89,13 @@ disagree: Magallanes* (each source compared on the same sample).
 **Period selector.** Full record, WMO normal 1991–2020 (temperature) and 2000–2024 (common with soil moisture); every
 window is recomputed by the pipeline and shown as a sensitivity check.
 
+**See it on the terrain (3D).** The same native cells and trends draped over the relief (Pacific, coastal range,
+desert, Andes) for Antofagasta (MERRA-2, 1980–2025 / 1980–2002 / 2003–2025, NASA MUR SST box over the sea) and Los Lagos
+(GLDAS soil moisture over relief or CONAF land cover). One footprint = one native cell; the terrain adds no data; the
+vertical exaggeration is shown in the legend. Three.js loads only when the view is opened; without WebGL the 2D map is
+shown. Built by `qgis/scripts/build_3d_terrain.py` from USGS GMTED2010; design and checks in `docs/gis/GIS_3D_ARCHITECTURE.md`
+and `docs/gis/THREE_D_VALIDATION.md`. A stand-alone page: `?embed=3d` (add `scene=los_lagos`, `period=2003-2025`, `cam=coast`).
+
 **Multivariable lab (exploratory).** Choose a phenomenon (water availability, Andean snow, climate) and the app suggests
 variables by documented rules; compare trends, see year-to-year association of detrended anomalies, native-cell trend
 maps, and the territorial case *Why does Antofagasta's coast behave differently from its interior?* (relief from a

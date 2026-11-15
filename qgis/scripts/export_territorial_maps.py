@@ -2,7 +2,8 @@
 
     "<QGIS>/bin/python-qgis.bat" qgis/scripts/export_territorial_maps.py
 
-Writes qgis/trend_detective_chile_refined.qgz (relative paths) and docs/gis/maps/{antofagasta,los_lagos}_territorial.{png,pdf}.
+Writes docs/gis/maps/{antofagasta,los_lagos}_territorial.{png,pdf}; with --write-project also (re)writes
+qgis/trend_detective_chile_refined.qgz (relative paths). Default: the existing project is left untouched.
 
 Cartographic rules: hillshade + discrete hypsometric tints for relief; climate cells drawn as their true native boxes with
 a symmetric diverging scale centred on zero; thick outline = coastal (Antofagasta) / no outline otherwise; NoData is
@@ -16,7 +17,9 @@ from qgis.core import (QgsApplication, QgsCategorizedSymbolRenderer, QgsColorRam
                        QgsLayoutExporter, QgsLayoutItemLabel, QgsLayoutItemLegend, QgsLayoutItemMap, QgsLayoutItemScaleBar,
                        QgsLayoutPoint, QgsLayoutSize, QgsPalettedRasterRenderer, QgsPrintLayout, QgsProject, QgsRasterLayer,
                        QgsRasterShader, QgsRectangle, QgsRendererCategory, QgsRendererRange, QgsSingleBandPseudoColorRenderer,
-                       QgsUnitTypes, QgsVectorLayer, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
+                       QgsUnitTypes, QgsVectorLayer, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
+                       QgsMapLayerLegendUtils, QgsRasterTransparency)
+import sys
 from qgis.PyQt.QtGui import QColor, QFont
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,9 +33,14 @@ proj.writeEntryBool("Paths", "/Absolute", False)
 
 HYPSO = {"antofagasta": [(0, "#5f8f5a"), (500, "#a3b86c"), (1500, "#e3d28c"), (2500, "#c9a26b"), (3500, "#a0785a"), (4500, "#ffffff")],
          "los-lagos": [(0, "#5f8f5a"), (200, "#8fb36a"), (500, "#c7cf84"), (1000, "#d9b97f"), (1500, "#b58f6a"), (2500, "#ffffff")]}
-LC = [(1, "Urban / industrial / mining", "#e31a1c"), (2, "Agriculture", "#f9e45b"), (3, "Grassland & shrubland", "#c7e9a0"),
-      (4, "Native forest", "#1b7837"), (5, "Plantation", "#a6611a"), (6, "Mixed forest", "#5aae61"), (7, "Wetland", "#80cdc1"),
-      (8, "Bare / no vegetation", "#d9d9d9"), (9, "Snow & glaciers", "#9ecae1"), (10, "Water", "#2c7fb8")]
+LC = [(1, "Urban / industrial / mining", "#c45c54"), (2, "Agriculture", "#decd80"), (3, "Grassland & shrubland", "#becd96"),
+      (4, "Native forest", "#4a704c"), (5, "Plantation", "#966e46"), (6, "Mixed forest", "#6e9164"), (7, "Wetland", "#82b4aa"),
+      (8, "Bare / no vegetation", "#cdc8be"), (9, "Snow & glaciers", "#e1e8ee"), (10, "Water", "#4e789b")]   # desaturated (same as the 3D view)
+TOP = {"antofagasta": 6750, "los-lagos": 3500}   # m: above the highest summit (Llullaillaco 6,739 m; Tronador 3,491 m) = artefact
+
+
+def pilot_of(lay):
+    return "antofagasta" if "antofagasta" in lay.source() else "los-lagos"
 
 
 def raster(path, name):
@@ -46,24 +54,28 @@ def hypso(lay, stops):
     sh.setColorRampType(QgsColorRampShader.Type.Discrete)
     items = [QgsColorRampShader.ColorRampItem(stops[i + 1][0], QColor(c), f"{stops[i][0]}–{stops[i + 1][0]} m") for i, (_, c) in enumerate(stops[:-1])]
     items.append(QgsColorRampShader.ColorRampItem(float("inf"), QColor(stops[-1][1]), f"> {stops[-1][0]} m"))
-    items.insert(0, QgsColorRampShader.ColorRampItem(0.5, QColor(0, 0, 0, 0), "sea / no data"))   # ocean transparent
+    items.insert(0, QgsColorRampShader.ColorRampItem(0.5, QColor(0, 0, 0, 0), ""))   # sea / outside: transparent, not in the legend
     sh.setColorRampItemList(items)
     rs = QgsRasterShader()
     rs.setRasterShaderFunction(sh)
-    lay.setRenderer(QgsSingleBandPseudoColorRenderer(lay.dataProvider(), 1, rs))
-    lay.setOpacity(0.55)
+    ren = QgsSingleBandPseudoColorRenderer(lay.dataProvider(), 1, rs)
+    tr = QgsRasterTransparency()              # 250 m display DEM still carries averaged artefacts above the highest summit
+    tr.setTransparentSingleValuePixelList([QgsRasterTransparency.TransparentSingleValuePixel(TOP[pilot_of(lay)], 99999, 100)])
+    ren.setRasterTransparency(tr)
+    lay.setRenderer(ren)
+    lay.setOpacity(0.5)
 
 
 def cells(table, name, field, unit, lim, outline_only=False):
     lay = QgsVectorLayer(f"{Q / 'layers_refined.gpkg'}|layername={table}", name, "ogr")
     assert lay.isValid(), table
-    cols = ["#2166ac", "#67a9cf", "#d1e5f0", "#fddbc7", "#ef8a62", "#b2182b"] if unit.startswith("°C") else ["#8c510a", "#d8b365", "#f6e8c3", "#c7eae5", "#5ab4ac", "#01665e"]
+    cols = ["#2166ac", "#67a9cf", "#d1e5f0", "#fddbc7", "#ef8a62", "#b2182b"] if unit.startswith("°C") else ["#543005", "#8c510a", "#bf812d", "#80cdc1", "#35978f", "#01665e"]
     edges = [-lim, -2 * lim / 3, -lim / 3, 0, lim / 3, 2 * lim / 3, lim]
     rngs = []
     for i in range(6):
-        sym = (QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": cols[i], "outline_width": "0.9"}) if outline_only
-               else QgsFillSymbol.createSimple({"color": cols[i], "outline_color": "#ffffff", "outline_width": "0.15"}))
-        sym.setOpacity(1.0 if outline_only else 0.6)
+        sym = (QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": cols[i], "outline_width": "1.1"}) if outline_only
+               else QgsFillSymbol.createSimple({"color": cols[i], "outline_color": "#ffffff", "outline_width": "0.12"}))
+        sym.setOpacity(1.0 if outline_only else 0.5)   # relief must stay readable under the cells
         rngs.append(QgsRendererRange(edges[i], edges[i + 1] if i < 5 else 1e9, sym, f"{edges[i]:+.2f} to {edges[i + 1]:+.2f}"))
     rngs[0].setLowerValue(-1e9)
     lay.setRenderer(QgsGraduatedSymbolRenderer(field, rngs))
@@ -71,10 +83,10 @@ def cells(table, name, field, unit, lim, outline_only=False):
 
 
 def coastal_outline(table):
-    lay = QgsVectorLayer(f"{Q / 'layers_refined.gpkg'}|layername={table}", "Coastal cells (land share < 0.99)", "ogr")
+    lay = QgsVectorLayer(f"{Q / 'layers_refined.gpkg'}|layername={table}", "Coastal cells", "ogr")
     # categorized renderer with a single category: only coastal cells are drawn (a subset string here broke later GPKG reads)
     sym = QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": "#111111", "outline_width": "0.7"})
-    lay.setRenderer(QgsCategorizedSymbolRenderer("coastal_e3", [QgsRendererCategory("1", sym, "Coastal cell (land share < 0.99)")]))
+    lay.setRenderer(QgsCategorizedSymbolRenderer("coastal_e3", [QgsRendererCategory("1", sym, "land share < 0.99")]))
     return lay
 
 
@@ -111,7 +123,8 @@ def export(name, title, layers, extent, notes, legend_layers):
     m = QgsLayoutItemMap(lay_)
     m.attemptMove(QgsLayoutPoint(8, 22, QgsUnitTypes.LayoutMillimeters))
     m.attemptResize(QgsLayoutSize(120, 230, QgsUnitTypes.LayoutMillimeters))
-    m.setLayers(layers)
+    m.setLayers(layers + ([LAND] if LAND else []))
+    m.setBackgroundColor(QColor("#b9cddc"))                 # sea: always distinguishable from land and from NoData
     m.zoomToExtent(extent)
     m.setFrameEnabled(True)
     lay_.addLayoutItem(m)
@@ -122,7 +135,13 @@ def export(name, title, layers, extent, notes, legend_layers):
     root = leg.model().rootGroup()
     root.clear()
     for l in legend_layers:
-        root.addLayer(l)
+        node = root.addLayer(l)
+        if isinstance(l, QgsRasterLayer):
+            # first legend node is the band name ("Band 1 ..."); pseudocolor also has the empty sea item next
+            skip = {"singlebandpseudocolor": 2, "paletted": 1}.get(l.renderer().type(), 0)
+            n = len(leg.model().layerLegendNodes(node))
+            QgsMapLayerLegendUtils.setLegendNodeOrder(node, list(range(skip, n)))
+            leg.model().refreshLayerLegend(node)
     leg.setTitle("Legend")
     leg.setWrapString("|")
     leg.setColumnSpace(2)
@@ -180,6 +199,11 @@ for pilot, (src, win) in GMTED.items():
     hypso(dem, HYPSO[pilot])
     built[pilot] = [hs, dem]
 reg = regions()
+_ne = ROOT / "data" / "gis_src" / "ne_10m_land" / "ne_10m_land.shp"
+LAND = QgsVectorLayer(str(_ne), "Land (Natural Earth)", "ogr") if _ne.exists() else None
+if LAND:
+    LAND.renderer().setSymbol(QgsFillSymbol.createSimple({"color": "#efebe3", "outline_color": "#7f8a94", "outline_width": "0.2"}))
+    proj.addMapLayer(LAND)
 c_a = cells("context_antofagasta_merra2_t2m", "Air temperature trend|°C per decade, 1980–2025|MERRA-2 cells 0.5° × 0.625°", "slope_per_decade", "°C", 0.36)
 co = coastal_outline("context_antofagasta_merra2_t2m")
 c_l = cells("context_los_lagos_gldas_soilm_root", "Root-zone soil moisture trend|mm per decade, 2000–2024|GLDAS-2.1 cells 0.25° (model)", "slope_per_decade", "mm", 48, outline_only=True)
@@ -218,6 +242,7 @@ export("antofagasta_territorial", "Antofagasta — relief and the warming trend 
 export("los_lagos_territorial", "Los Lagos — land cover, relief and modelled soil-moisture trends",
        [c_l, reg] + ([lc_l] if lc_l else [built["los-lagos"][1]]) + [built["los-lagos"][0]], QgsRectangle(-75.2, -44.3, -71.3, -40.1), note_l,
        [c_l] + ([lc_l] if lc_l else [built["los-lagos"][1]]))
-proj.write(str(Q / "trend_detective_chile_refined.qgz"))
+if "--write-project" in sys.argv:
+    proj.write(str(Q / "trend_detective_chile_refined.qgz"))
 print("ok", [l.name() for l in proj.mapLayers().values()])
 app.exitQgis()

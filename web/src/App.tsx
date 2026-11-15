@@ -1,6 +1,6 @@
 // SI disclosure: developed with Claude and revised with OpenAI Codex; human team review is pending for the revision.
 // Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline, type Interval } from './charts';
 import { FIXTURE, load } from './data';
 import {
@@ -9,6 +9,8 @@ import {
 import { EvidenceCards, MagallanesCase, QuestionStart, type Discovery, type Question } from './discovery';
 import { Lab } from './lab';
 import { ChileMap, rewind } from './map';
+
+const Terrain3D = lazy(() => import('./terrain3d'));   // Three.js only loads when the 3D view is opened
 import type {
   Alt, Catalog, CellMap, Check, GuidedCase, MultiVar, Regions, RegionSeries, Trend, Validation, VariableData, VariableInfo, Verdict,
   SST, Territory, WindowEntry, Windows,
@@ -52,7 +54,41 @@ function Explain({ term, children }: { term: string; children: ReactNode }) {
 
 const VerdictBadge = ({ v }: { v: Verdict }) => <span className={`vbadge v-${v}`}>{VERDICT_SHORT[v]}</span>;
 
+function TerrainSection({ terr, sst }: { terr: Territory | null; sst: SST | null }) {
+  const [open, setOpen] = useState(() => new URLSearchParams(location.search).get('view') === '3d');
+  return (
+    <section aria-labelledby="h-terrain3d">
+      <h2 id="h-terrain3d">See it on the terrain (3D)</h2>
+      <p>The same native cells and trends, draped over the real relief: the Pacific, the coastal range, the desert and the Andes.
+        It explains where the cells sit; it adds no data.</p>
+      {open ? (
+        <Suspense fallback={<p>Loading the 3D view…</p>}><Terrain3D terr={terr} sst={sst} /></Suspense>
+      ) : (
+        <button type="button" className="primary" onClick={() => setOpen(true)}>Open the 3D terrain view</button>
+      )}
+    </section>
+  );
+}
+
 export default function App() {
+  if (new URLSearchParams(location.search).get('embed') === '3d') return <Embed3D />;
+  return <FullApp />;
+}
+
+// Stand-alone 3D view (?embed=3d): used for the presentation shots and as a self-contained page.
+function Embed3D() {
+  const terr = useFile<Territory>('territory.json');
+  const sst = useFile<SST>('sst.json');
+  return (
+    <main className={`wrap embed3d${new URLSearchParams(location.search).has('shot') ? ' shot' : ''}`}>
+      <Suspense fallback={<p>Loading the 3D view…</p>}>
+        <Terrain3D terr={terr.state === 'ok' ? terr.data : null} sst={sst.state === 'ok' ? sst.data : null} />
+      </Suspense>
+    </main>
+  );
+}
+
+function FullApp() {
   const catalog = useFile<Catalog>('catalog.json');
   const geoFile = useFile<Regions>('regions.geojson');
   const validation = useFile<Validation>('validation.json');
@@ -201,6 +237,7 @@ export default function App() {
                 cellsSm={cellsS.state === 'ok' ? cellsS.data : null} terr={terrFile.state === 'ok' ? terrFile.data : null} focus={labFocus}
                 sst={sstFile.state === 'ok' ? sstFile.data : null} />
             ) : <Status what="the multivariable lab" s={mvFile} />}
+            <TerrainSection terr={terrFile.state === 'ok' ? terrFile.data : null} sst={sstFile.state === 'ok' ? sstFile.data : null} />
             {discFile.state === 'ok' && <MagallanesCase d={discFile.data} />}
             {discFile.state === 'ok' ? <EvidenceCards d={discFile.data} /> : <Status what="the evidence cards" s={discFile} />}
           </>

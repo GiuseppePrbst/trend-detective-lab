@@ -186,13 +186,13 @@ def main() -> None:
         d = comp(T, b, a)
         ci = MV["coast_interior"]
         fig = slide("Coast and interior of Antofagasta: different trends", "Finding 1 · temperature, 1980–2025 (MERRA-2)")
-        mp = ROOT / "docs" / "gis" / "maps" / "antofagasta_territorial.png"
+        mp = ROOT / "qgis" / "exports_3d" / "antofagasta" / "coastal_comparison.png"   # qgis/scripts/export_3d_views.py
         if mp.exists():
             img = plt.imread(mp)
-            h, w = img.shape[:2]
-            ax = fig.add_axes([0.02, 0.06, 0.27, 0.66]); ax.imshow(img[int(h * 0.07):int(h * 0.86), int(w * 0.03):int(w * 0.62)]); ax.axis("off")
-            ax.set_title("QGIS map: CIREN relief, MERRA-2 cells\n(outlined: coastal)", fontsize=9, color=GREY)
-        ax = fig.add_axes([0.47, 0.4, 0.28, 0.38])
+            ax = fig.add_axes([0.01, 0.27, 0.42, 0.5]); ax.imshow(img[150:723, 127:1273]); ax.axis("off")
+            ax.set_title("3D view: native MERRA-2 cells on the terrain, 1980–2025\n(thick outline: coastal; GMTED2010 relief, 2× vertical exaggeration)",
+                         fontsize=9, color=GREY)
+        ax = fig.add_axes([0.62, 0.4, 0.24, 0.38])
         ta, tb = T["regions"][a]["trend"], T["regions"][b]["trend"]
         st = next(c for c in VAL["checks"] if c["region"] == "antofagasta" and c["variable"] == "t2m" and c["kind"] == "station")
         e5 = ci["point_check"]["ERA5"]
