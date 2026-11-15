@@ -260,3 +260,147 @@ button:disabled { cursor: not-allowed; }
   .t3d-cams { position: static; padding: 0.4rem; justify-content: flex-start; background: #fff; }
   .t3d-labels span { font-size: 11px; }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────────────────────────
+   Editorial layer — Research Lab as a working paper (not peer-reviewed).
+   Everything is scoped to .paper (the full Lab); ?embed=3d renders outside .paper and keeps the rules above.
+   ProGarLabs accents only (#7B00FF / #330099, cyan #4CD9E6); data colours are never touched here.
+   ─────────────────────────────────────────────────────────────────────────────────────────────── */
+.paper {
+  --ink: #14121f;
+  --brand: #7b00ff;
+  --brand-deep: #330099;
+  --brand-soft: #f3ecff;
+  --accent: #4cd9e6;
+  --focus: 3px solid #7b00ff;
+  --text: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --mono: 'Space Mono', ui-monospace, Consolas, 'Courier New', monospace;
+  --display: 'Anton', 'Archivo', Impact, sans-serif;
+  font-family: var(--text);
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  color: var(--ink);
+  counter-reset: fig tbl;
+}
+.paper * { border-radius: 0 !important; }
+.paper a { color: var(--brand-deep); text-underline-offset: 2px; }
+.paper button, .paper select, .paper input { font-family: inherit; }
+
+/* Reading width: the page stays wide for charts and the map, running text does not. */
+.paper :is(p, li, dd) { max-width: 72ch; }
+.paper :is(.cases, .toc, .chart-key, .legend-keys) li, .paper .t3d-loading, .paper table :is(p, li, dd) { max-width: none; }
+
+/* Hierarchy */
+.paper h1 { font-family: var(--display); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.08;
+  font-size: clamp(2rem, 5.4vw, 3.6rem); max-width: 22ch; margin: 1.25rem 0 1rem; }
+.paper h2 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; flex-wrap: wrap; margin-bottom: 1rem; scroll-margin-top: 1rem; }
+.paper h3 { font-size: 1.12rem; font-weight: 700; margin-top: 1.75rem; scroll-margin-top: 1rem; }
+.paper h4, .paper h5 { font-size: 1rem; font-weight: 700; }
+.paper main section { padding: 2.5rem 0; }
+.paper .step { width: 1.9rem; height: 1.9rem; background: none; border: 1.5px solid var(--brand-deep); color: var(--brand-deep);
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 400; }
+.paper .tag-exp { font-family: var(--mono); font-size: 0.62em; font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+.paper .hint, .paper .muted { font-size: 0.9rem; }
+
+/* Masthead */
+.paper .site-header { border-top: 6px solid var(--brand-deep); border-bottom: 3px solid var(--ink); padding: 0.9rem 0 1.5rem; }
+.paper .mast-top { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--line); padding-bottom: 0.75rem; }
+.paper .eyebrow { font-family: var(--mono); font-weight: 400; font-size: 0.8rem; letter-spacing: 0.14em; color: var(--brand-deep); }
+.paper .to-globe { font-family: var(--mono); font-size: 0.78rem; text-decoration: none; color: var(--ink); border: 1px solid var(--ink); padding: 0.3rem 0.7rem; }
+.paper .to-globe:hover { background: var(--ink); color: #fff; }
+[data-nogl] .paper .to-globe { display: none; }
+.paper .paper-status { font-family: var(--mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 1rem;
+  padding-left: 0.6rem; border-left: 0.6rem solid var(--accent); max-width: none; }
+.paper .lede { font-size: 1.2rem; font-weight: 500; color: var(--ink); max-width: 58ch; }
+.paper .source { font-family: var(--mono); font-size: 0.78rem; }
+.paper .toc { margin-top: 1.5rem; border-top: 1px solid var(--ink); padding-top: 0.6rem; }
+.paper .toc-title { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0 0 0.4rem; }
+.paper .toc ol { list-style: none; margin: 0; padding: 0; columns: 3 17rem; column-gap: 2rem; font-size: 0.92rem; }
+.paper .toc li { display: flex; gap: 0.6rem; padding: 0.12rem 0; break-inside: avoid; }
+.paper .toc-n { font-family: var(--mono); font-size: 0.8rem; color: var(--brand); flex: none; width: 1rem; text-align: center; }
+.paper .toc a { color: var(--ink); text-decoration: none; }
+.paper .toc a:hover, .paper .toc a:focus-visible { color: var(--brand-deep); text-decoration: underline; }
+
+/* Tables: rules instead of boxes, tabular numerals, numbered captions */
+.paper table { border-collapse: collapse; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink);
+  font-variant-numeric: tabular-nums lining-nums; }
+.paper thead th { font-family: var(--mono); font-size: 0.7rem; font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--muted); border-bottom: 1px solid var(--ink); vertical-align: bottom; }
+.paper tbody th, .paper tbody td { vertical-align: top; }
+.paper caption { caption-side: top; text-align: left; font-size: 0.85rem; font-weight: 400; color: var(--muted); padding-bottom: 0.4rem; counter-increment: tbl; }
+.paper caption::before { content: "Table " counter(tbl) ". "; font-weight: 700; color: var(--ink); }
+
+/* Figures: one running number per chart or map. A <figure> keeps its own caption text, prefixed with the number;
+   a chart without a caption only gets the number (no statement is added). Numbers follow what is on screen. */
+.paper .plot, .paper .map, .paper figure { counter-increment: fig; }
+.paper figure { margin: 1rem 0; }
+.paper figure .plot { counter-increment: none; }
+.paper .plot::after, .paper .map::after { content: "Figure " counter(fig); display: block; justify-self: start; margin-top: 0.4rem; padding-top: 0.3rem;
+  border-top: 1px solid var(--line); font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.paper .map::after { width: 100%; }
+.paper figure .plot::after { content: none; }
+.paper figcaption { font-size: 0.85rem; color: var(--muted); }
+.paper .multiples figcaption { color: var(--ink); }
+.paper figcaption::before { content: "Figure " counter(fig) ". "; font-weight: 700; color: var(--ink); flex: none; white-space: nowrap; }
+
+/* Data and labels */
+.paper .stats dt, .paper .ecard dt { font-family: var(--mono); font-size: 0.72rem; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; }
+.paper .ecard dt { color: var(--brand-deep); }
+.paper .cblock-slope, .paper .var-meta, .paper .t3d-ticks { font-family: var(--mono); }
+.paper .var-meta { font-size: 0.75rem; }
+.paper .facts dt { font-family: var(--mono); font-size: 0.78rem; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); padding-top: 0.2rem; }
+.paper .citation { border-left: 4px solid var(--ink); font-size: 0.9rem; }
+
+/* Blocks and controls */
+.paper .callout { border: 0; border-left: 4px solid var(--brand-deep); }
+.paper .primary { background: var(--brand-deep); font-family: var(--mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.7rem 1.1rem; }
+.paper .primary:disabled { background: #98a2b3; }
+.paper .chip { border-color: var(--ink); font-size: 0.92rem; }
+.paper .chip[aria-pressed="true"] { background: var(--brand-deep); border-color: var(--brand-deep); }
+.paper .chip:focus-visible, .paper .primary:focus-visible { outline: var(--focus); }
+.paper .field { font-size: 0.9rem; }
+.paper .site-footer { border-top: 3px solid var(--ink); font-size: 0.88rem; scroll-margin-top: 1rem; }
+
+/* ── Print (A4): the paper without its controls ── */
+@page { size: A4; margin: 18mm 16mm; }
+@media print {
+  /* interactive chrome; #root > p:first-child is the no-WebGL notice rendered by main.tsx */
+  #root > p:first-child, .paper .skip, .paper .to-globe, .paper .q, .paper .primary, .paper .t3d-bar, .paper .t3d-cams, .paper .t3d-view,
+  .paper .toggle button[aria-pressed='false'] { display: none !important; }
+  /* the WebGL canvas does not print: say so; its legend, notes and sources stay */
+  .paper .t3d::before { content: "Interactive 3D view: not available in print. Its legend, notes and sources follow."; display: block; font-style: italic; margin: 0.5rem 0; }
+  /* selects and toggles print as plain text, so the page still says which region, period and variable it shows */
+  .paper select { appearance: none; -webkit-appearance: none; border: 0 !important; padding: 0 !important; background: none !important; font-weight: 700 !important; }
+  .paper .toggle { border: 0; }
+  .paper .toggle button, .paper .chip, .paper .case { background: none !important; }
+  .paper .toggle button { font-weight: 700; padding-left: 0; }
+  .paper .chip { border: 0; padding: 0 0.8rem 0 0; }
+  .paper .chip[aria-pressed="true"] { font-weight: 700; text-decoration: underline; }
+
+  html, body { background: #fff !important; }
+  .paper { --ink: #000; --muted: #333; --brand: #000; --brand-deep: #000; --line: #999; font-size: 10.5pt; line-height: 1.45; background: #fff; }
+  .paper *:not(svg, svg *) { color: #000 !important; box-shadow: none !important; text-shadow: none !important; }
+  .paper a { text-decoration: underline; }
+  .paper :is(main, footer) a[href^="http"]::after { content: " <" attr(href) ">"; font-size: 0.85em; overflow-wrap: anywhere; }
+  /* keys and colour ramps are data legends: print their colours */
+  .paper :is(.sw, .key, .t3d-ramp, .legend-keys, .cblock, .plot, .map) { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .paper .wrap { max-width: none; padding: 0; }
+  .paper .site-header { border-top: 0; padding-top: 0; }
+  .paper h1 { font-size: 26pt; }
+  .paper h2 { font-size: 15pt; }
+  .paper main section { padding: 1.2rem 0; }
+  .paper .workspace { display: block; }
+  .paper .side { position: static; max-height: none; overflow: visible; }
+  .paper .map-svg { height: auto; max-height: 170mm; }
+  .paper .table-scroll { overflow: visible; }
+
+  /* collapsed sections are part of the paper: print them (browsers without ::details-content print them closed) */
+  .paper details::details-content { content-visibility: visible; display: block; }
+
+  .paper :is(figure, .plot, .map, table, tr, img, .result, .ecard, .cblock, .callout, .caution, .note, .warnings, .question-panel, .citation, .t3d-legend, .toc) {
+    break-inside: avoid; page-break-inside: avoid; }
+  .paper :is(h1, h2, h3, h4, h5, summary, caption) { break-after: avoid; page-break-after: avoid; }
+  .paper thead { display: table-header-group; }
+}

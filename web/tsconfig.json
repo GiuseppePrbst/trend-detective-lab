@@ -14,5 +14,6 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "fixtures", "vite.config.ts"]
+  "include": ["src", "fixtures", "vite.config.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

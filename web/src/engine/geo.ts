@@ -28,13 +28,21 @@ export function toUV(scene: Scene, lon: number, lat: number): [number, number] {
   return [(x - x0) / (x1 - x0), (y1 - y) / (y1 - y0)];
 }
 
-/** Pose → Three.js camera position and target in the terrain's local frame (x east, y up, z south; km). */
-export function poseToLocal(scene: Scene, W: number, H: number, p: Pose) {
+/** Pose → Three.js camera position, target and up vector in the terrain's local frame (x east, y up, z south; km).
+ *  With a planet radius the frame is the tangent plane at the scene centre of a sphere: the target sits on the curved surface and
+ *  the camera's local vertical tilts with it, as on the globe. Without one the terrain is a flat block (Research Lab view). */
+export function poseToLocal(scene: Scene, W: number, H: number, p: Pose, radius = 0) {
   const [u, v] = toUV(scene, p.lon, p.lat);
-  const target: [number, number, number] = [(u - 0.5) * W, 0, (v - 0.5) * H];
+  const x = (u - 0.5) * W, z = (v - 0.5) * H;
+  const target: [number, number, number] = [x, radius ? -(x * x + z * z) / (2 * radius) : 0, z];
   const ch = Math.cos(p.heading * R), sh = Math.sin(p.heading * R), cp = Math.cos(p.pitch * R), sp = Math.sin(p.pitch * R);
-  const position: [number, number, number] = [target[0] - sh * cp * p.range, -sp * p.range, target[2] + ch * cp * p.range];
-  return { position, target };
+  const e = -sh * cp * p.range, n = -ch * cp * p.range, up = -sp * p.range;       // camera offset: east, north, up at the target
+  // local axes at the target expressed in the centre frame (small-angle rotation of the vertical by d/R)
+  const tx = radius ? x / radius : 0, tz = radius ? z / radius : 0, k = 1 / Math.hypot(tx, 1, tz);
+  const U: [number, number, number] = [tx * k, k, tz * k];
+  const E: [number, number, number] = [k, -tx * k, 0], N: [number, number, number] = [0, tz * k, -k];
+  const position: [number, number, number] = [0, 1, 2].map((i) => target[i] + e * E[i] + n * N[i] + up * U[i]) as [number, number, number];
+  return { position, target, up: U };
 }
 
 // DEV self-check: the projection must put a known city where the pipeline put it.

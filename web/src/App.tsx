@@ -1,5 +1,10 @@
 // SI disclosure: developed with Claude and revised with OpenAI Codex; human team review is pending for the revision.
 // Trend Detective Lab — displays results computed by the Python pipeline. It computes no statistics.
+import '@fontsource/archivo/400.css';
+import '@fontsource/archivo/500.css';
+import '@fontsource/archivo/700.css';
+import '@fontsource/space-mono/400.css';
+import '@fontsource/anton/400.css';
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COLOR_A, COLOR_B, intervals, PlotFigure, timeline, type Interval } from './charts';
 import { FIXTURE, load } from './data';
@@ -52,6 +57,24 @@ function Explain({ term, children }: { term: string; children: ReactNode }) {
   );
 }
 
+// Table of contents of the masthead: [marker, label, existing heading id]. Labels follow the section headings.
+const TOC: [string, string, string][] = [
+  ['0', 'What do you want to investigate?', 'h-question'],
+  ['1', 'Start with a case', 'h-cases'],
+  ['2', 'Choose a variable', 'h-var'],
+  ['3', 'Select a region', 'h-region'],
+  ['4', 'Explore the timeline', 'h-explore'],
+  ['5', 'Test the trend', 'h-test'],
+  ['6', 'Compare regions', 'h-compare'],
+  ['7', 'Review the evidence', 'h-evidence'],
+  ['8', 'Multivariable lab', 'h-lab'],
+  ['·', 'Guided discovery: Antofagasta, coast and interior', 'h-coast'],
+  ['·', 'See it on the terrain (3D)', 'h-terrain3d'],
+  ['·', 'When datasets disagree: Magallanes', 'h-magallanes'],
+  ['9', 'Evidence cards', 'h-evidence-cards'],
+  ['·', 'Credits, licence and use of SI', 'h-credits'],
+];
+
 const VerdictBadge = ({ v }: { v: Verdict }) => <span className={`vbadge v-${v}`}>{VERDICT_SHORT[v]}</span>;
 
 function TerrainSection({ terr, sst }: { terr: Territory | null; sst: SST | null }) {
@@ -102,6 +125,15 @@ function FullApp() {
   const [labFocus, setLabFocus] = useState<{ region: string; x: string; y: string; n: number }>();
   const cat = catalog.state === 'ok' ? catalog.data : null;
 
+  // "Back to the globe" keeps the region named by the Lab URL: ?region=, the region of a ?q= question, or the 3D ?scene=.
+  const globeRegion = useMemo(() => {
+    const sp = new URLSearchParams(location.search);
+    const open = discFile.state === 'ok' ? discFile.data.questions.find((x) => x.id === sp.get('q'))?.open : undefined;
+    const id = sp.get('region') ?? open?.region
+      ?? (open?.kind === 'coast' ? 'antofagasta' : open?.kind === 'magallanes' ? 'magallanes' : sp.get('scene')?.replace('_', '-'));
+    return cat?.regions.some((r) => r.id === id) ? id : undefined;   // only ids of catalog.json
+  }, [cat, discFile]);
+
   const [varId, setVarId] = useState<string | null>(null);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
@@ -111,7 +143,9 @@ function FullApp() {
   useEffect(() => {
     if (!cat || varId) return;
     setVarId(cat.variables[0]?.id ?? null);
-    const preferred = cat.regions.find((r) => r.id === 'los-lagos') ?? cat.regions[0];
+    // the region the visitor came with from the globe (?region=), else the default
+    const asked = new URLSearchParams(location.search).get('region');
+    const preferred = cat.regions.find((r) => r.id === asked) ?? cat.regions.find((r) => r.id === 'los-lagos') ?? cat.regions[0];
     setA(preferred?.id ?? '');
   }, [cat, varId]);
 
@@ -143,17 +177,29 @@ function FullApp() {
   };
 
   return (
-    <>
+    <div className="paper">
       <a className="skip" href="#main">Skip to content</a>
       <header className="site-header">
         <div className="wrap">
-          <p className="eyebrow">Trend Detective Lab</p>
+          <div className="mast-top">
+            <p className="eyebrow">Trend Detective Lab</p>
+            <a className="to-globe" href={`./${globeRegion ? `?region=${globeRegion}` : ''}`}>← Back to the globe</a>
+          </div>
           <h1>What is changing, where, how fast — and how certain are we?</h1>
+          <p className="paper-status">Working paper · exploratory results · not peer-reviewed</p>
           <p className="lede">
             Pick a region of Chile and a climate variable, look at the record, and see what a careful statistical test
             can — and cannot — tell you.
           </p>
           <p className="source">Data: NASA Giovanni / GES DISC</p>
+          <nav className="toc" aria-labelledby="h-toc">
+            <p id="h-toc" className="toc-title">Contents</p>
+            <ol>
+              {TOC.map(([n, label, id]) => (
+                <li key={id}><span className="toc-n" aria-hidden="true">{n}</span><a href={`#${id}`}>{label}</a></li>
+              ))}
+            </ol>
+          </nav>
         </div>
       </header>
 
@@ -244,14 +290,14 @@ function FullApp() {
         )}
       </main>
 
-      <footer className="site-footer">
+      <footer id="h-credits" className="site-footer">
         <div className="wrap">
           <p>Team ProGarLabs · Built during NASA Space Apps Challenge 2026 · License Apache-2.0 · <a href={REPO_URL}>Source repository</a></p>
           <p>Use of SI: Parts of this code were written with SI coding tools (Claude and OpenAI Codex); the team is responsible for review.</p>
           {cat && <p className="muted">Data files generated {cat.generated_at}.</p>}
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 

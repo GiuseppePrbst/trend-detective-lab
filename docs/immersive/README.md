@@ -12,6 +12,15 @@ Trend Detective Lab now has three surfaces that share one scene, one data set an
 
 If the browser has no WebGL, the entry opens the Research Lab (with its 2D maps) and says why.
 
+## V2 (Earth Atlas) — read this first
+
+The second iteration answers the team's review (PR #12) and is described in:
+[`V2_REQUIREMENTS_MATRIX.md`](V2_REQUIREMENTS_MATRIX.md) (every request, what was done, how it was checked),
+[`V2_CARTOGRAPHY.md`](V2_CARTOGRAPHY.md) (data on the curved globe, clipping, relief, markers, flights),
+[`V2_AUDIO.md`](V2_AUDIO.md) (interface sounds; film soundtrack: Epidemic Sound mix rejected, MiniMax candidate pending approval and rights) and
+[`V2_FINAL_REPORT.md`](V2_FINAL_REPORT.md) (tests, captures, film V1/V2, what is not done).
+Where this README and those files differ, V2 is the current state: cells are now drawn on the Cesium globe as well, the relief is cut to the region and has no block, the bottom strip lists statistical windows, and the URL also accepts `?region=<id>`, `&layer=cells|t2m|precip`, `&relief=0`.
+
 ## One scene, two engines, one camera
 
 - **CesiumJS** draws the Earth: one persistent `Viewer`, never destroyed while the page lives, rendered **on demand** (no render loop of its own).

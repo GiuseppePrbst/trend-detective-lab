@@ -13,14 +13,40 @@
 .im-globe .cesium-viewer-bottom { left: 8px; bottom: 30px; opacity: 0.7; transform: scale(0.8); transform-origin: left bottom; }
 .im-terrain, .im-labels, .im-film { pointer-events: none; }
 .im-terrain canvas { display: block; width: 100%; height: 100%; }
-.im-input { touch-action: none; cursor: grab; }
-.im-input:active { cursor: grabbing; }
+/* the detective's magnifier on the planet only; buttons, selects and links keep their own cursors */
+.im-input { touch-action: none; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Ccircle cx='12' cy='12' r='8' fill='rgba(6,13,26,0.18)' stroke='%23060D1A' stroke-width='4.5'/%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='%23EFF6FF' stroke-width='2'/%3E%3Cpath d='M18.5 18.5l8 8' stroke='%23060D1A' stroke-width='5.5' stroke-linecap='round'/%3E%3Cpath d='M18.5 18.5l8 8' stroke='%234CD9E6' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, crosshair; }
+.im-input.is-hot { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Ccircle cx='12' cy='12' r='8' fill='rgba(76,217,230,0.35)' stroke='%23060D1A' stroke-width='4.5'/%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='%23EFF6FF' stroke-width='2'/%3E%3Cpath d='M18.5 18.5l8 8' stroke='%23060D1A' stroke-width='5.5' stroke-linecap='round'/%3E%3Cpath d='M18.5 18.5l8 8' stroke='%234CD9E6' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, pointer; }
+.im-input.is-drag { cursor: grabbing; }
 .im-mono { font-family: "Space Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
 .im-dim { color: var(--ink2); }
 .im-labels span { position: absolute; left: 0; top: 0; margin: -22px 0 0 8px; font: 700 12px Archivo, system-ui, sans-serif; color: var(--ink);
   text-shadow: 0 0 4px #000, 0 0 2px #000; white-space: nowrap; }
-.im-labels span::before { content: ""; position: absolute; left: -8px; top: 22px; width: 5px; height: 5px; background: var(--ink); margin: -2.5px; }
-.im-tip { position: absolute; z-index: 5; max-width: 300px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); pointer-events: none; font-size: 13px; }
+.im-labels span::before, .im-place i { content: ""; position: absolute; left: -8px; top: 22px; width: 15px; height: 15px; margin: -9px -7.5px; background: center / contain no-repeat
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 14.5v-6h3.5v-5h6v3h3.5v8z' fill='%23EFF6FF' stroke='%23060D1A' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M6.6 5.6h1.2v1.2h-1.2zm2.2 0h1.2v1.2h-1.2zm-2.2 2.6h1.2v1.2h-1.2zm2.2 0h1.2v1.2h-1.2zm-5.6 2h1.2v1.2h-1.2zm8.4-2h1.2v1.2h-1.2z' fill='%23060D1A'/%3E%3C/svg%3E"); }
+/* a volcano or a lake is a landmark, not a town */
+.im-labels span.is-landmark::before, .im-place.is-landmark i { background-image:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.5l6 11h-12z' fill='none' stroke='%23060D1A' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M8 2.5l6 11h-12z' fill='none' stroke='%23EFF6FF' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+
+/* georeferenced markers: anchored at left/top 0 and moved by the stage; hidden behind the planet */
+.im-markers { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.im-markers > * { position: absolute; left: 0; top: 0; pointer-events: auto; white-space: nowrap; }
+.im-place { margin: -22px 0 0 8px; font: 700 12px Archivo, system-ui, sans-serif; color: var(--ink); text-shadow: 0 0 4px #000, 0 0 2px #000; pointer-events: none !important; }
+.im-markers > .is-crowded span { display: none; }
+.im-labels span.is-crowded { color: transparent; text-shadow: none; }
+.im-root .im-flag { margin: -58px 0 0 -1px; padding: 0; border: 0; background: none; height: 58px; display: flex; align-items: flex-start; cursor: pointer; }
+.im-flag i { width: 2px; height: 58px; background: var(--ink); box-shadow: 0 0 0 1px rgba(6, 13, 26, 0.7); position: relative; }
+.im-flag i::after { content: ""; position: absolute; left: -3px; bottom: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--space); }
+.im-flag span { padding: 5px 18px 5px 8px; background: var(--pgl); color: #fff; font-size: 11px; font-weight: 700; clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 50%, 100% 100%, 0 100%); transition: background 140ms; }
+.im-flag.is-flip { flex-direction: row-reverse; } .im-flag.is-flip span { padding: 5px 8px 5px 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 9px 50%); }
+.im-root .im-flag:hover span, .im-root .im-flag:focus-visible span { background: var(--accent); color: var(--space); }
+.im-root .im-study { margin: -9px 0 0 -9px; padding: 0; border: 0; background: none; display: flex; align-items: center; gap: 6px; font: 700 11.5px Archivo, system-ui, sans-serif; letter-spacing: 0; text-transform: none; text-shadow: 0 0 4px #000, 0 0 2px #000; }
+.im-study i { width: 18px; height: 18px; border: 2px solid var(--accent); background: rgba(6, 13, 26, 0.75); transform: rotate(45deg) scale(0.72); flex: none; }
+.im-root .im-study:hover i, .im-root .im-study:focus-visible i { background: var(--accent); }
+.im-ext { margin: -30px 0 0 -8px; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none !important; }
+.im-ext span { order: -1; padding: 2px 6px; background: var(--ink); color: var(--space); font-size: 11px; font-weight: 700; letter-spacing: 0; }
+.im-ext i { font-style: normal; font-size: 12px; line-height: 14px; color: var(--ink); text-shadow: 0 0 3px #000, 0 0 2px #000; }
+.im-tip { position: absolute; z-index: 5; max-width: 300px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); pointer-events: none; font-size: 13px; }
+.im-tip b { display: block; font: 700 13px "Space Mono", ui-monospace, monospace; }
 .im-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); }
 .im-status a, .im-root a { color: var(--accent); }
 
@@ -76,16 +102,35 @@
 .im-ramp { height: 12px; margin: 6px 0 3px; border: 1px solid var(--line); }
 .im-ticks { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0; margin-bottom: 8px; }
 
-.im-cam { position: absolute; right: 16px; bottom: 96px; display: flex; flex-direction: column; gap: 4px; }
+/* a row in the bottom-right corner: below the right panel whatever its height, beside the window strip */
+.im-cam { position: absolute; right: 16px; bottom: 40px; display: flex; gap: 4px; }
 .im-root .im-cam button { width: 36px; height: 36px; padding: 0; font-size: 16px; background: rgba(16, 26, 44, 0.9); }
-.im-dock { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: min(560px, calc(100% - 140px)); display: flex; align-items: flex-start; gap: 10px;
-  padding: 8px 12px; background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); }
-.im-axis { position: relative; flex: 1; height: 40px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
-.im-root .im-axis button { position: absolute; height: 11px; padding: 0; border: 1px solid var(--ink2); background: transparent; }
-.im-root .im-axis button[aria-pressed="true"] { background: var(--accent); }
-.im-axis button span { position: absolute; left: 0; top: -1px; font-size: 9px; line-height: 11px; padding-left: 3px; white-space: nowrap; }
+/* statistical windows: a small floating strip, secondary to the planet; it never resizes the canvas */
+.im-dock { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px;
+  background: rgba(16, 26, 44, 0.55); border: 1px solid rgba(52, 70, 92, 0.8); backdrop-filter: blur(5px); }
+.im-dock > span { font-size: 10px; margin-right: 4px; }
+.im-dock, .im-root .im-dock button { white-space: nowrap; }
+.im-root .im-dock button { padding: 4px 8px; font-size: 11px; border-color: transparent; color: var(--ink2); }
+.im-root .im-dock button[aria-pressed="true"] { background: transparent; border-color: var(--accent); color: var(--accent); }
+.im-extremes { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); display: grid; grid-template-columns: auto auto; gap: 2px 22px; padding: 8px 12px;
+  background: rgba(16, 26, 44, 0.72); border: 1px solid var(--line); border-top: 2px solid var(--pgl); backdrop-filter: blur(5px); }
+.im-extremes > div { display: flex; flex-direction: column; }
+.im-extremes span { font-size: 9.5px; letter-spacing: 0.04em; }
+.im-extremes b { font: 400 26px/1.05 Anton, Impact, sans-serif; }
+.im-extremes p { grid-column: 1 / -1; margin: 3px 0 0; font-size: 9px; letter-spacing: 0.03em; }
 .im-foot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 7px 16px; background: var(--ink); color: var(--space); font-size: 10.5px; }
-.im-root .im-skip { position: absolute; right: 16px; top: 14px; z-index: 6; background: rgba(16, 26, 44, 0.9); }
+.im-skip { position: absolute; right: 16px; top: 14px; z-index: 6; display: flex; gap: 6px; }
+.im-root .im-skip button { background: rgba(16, 26, 44, 0.9); }
+.im-card { margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--line); border-left: 3px solid var(--pgl); }
+.im-card .im-note { margin: 0; }
+.im-big { margin: 2px 0 4px !important; } .im-big b { font: 400 30px/1 Anton, Impact, sans-serif; margin-right: 6px; } .im-big span { font: 400 11px "Space Mono", monospace; color: var(--ink2); text-transform: uppercase; }
+.im-root .im-guide { display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 0 0 10px; border-color: var(--pgl); border-left-width: 4px; font: 700 15px Archivo, system-ui, sans-serif; letter-spacing: 0; text-transform: none; }
+.im-guide .im-mono { display: block; font-size: 10px; color: var(--accent); margin-bottom: 3px; }
+.im-root .im-link { border: 0; padding: 0; font: inherit; letter-spacing: 0; text-transform: none; text-align: left; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); }
+.im-tight th, .im-tight td { padding: 3px 6px 3px 0; font-size: 12.5px; } .im-tight td b { font-size: 12.5px; } .im-tight tr.is-on th button { color: var(--accent); }
+.im-fig { margin: 0 0 10px; } .im-fig img { display: block; width: 100%; height: 150px; object-fit: cover; border: 1px solid var(--line); } .im-fig figcaption { margin: 4px 0 0; font-size: 11px; }
+.im-vol { width: 70px; accent-color: var(--accent); align-self: center; }
+.im-panel .im-seg { margin-bottom: 10px; }
 
 /* film overlay: sized in vw so 1080p and 4K frames are the same picture */
 .im-film { z-index: 2; }
@@ -100,6 +145,13 @@
 .im-chips > div > span { display: block; font-size: 0.85vw; color: var(--ink2); }
 .im-chips b { font: 400 4.4vw/1 Anton, Impact, sans-serif; }
 .im-chipnote { grid-column: 1 / -1; font-size: 0.8vw; color: var(--ink2); }
+.im-chart { position: absolute; left: 3.75vw; top: 4.4vw; width: 31vw; padding: 1vw 1.2vw 0.8vw; background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); box-shadow: 0.6vw 0.6vw 0 var(--pgl-deep); }
+.im-chart svg { display: block; width: 100%; overflow: visible; }
+.im-charthead { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.78vw; color: var(--ink2); }
+.im-charthead b { font-size: 2vw; color: var(--accent); letter-spacing: 0.02em; }
+.im-charttick { font: 400 1.9px "Space Mono", monospace; fill: #A8BDD0; }
+.im-chartkey { font: 700 2.1px Archivo, system-ui, sans-serif; }
+.im-chartnote { font-size: 0.62vw; letter-spacing: 0.02em; color: var(--ink2); margin-top: 0.3vw; }
 .im-filmlegend { position: absolute; right: 3.75vw; bottom: 5.6vw; width: 24vw; padding: 0.9vw 1.1vw; background: rgba(16, 26, 44, 0.92); border: 1px solid var(--line); }
 .im-filmlegend .im-mono { font-size: 0.72vw; } .im-filmlegend .im-ramp { height: 0.9vw; } .im-filmlegend .im-ticks { font-size: 0.72vw; margin: 0; }
 .im-title { position: absolute; left: 0; right: 0; top: 30%; text-align: center; text-shadow: 0 0 2vw rgba(6, 13, 26, 0.95); }
@@ -108,14 +160,33 @@
 .im-credits { margin-top: 1.6vw; font-size: 0.85vw; color: var(--ink); }
 .im-folio { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: 0.9vw 3.75vw; background: var(--ink); color: var(--space); font-size: 0.85vw; }
 
-@media (max-width: 1100px) { .im-top nav { order: 3; } .im-top { flex-wrap: wrap; } .im-panel, .im-root .im-reopen { top: 132px; max-height: calc(100% - 236px); } }
-@media (max-width: 760px) {
+/* narrower than 1280: the centred highest/lowest card reaches under the panels, so they end above it */
+@media (max-width: 1279px) { .im-panel { max-height: calc(100% - 294px); } }
+/* tablet: the header takes two rows and the footer wraps, so everything floating moves up a little */
+@media (max-width: 1100px) { .im-top nav { order: 3; } .im-top { flex-wrap: wrap; } .im-panel, .im-root .im-reopen { top: 132px; } .im-panel { max-height: calc(100% - 340px); }
+  .im-dock, .im-cam { bottom: 56px; } .im-dock > span { display: none; } .im-extremes { bottom: 100px; } }
+@media (max-width: 830px) { .im-panel, .im-root .im-reopen { top: 178px; } .im-panel { max-height: calc(100% - 420px); } }   /* header in three rows */
+@media (max-width: 760px), (max-height: 500px) {   /* phones, upright or lying down (PHONE in stage.ts) */
   .im-top { left: 8px; right: 8px; top: 8px; gap: 8px; } .im-actions button { display: none; }
   .im-top nav { gap: 4px; width: 100%; } .im-root .im-top nav button { flex: 1; padding: 7px 2px; font-size: 10.5px; letter-spacing: 0; }
   /* one bottom sheet for evidence, a compact bar under the header for layers: about half the scene stays free */
-  .im-right { left: 8px; right: 8px; width: auto; top: auto; bottom: 96px; max-height: 40dvh; }
-  .im-left { left: 8px; right: 52px; width: auto; top: 150px; max-height: 46dvh; }
+  .im-panel.im-right { left: 8px; right: 8px; width: auto; top: auto; bottom: 96px; max-height: 40dvh; }
+  .im-panel.im-left { left: 8px; right: 52px; width: auto; top: 150px; max-height: 46dvh; }
   .im-root .im-reopen.im-left { top: 150px; } .im-root .im-reopen.im-right { top: auto; bottom: 96px; right: 8px; }
-  .im-cam { bottom: auto; top: 150px; right: 8px; } .im-dock { width: calc(100% - 16px); bottom: 40px; } .im-foot span:last-child { display: none; }
+  .im-cam { bottom: auto; top: 150px; right: 8px; flex-direction: column; } .im-foot span:last-child { display: none; } .im-foot { padding: 4px 8px; font-size: 8.5px; }
+  /* phone: the window strip shows only the chosen window (tap it to choose another); extremes shrink to one line each */
+  .im-dock { bottom: 38px; padding: 2px 4px 2px 8px; gap: 2px; } .im-dock > span { display: inline; font-size: 8.5px; }
+  .im-root .im-dock button { display: none; padding: 9px 8px; } .im-root .im-dock button[aria-pressed="true"], .im-root .im-dock.is-open button { display: block; }
+  .im-extremes { left: 8px; bottom: auto; top: 200px; transform: none; grid-template-columns: auto; padding: 5px 8px; gap: 2px; } .im-extremes b { font-size: 18px; } .im-extremes p, .im-extremes div span:last-child { display: none; }
+  .im-panel.im-left.is-expanded ~ .im-extremes { display: none; }
+  .im-flag span { font-size: 9.5px; padding: 4px 15px 4px 6px; } .im-study span { display: none; } .im-vol { display: none; }
+  .im-skip { top: 8px; right: 8px; }
+}
+/* a phone lying down: one header row, layers under it, evidence as a short bottom sheet; the highest/lowest card gives way to its two markers on the cells */
+@media (max-height: 500px) {
+  .im-top { flex-wrap: nowrap; } .im-top nav { order: 0; width: auto; flex: 1; } .im-brand em, .im-actions a, .im-extremes { display: none; }
+  .im-panel.im-left, .im-root .im-reopen.im-left, .im-cam { top: 64px; } .im-panel.im-left { max-height: calc(100dvh - 170px); }
+  .im-panel.im-right, .im-root .im-reopen.im-right { bottom: 64px; } .im-panel.im-right { left: auto; width: min(372px, 60vw); max-height: calc(100dvh - 140px); }
+  .im-dock { left: 8px; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .im-root, .im-root * { transition: none !important; animation: none !important; } }
