@@ -1,4 +1,6 @@
-"""Sound mix for the 30 s film: places a few licensed sound files on the film's beats and muxes the result with the silent picture.
+"""HISTORICAL — this mix was REJECTED by the team on 2026-11-15; do not use it for the film. Use scripts/mix_film_music.py.
+
+Sound mix for the 30 s film: places a few licensed sound files on the film's beats and muxes the result with the silent picture.
 
 The sound files are NOT part of this repository (they are licensed to a subscriber, not redistributable). Pass the folder that
 holds them. Each cue is aligned by its loudest moment (a riser's peak lands on the beat) or by its start.

@@ -11,7 +11,7 @@ import { createEarth, type Earth, type RegionShape } from '../engine/earth';
 import { FOV_Y, poseToLocal, toUV, type Pose } from '../engine/geo';
 import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, ramp, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
 import { num, pval, signed } from '../format';
-import { extremesOf, kmBetween, type Extreme } from './pure';
+import { extremesOf, kmBetween, visibleCellAt, type Extreme } from './pure';
 import type { Regions } from '../types';
 
 export type Mode = 'explore' | 'trends' | 'compare' | 'methodology';
@@ -265,7 +265,9 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     const h = ray.intersectObject(terrain.mesh)[0];
     return h?.uv ? [h.uv.x, 1 - h.uv.y] : null;
   }
-  const cellAt = (q: [number, number]) => (get().cells && get().layer === 'cells' && data ? data.scene.cells.findIndex((c) => inside(q, c.uv)) : -1);
+  const onLand = (q: [number, number]) => landUV.some((r) => inside(q, r));      // the part of the relief the mask leaves visible
+  const cellAt = (q: [number, number]) => (!get().cells || get().layer !== 'cells' || !data ? -1
+    : clipUV ? visibleCellAt(q, clipUV) : onLand(q) ? data.scene.cells.findIndex((c) => inside(q, c.uv)) : -1);
   /** the cell under a lon/lat on the globe: inside its native box and inside its visible (clipped) footprint */
   function cellAtGeo(ll: [number, number]): { id: SceneId; i: number } | null {
     const s = get();
@@ -291,7 +293,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       if (q) {
         const i = cellAt(q);
         if (i >= 0 && data.scene.cells[i].trends[perOf(loadedId, s.period)]) lines = cellLines(loadedId, i);
-        else {
+        else if (onLand(q)) {
           const hk = Math.floor(q[1] * data.scene.grid.ny) * data.scene.grid.nx + Math.floor(q[0] * data.scene.grid.nx);
           lines = [data.heights[hk] === -32768 ? 'Ocean' : `Terrain ${Math.max(0, data.heights[hk])} m (2 km mean, GMTED2010)`];
         }

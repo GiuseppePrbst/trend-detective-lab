@@ -4,13 +4,36 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CHART, DEST, flightPose, PERIOD_A, PERIOD_B, PERIOD_SWAP, planFlight, poseAt, SHOTS, stateAt, terrainAlpha, TITLE, TOTAL, WHOLE_EARTH } from './cinematic/timeline';
 import type { Scene } from './engine/terrain';
-import { extremesOf, kmBetween } from './experiences/pure';
+import { toUV } from './engine/geo';
+import { inside } from './engine/terrain';
+import { extremesOf, kmBetween, visibleCellAt } from './experiences/pure';
 import { STUDIES } from './experiences/studies';
 
 const json = <T,>(p: string) => JSON.parse(readFileSync(new URL(`../public/${p}`, import.meta.url), 'utf-8')) as T;
 const scenes = { antofagasta: json<Scene>('scene3d/antofagasta/scene.json'), los_lagos: json<Scene>('scene3d/los_lagos/scene.json') };
 const atlas = json<{ cells: Record<string, unknown[]>; places: { name: string; lon: number; lat: number; kind: string; scene: string }[]; series: { antofagasta: { years: number[]; coastal: number[]; interior: number[] } } }>('data/atlas.json');
 const catalog = json<{ regions: { id: string }[] }>('data/catalog.json');
+
+describe('picking on the relief follows the clipped footprints', () => {
+  for (const id of ['antofagasta', 'los_lagos'] as const) it(`${id}: a click opens a cell only where that cell is drawn`, () => {
+    const sc = scenes[id];
+    const clip = (atlas.cells[id] as [number, number][][][][]).map((polys) => polys.map((rings) => rings.map((r) => r.map(([lo, la]) => toUV(sc, lo, la)))));
+    let hidden = 0, shown = 0;
+    sc.cells.forEach((c, i) => {
+      const us = c.uv.map((p) => p[0]), vs = c.uv.map((p) => p[1]);
+      for (let a = 0.05; a < 1; a += 0.1) for (let b = 0.05; b < 1; b += 0.1) {
+        const q: [number, number] = [Math.min(...us) + a * (Math.max(...us) - Math.min(...us)), Math.min(...vs) + b * (Math.max(...vs) - Math.min(...vs))];
+        if (!inside(q, c.uv)) continue;
+        const k = visibleCellAt(q, clip);
+        if (k === -1) hidden++;                                      // inside the native box, outside every drawn footprint: nothing opens
+        else { shown++; expect(inside(q, sc.cells[k].uv)).toBe(true); } // what opens is the cell whose native box holds the point
+        if (k === i) expect(clip[i].some(([o]) => inside(q, o))).toBe(true);
+      }
+    });
+    expect(hidden).toBeGreaterThan(0);                               // the native boxes do reach off the region: the old test would have opened them
+    expect(shown).toBeGreaterThan(hidden);
+  });
+});
 
 describe('film timeline', () => {
   it('lasts 30 s and is a pure function of time', () => {

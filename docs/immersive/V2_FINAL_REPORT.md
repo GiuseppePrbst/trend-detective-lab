@@ -10,7 +10,7 @@ What each request became is in [`V2_REQUIREMENTS_MATRIX.md`](V2_REQUIREMENTS_MAT
 | Suite | Command | Result |
 | --- | --- | --- |
 | Python (science + atlas geometry) | `uv run pytest -q` | **54 passed** (46 existing + 8 in `tests/test_atlas.py`) |
-| Frontend unit | `npm test` (vitest, in `web/`) | **19 passed** (`web/src/atlas.test.ts`) |
+| Frontend unit | `npm test` (vitest, in `web/`) | **21 passed** (`web/src/atlas.test.ts`, 2 for picking on the relief) |
 | Types and build | `npm run build` | clean, Node 20.11 |
 | Browser smoke | `npm run dev -- --port 5199`, then `npm run smoke` | **24 passed** (local, headless Chrome 157 with GPU) |
 
@@ -65,7 +65,8 @@ All in `web/out/` (git-ignored, local):
 | `trend-detective-lab-earth-experience-30s.mp4`, `…-30s-4k.mp4` | **V1, approved, untouched** |
 | `trend-detective-lab-film-v2-1080p.mp4` | V2 full render: H.264, 1920×1080, 30 fps, 900 frames, 30.000 s, decodes clean. **Re-rendered in the closing pass** because the camera buttons moved (they show in the last 2.7 s); the earlier render is kept in `web/out/v2_prev/` |
 | `trend-detective-lab-earth-experience-v2-30s.mp4` | V2 silent delivery copy (stream copy of the re-render: 900 frames, 30.000 s) |
-| `trend-detective-lab-earth-experience-v2-30s-audio.mp4` (+ `.wav`, `.cues.json`) | V2 with the sound mix: AAC, integrated loudness −21.8 LUFS, peak −5.5 dBFS, no clipping. **Not listened to; licence unconfirmed** |
+| `trend-detective-lab-earth-experience-v2-30s-audio.mp4` (+ `.wav`, `.cues.json`) | **Rejected** Epidemic Sound mix: local backup only, not for publication |
+| `music/trend-detective-lab-v2-minimax-candidate.mp4` (+ `.wav`, `.json`) | **Candidate** with the MiniMax track: 900 frames, 30.000 s, AAC 48 kHz stereo, −19.6 LUFS, −1.5 dBTP. Pending listening, approval and rights (`V2_AUDIO.md`) |
 | `events-v2.json` | Beat list of V2 |
 
 V2 against the approved V1 — the camera path, shots, captions, numbers, title and last frame's pose are the same code. Three visible differences, for Fabiana to accept or reject:
@@ -102,5 +103,5 @@ Hand-off: `poseAt(30)` equals the interactive Antofagasta pose (unit test); the 
 
 1. Fabiana: the three film differences above, the window strip, flags, cursor and icons.
 2. Giuseppe: science wording on the globe (extremes, clipping note, regional layers) and whether V2 should replace V1 in production before the deadline.
-3. Whoever holds the Epidemic Sound subscription: listen to the mix and confirm the licence, or keep the silent film.
-4. Merging this branch and anything about the contest submission.
+3. Giuseppe and Fabiana: listen to the MiniMax candidate and approve or reject it; the MiniMax account holder: confirm the rights. Until then the silent film is the delivery. (The Epidemic Sound mix is rejected.)
+4. Anything about the contest submission (the form is sent by a person).
