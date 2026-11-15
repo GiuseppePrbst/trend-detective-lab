@@ -9,7 +9,8 @@ import { EVENTS, DEST, flightPose, PERIOD_B, planFlight, poseAt, reliefRise, smo
 import { load } from '../data';
 import { createEarth, type Earth, type RegionShape } from '../engine/earth';
 import { FOV_Y, poseToLocal, toUV, type Pose } from '../engine/geo';
-import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, ramp, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
+import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
+import { createTrendScale, type ScaleMode, type TrendScale } from '../engine/scale';
 import { num, pval, signed, VERDICT_SHORT } from '../format';
 import { extremesOf, kmBetween, sstLines, visibleCellAt, type AreaTrend, type Extreme } from './pure';
 import type { Regions } from '../types';
@@ -45,7 +46,7 @@ export type StageState = typeof DEFAULTS & {
   basemap: 'gibs' | 'bundled' | null;
   sstSlope: number | undefined;  // from sst.json, set by the UI once loaded
   sstTrend: (AreaTrend & { verdict: string }) | undefined;
-  scale: number; sources: string[]; places: string[];
+  scaleMode: ScaleMode; cellScale: TrendScale | null; fixedScale: TrendScale | null; sources: string[]; places: string[];
   tip: { x: number; y: number; lines: string[] } | null;
 };
 export const PHONE = '(max-width: 760px), (max-height: 500px)';   // same condition as the phone block of immersive.css
@@ -53,7 +54,7 @@ export const useStage = create<StageState>(() => ({
   ...DEFAULTS, mode: 'explore', left: matchMedia(PHONE).matches ? 'minimized' : 'expanded', right: matchMedia(PHONE).matches ? 'minimized' : 'expanded',   // phones open on the planet
   hideUi: false, film: false, t: 0,
   status: 'loading', error: '', near: false, region: null, regionNames: {}, extremes: null, picked: null, atlas: null,
-  basemap: null, sstSlope: undefined, sstTrend: undefined, scale: 1, sources: [], places: [], tip: null,
+  basemap: null, sstSlope: undefined, sstTrend: undefined, scaleMode: 'spatial', cellScale: null, fixedScale: null, sources: [], places: [], tip: null,
 }));
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -81,7 +82,13 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   }
   const regionAt = (ll: [number, number]) => shapes.find((sh) => sh.rings.some((r, i) => { const b = sh.boxes[i]; return ll[0] >= b[0] && ll[0] <= b[2] && ll[1] >= b[1] && ll[1] <= b[3] && inside(ll, r); }))?.id ?? null;
   const perOf = (id: SceneId, period: string) => ((SCENES[id].periods as readonly string[]).includes(period) ? period : SCENES[id].periods[0]);
-  const css = (id: SceneId, slope: number) => `#${ramp(stopsFor(id) as unknown as string[], (slope / scaleOf[id] + 1) / 2).getHexString()}`;
+  // one scale per territory, window and mode: the globe, the relief and the legend all read this (the film always uses the fixed one)
+  const scales = new Map<string, TrendScale>();
+  const scaleFor = (id: SceneId, period: string, mode: ScaleMode) => {
+    const k = `${id}|${period}|${mode}`;
+    if (!scales.has(k)) scales.set(k, createTrendScale(metas[id].cells.flatMap((c) => (c.trends[period] ? [c.trends[period].slope] : [])), id, mode, scaleOf[id], SCENES[id].periods.length));
+    return scales.get(k)!;
+  };
   const layerCache = new Map<string, { fill: (string | null)[]; line: (string | null)[] }>();
   let regionFill: { version: string; colours: Record<string, string | null> } | null = null;
 
@@ -170,7 +177,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     const nearK = terrainAlpha(p.range);
     const home = kmBetween(p, DEST[fs ? 'antofagasta' : s.scene]) < 700;      // inside the active study territory (whether or not its relief has loaded)
     const a = data && terrain && (fs || (s.terrainOn && home && loadedId === s.scene)) ? nearK : 0;
-    const key = JSON.stringify([p, loadedId, per, s.period, s.scene, s.cells, s.sst, s.opacity, s.exag, s.selected, s.sstSlope, s.terrainOn, s.layer, s.region, regionFill?.version,
+    const key = JSON.stringify([p, loadedId, per, s.period, s.scene, s.scaleMode, s.cells, s.sst, s.opacity, s.exag, s.selected, s.sstSlope, s.terrainOn, s.layer, s.region, regionFill?.version,
       s.extremes?.max.i, s.extremes?.min.i, els.markers.childElementCount, fs?.reveal, fs?.cellFade, W, H]);
     if (key === frameKey && settled) return;
     frameKey = key;
@@ -181,10 +188,10 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     // data on the curved globe: clipped native cells of both territories, or one regional trend for the 16 regions
     const far = 1 - smooth(Math.log(5200), Math.log(9500), Math.log(p.range));
     for (const id of IDS) {
-      const pi = perOf(id, s.period), sel = s.scene === id ? s.selected : null, ver = `${id}|${pi}|${sel}`;
+      const pi = perOf(id, s.period), sel = s.scene === id ? s.selected : null, sc = scaleFor(id, pi, s.scaleMode), ver = `${sc.key}|${pi}|${sel}`;
       let c = layerCache.get(ver);
       if (!c) {
-        c = { fill: metas[id].cells.map((x) => (x.trends[pi] ? css(id, x.trends[pi].slope) : null)),
+        c = { fill: metas[id].cells.map((x) => (x.trends[pi] ? sc.colour(x.trends[pi].slope) : null)),
           line: metas[id].cells.map((x, i) => (!x.trends[pi] ? null : i === sel ? '#4CD9E6' : x.coastal ? '#0f0f0f' : '#3a3a3a')) };
         layerCache.set(ver, c);
       }
@@ -208,9 +215,10 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       if (loadedId !== maskKey) { maskKey = loadedId; terrain.setMask(paintMask(data, landUV, false, maskCanvas)); }
       const ex = !fs && s.extremes?.scene === loadedId && s.extremes.period === per ? [s.extremes.max.i, s.extremes.min.i] : undefined;
       const o = { tex: 'relief', period: per, cells: s.cells && (!!fs || s.layer === 'cells'), opacity: s.opacity * (fs ? fs.cellFade : 1), D: scaleOf[loadedId], stops: stopsFor(loadedId) as unknown as string[],
+        scaleKey: scaleFor(loadedId, per, fs ? 'fixed' : s.scaleMode).key,
         reveal: fs ? fs.reveal : 1, selected: s.scene === loadedId ? s.selected ?? undefined : undefined, marks: ex };
       const pk = loadedId + JSON.stringify(o);
-      if (pk !== paintKey) { paintKey = pk; terrain.setMap(paintOverlay(data, { ...o, clip: clipUV }, paint)); }
+      if (pk !== paintKey) { paintKey = pk; terrain.setMap(paintOverlay(data, { ...o, clip: clipUV, colour: scaleFor(loadedId, per, fs ? 'fixed' : s.scaleMode).colour }, paint)); }
       const L = poseToLocal(data.scene, terrain.W, terrain.H, p, EARTH_R);
       cam.position.set(...L.position); cam.up.set(...L.up); cam.lookAt(...L.target);
       renderer.render(scene3, cam);
@@ -245,7 +253,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   function endFilm(at = TOTAL) {
     const fs = stateAt(at);
     pose = fs.pose;
-    set({ film: false, t: 0, period: fs.period, hideUi: false });
+    set({ film: false, t: 0, period: fs.period, hideUi: false, scaleMode: 'fixed' });   // the film's fixed scale continues after the hand-off
     if (at >= TOTAL) set({ period: PERIOD_B, region: REGION_OF.antofagasta });
   }
   function tick(now: number) {
@@ -387,9 +395,11 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
 
   const refreshExtremes = () => {
     const s = get(), pi = perOf(s.scene, s.period), e = extremesOf(metas[s.scene].cells, pi);
-    if (s.extremes?.scene !== s.scene || s.extremes.period !== pi) set({ extremes: e ? { scene: s.scene, period: pi, ...e } : null, scale: scaleOf[s.scene] });
+    if (s.extremes?.scene !== s.scene || s.extremes.period !== pi) set({ extremes: e ? { scene: s.scene, period: pi, ...e } : null });
+    const sc = scaleFor(s.scene, pi, s.scaleMode), fx = scaleFor(s.scene, pi, 'fixed');
+    if (s.cellScale?.key !== sc.key || s.fixedScale?.key !== fx.key) set({ cellScale: sc, fixedScale: fx });
   };
-  const unsub = useStage.subscribe((s, prev) => { if (s.scene !== prev.scene || s.period !== prev.period) refreshExtremes(); });
+  const unsub = useStage.subscribe((s, prev) => { if (s.scene !== prev.scene || s.period !== prev.period || s.scaleMode !== prev.scaleMode) refreshExtremes(); });
   refreshExtremes();
   const regionPose = (id: string): Pose | null => {
     const sh = shapes.find((x) => x.id === id);

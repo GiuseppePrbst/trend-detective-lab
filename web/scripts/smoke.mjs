@@ -194,6 +194,21 @@ try {
     return `+${t} °C per decade`;
   });
 
+  await test('20 colour scale: spatial legend from the real cell range, Fixed comparison restores the common scale', async () => {
+    await go('?region=antofagasta&period=2003-2025'); await until(ARRIVED('antofagasta')); await wait(2500);
+    const leg = () => ev(`document.querySelector('.im-legend').textContent`);
+    const a = await leg(), ex = await ev(`document.querySelector('.im-extremes')?.textContent ?? ''`);
+    assert(/Spatial contrast/.test(a) && /not directly comparable between periods/.test(a), 'spatial legend or its warning missing');
+    for (const v of ex.match(/[+−-]0\.\d\d/g)?.slice(0, 2) ?? []) assert(a.includes(v.replace('−', '-')) || a.includes(v), `legend does not end at the extreme ${v}`);
+    await ev(`(() => { const el = [...document.querySelectorAll('.im-field')].find((f) => /Colour scale/.test(f.textContent)).querySelector('select');
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, 'fixed'); el.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    await wait(600);
+    const b = await leg();
+    assert(/Fixed comparison/.test(b) && /directly comparable/.test(b) && /0\.70/.test(b), 'fixed legend wrong');
+    await shot('20_fixed');
+    return 'spatial ↔ fixed';
+  });
+
   // layout: nothing floating covers anything else, at the sizes the report had left unchecked
   for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [768, 1024], [844, 390], [390, 844]]) {
     await test(`16 layout ${w}×${h}: Antofagasta and a region card`, async () => {

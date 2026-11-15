@@ -67,6 +67,8 @@ export function colourDomain(scene: Scene, id: SceneId) {
 
 export type Overlay = {
   tex: string; period: string; cells: boolean; opacity: number; D: number; stops: string[];
+  /** cell colour from engine/scale.ts (same function as the globe and the legend); default: the fixed diverging ramp D/stops */
+  colour?: (slope: number) => string;
   /** slope of the coastal SST box, °C per decade; drawn only for 2003-2025, the period it was computed for */
   sstSlope?: number;
   /** 0..1: share of cells drawn, west to east (film only; every drawn cell keeps its own computed colour) */
@@ -138,7 +140,7 @@ export function paintOverlay(data: Loaded, o: Overlay, into?: HTMLCanvasElement)
       if (k <= 0) return;
       shape(i);
       g.globalAlpha = o.opacity * k;
-      g.fillStyle = ramp(o.stops, (t.slope / o.D + 1) / 2).getStyle();
+      g.fillStyle = o.colour ? o.colour(t.slope) : ramp(o.stops, (t.slope / o.D + 1) / 2).getStyle();
       g.fill('evenodd');
       g.globalAlpha = k;
       g.strokeStyle = cell.coastal ? 'rgba(15,15,15,0.95)' : 'rgba(40,40,40,0.45)';
