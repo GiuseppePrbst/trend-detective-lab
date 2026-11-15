@@ -220,9 +220,11 @@ function Evidence({ terr, sst, stage, cat, regional, precipFile, study, setStudy
               </div>
             </> : <>
               <h3 className="im-h">The planet is the interface</h3>
+              <p className="im-note">How have temperature, rain, soil moisture and snow changed in Chile's 16 regions — and how sure can we be? NASA data (MERRA-2, GPM IMERG, GLDAS), every trend with its 95 % interval and p-value.</p>
               <p>Drag to turn the Earth and zoom in on Chile. Pick a flag, click any of the 16 regions, or start with a guided case.</p>
               <button type="button" className="im-guide" onClick={() => { sound.cue('fly'); useStage.setState({ layer: 'cells', cells: true, period: '1980-2025', mode: 'explore' }); stage?.flyTo('antofagasta'); setStudy(STUDIES[0]); }}>
                 <span className="im-mono">Guided case</span>Investigate a changing coastline →</button>
+              <a className="im-note" href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/education/CLASSROOM_INVESTIGATION_EN.md" target="_blank" rel="noopener">Teachers and students: a 15-minute investigation with this app ↗</a>
             </>)}
           {s.mode === 'trends' && (reg && s.layer !== 'cells' ? <>
             <h3 className="im-h">{reg.short}, 16 regions</h3>
