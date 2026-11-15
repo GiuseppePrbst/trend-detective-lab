@@ -13,9 +13,10 @@ import './immersive.css';
 import { CELLS_IN, CHART, PERIOD_A, PERIOD_B, PERIOD_SWAP, SHOTS, smooth, stateAt, UI_IN } from '../cinematic/timeline';
 import { load } from '../data';
 import { BASEMAPS } from '../engine/earth';
-import { BRBG, ramp, RDBU, SCENES, stopsFor, type SceneId } from '../engine/terrain';
+import { SCENES, stopsFor, type SceneId } from '../engine/terrain';
 import { num, pval, signed, VERDICT_SHORT } from '../format';
-import type { Catalog, SST, Territory, VariableData } from '../types';
+import type { Catalog, MultiVar, SST, Territory, VariableData } from '../types';
+import { adjustedSignificant, domain, FLAG_TEXT, fills, fromConfirmatory, fromMultivar, isRegional, LAYERS, type RegionalLayer, type RegionalView } from './regional';
 import { sound } from './sound';
 import { EVENTS, mountStage, PHONE, REGION_OF, TOTAL, useStage, type Atlas, type Layer, type Mode, type PanelState, type Stage } from './stage';
 import { STUDIES, type Study } from './studies';
@@ -31,17 +32,10 @@ const FLAGS: { id: SceneId; label: string; lon: number; lat: number }[] = [
   { id: 'antofagasta', label: 'Antofagasta, Chile', lon: -70.4, lat: -23.65 },
   { id: 'los_lagos', label: 'Los Lagos, Chile', lon: -72.94, lat: -41.47 },
 ];
-const REGIONAL: Record<Exclude<Layer, 'cells'>, { file: string; label: string; stops: string[]; short: string }> = {
-  t2m: { file: 't2m.json', label: 'Air temperature trend, regional mean', stops: RDBU, short: 'Air temperature' },
-  precip: { file: 'precip.json', label: 'Precipitation trend, regional mean', stops: BRBG, short: 'Precipitation' },
-};
-type Regional = Partial<Record<Exclude<Layer, 'cells'>, VariableData | null>>;
-/** symmetric colour domain of a regional layer: the largest published |trend|, rounded up to one significant step */
-const domainOf = (d: VariableData) => {
-  const m = Math.max(...Object.values(d.regions).map((r) => Math.abs(r.trend.slope_per_decade)));
-  const step = 10 ** Math.floor(Math.log10(m));
-  return Math.ceil(m / step) * step;
-};
+/** one view per regional layer (undefined = loading, null = not available) — see regional.ts */
+type Regional = Partial<Record<RegionalLayer, RegionalView | null>>;
+type RawFiles = { t2m?: VariableData | null; precip?: VariableData | null; multivar?: MultiVar | null };
+const sourceOf = (l: RegionalLayer): keyof RawFiles => (l === 't2m' || l === 'precip' ? l : 'multivar');
 
 function setPanel(side: 'left' | 'right', v: PanelState) {
   const other = side === 'left' ? 'right' : 'left';
@@ -71,13 +65,13 @@ function Panel({ side, index, title, children }: { side: 'left' | 'right'; index
   );
 }
 
-function Legend({ compact = false, regional, cat }: { compact?: boolean; regional?: Regional; cat?: Catalog | null }) {
+function Legend({ compact = false, regional }: { compact?: boolean; regional?: Regional }) {
   const scene = useStage((s) => s.scene), layer = useStage((s) => s.layer), period = useStage((s) => s.period);
   const sc = useStage((s) => (compact ? s.fixedScale : s.cellScale));   // the film always compares windows on the fixed scale
   const cfg = SCENES[scene];
   const reg = !compact && layer !== 'cells' ? regional?.[layer] : null;
-  const D = reg ? domainOf(reg) : 1, stops = reg ? REGIONAL[layer as 't2m'].stops : stopsFor(scene);
-  const unit = reg ? cat?.variables.find((v) => v.id === layer)?.trend_unit ?? '' : cfg.unit;
+  const D = reg ? domain(reg) : 1, stops = reg ? reg.stops : stopsFor(scene);
+  const unit = reg ? reg.unit : cfg.unit;
   // cells: ticks and gradient sampled from the very colour function the globe and the relief use
   const ticks = !reg && sc ? sc.ticks : Array.from({ length: 7 }, (_, i) => -D + (i * 2 * D) / 6);
   const grad = !reg && sc ? Array.from({ length: 13 }, (_, i) => sc.colour(sc.lo + ((sc.hi - sc.lo) * i) / 12)) : stops;
@@ -85,13 +79,16 @@ function Legend({ compact = false, regional, cat }: { compact?: boolean; regiona
   const per = (cfg.periods as readonly string[]).includes(period) ? period : cfg.periods[0];
   return (
     <div className="im-legend">
-      <div className="im-mono im-dim">{reg && layer !== 'cells' ? REGIONAL[layer].label : scene === 'antofagasta' ? 'Air temperature trend' : 'Root-zone soil moisture trend'} · {unit}</div>
+      <div className="im-mono im-dim">{reg ? `${reg.short} trend, regional mean` : scene === 'antofagasta' ? 'Air temperature trend' : 'Root-zone soil moisture trend'} · {unit}</div>
       {!reg && sc && <div className="im-mono im-dim">{compact ? '' : `${dash(per)} · `}{sc.mode === 'fixed' ? 'Fixed comparison · same scale for every period' : 'Spatial contrast · period-adjusted scale'}</div>}
       <div className="im-ramp" style={{ background: `linear-gradient(to right, ${grad.join(',')})` }} />
       <div className="im-ticks im-mono">{ticks.map((x, i) => <span key={i}>{big ? signed(Math.round(x) || 0).replace('.00', '') : signed(Math.round(x * 100) / 100 || 0)}</span>)}</div>
       {!compact && !reg && sc && <p className="im-note">{sc.note}{sc.warning && <b className="im-warn"> {sc.warning}</b>}</p>}
       {!compact && (reg
-        ? <p className="im-note">One colour = one region's mean trend over its whole record. Colour shows the size of the trend, not whether it is significant: see the table in Trends. Regions without a value are left uncoloured (never zero).</p>
+        ? <p className="im-note">One colour = one region's mean trend, {reg.period}; fixed scale for this variable, zero in the middle. Colour shows the size of the trend, not whether it is significant: see the table in Trends. Regions without a usable value are left uncoloured (never zero).
+          {reg.exploratory && ' Exploratory result of a land-surface model (GLDAS): simulated, not measured; its link with rainfall is partly built into the model, not independent evidence.'}
+          {reg.id === 'swe' && ' Snow: northern regions have negligible snow and Aysén / Magallanes have glacier cells that accumulate snow in GLDAS (not seasonal snow); both are left uncoloured.'}
+          {reg.id === 'evap' && ' Evapotranspiration here is modelled, not measured by a satellite.'}</p>
         : <p className="im-note">One coloured footprint = one native cell and one computed trend, drawn only over the region's land; the value is still that of the whole native cell. No cell, no colour (never zero). Hover or click a cell for its exact value.
           {scene === 'antofagasta' && ' Dark outline: coastal cells. Dashed turquoise outline over the sea: the NASA MUR sea-surface temperature study area, one area-averaged trend, 2003–2025 only — a study footprint, not a temperature map.'}</p>)}
     </div>
@@ -115,8 +112,8 @@ function Controls({ stage, cat, regional }: { stage: Stage | null; cat: Catalog 
       <label className="im-field"><span className="im-mono im-dim">Data on the globe</span>
         <select value={s.layer} onChange={(e) => { sound.cue('layer'); useStage.setState({ layer: e.target.value as Layer, selected: null, picked: null }); }}>
           <option value="cells">Native cells — the two study territories</option>
-          <option value="t2m">Regional trend — air temperature, 16 regions</option>
-          <option value="precip">Regional trend — precipitation, 16 regions</option>
+          {(['Atmosphere', 'Land surface'] as const).map((g) => <optgroup key={g} label={`${g} — regional trend, 16 regions`}>
+            {LAYERS.filter((l) => l.group === g).map((l) => <option key={l.id} value={l.id}>{l.short}</option>)}</optgroup>)}
         </select></label>
       {s.layer === 'cells' ? <>
         <div className="im-field"><span className="im-mono im-dim">Variable in {REGION_NAME[s.scene]}</span>
@@ -135,9 +132,9 @@ function Controls({ stage, cat, regional }: { stage: Stage | null; cat: Catalog 
           <select value={s.exag} onChange={(e) => useStage.setState({ exag: Number(e.target.value) })}>
             {[1, 1.5, 2, 3].map((x) => <option key={x} value={x}>{x}×{x === 1 ? ' (true scale)' : ''}</option>)}</select></label>}
       </> : <div className="im-field"><span className="im-mono im-dim">Product</span>
-        <p className="im-note">{cat?.variables.find((v) => v.id === s.layer)?.product ?? ''}, {cat?.variables.find((v) => v.id === s.layer)?.period.join('–')}. {regional[s.layer] === undefined ? 'Loading…' : regional[s.layer] === null ? 'Not available.' : regional[s.layer]?.SYNTHETIC ? 'SYNTHETIC DEMO DATA — not NASA observations.' : ''}</p></div>}
-      <Legend regional={regional} cat={cat} />
-      <p className="im-note im-mono">Window: {dash(per)}</p>
+        <p className="im-note">{regional[s.layer] === undefined ? 'Loading…' : regional[s.layer] === null ? 'Not available.' : <>{regional[s.layer]!.product}, {regional[s.layer]!.period}, native {regional[s.layer]!.grid} cells. {regional[s.layer]!.nature}.{regional[s.layer]!.synthetic && <b className="im-warn"> SYNTHETIC DEMO DATA — not NASA observations.</b>}</>}</p></div>}
+      <Legend regional={regional} />
+      {s.layer === 'cells' && <p className="im-note im-mono">Window: {dash(per)}</p>}   {/* regional layers state their own period */}
     </Panel>
   );
 }
@@ -148,20 +145,21 @@ const Row = ({ label, t }: { label: string; t: T4['coastal'] }) => (
 );
 
 /** What the published regional files say about one region. */
-function RegionCard({ id, cat, regional, stage }: { id: string; cat: Catalog | null; regional: Regional; stage: Stage | null }) {
-  const name = useStage((s) => s.regionNames[id]) ?? id;
+function RegionCard({ id, regional, stage }: { id: string; regional: Regional; stage: Stage | null }) {
+  const name = useStage((s) => s.regionNames[id]) ?? id, layer = useStage((s) => s.layer);
   const scene = (Object.keys(REGION_OF) as SceneId[]).find((k) => REGION_OF[k] === id);
   return <>
     <h3 className="im-h">{name}</h3>
-    {(['t2m', 'precip'] as const).map((v) => {
-      const info = cat?.variables.find((x) => x.id === v), d = regional[v], t = d?.regions[id]?.trend;
+    {[...new Set<RegionalLayer>(['t2m', 'precip', ...(layer !== 'cells' ? [layer] : [])])].map((v) => {
+      const d = regional[v], x = d?.regions[id], t = x?.trend;
       return <div key={v} className="im-card">
-        <div className="im-mono im-dim">{info?.label ?? v} · {info?.product}</div>
-        {d === undefined ? <p className="im-note">Loading…</p> : !t ? <p className="im-note">No result published for this region and product.</p> : <>
-          <p className="im-big"><b>{signed(t.slope_per_decade)}</b> <span>{info?.trend_unit}</span></p>
+        <div className="im-mono im-dim">{d?.short ?? v} · {d?.product}{d?.exploratory ? ' · exploratory' : ''}</div>
+        {d === undefined ? <p className="im-note">Loading…</p> : !d || !t ? <p className="im-note">No result published for this region and product.</p> : <>
+          <p className="im-big"><b>{signed(t.slope_per_decade)}</b> <span>{d.unit}</span></p>
           <p className="im-note">{t.start.slice(0, 4)}–{t.end.slice(0, 4)} · 95 % interval {signed(t.ci_low)} to {signed(t.ci_high)} · {pval(t.p_value)}{t.p_adjusted != null && ` · q = ${t.p_adjusted.toFixed(3)} (16 regions)`}<br />
-            {VERDICT_SHORT[t.verdict]}{t.significant_after_fdr ? ', and significant after adjusting for 16 regions' : ''}. Regional mean of native {info?.grid} cells; {info?.nature_label?.toLowerCase()}.
-            {d?.SYNTHETIC && <b className="im-warn"> SYNTHETIC DEMO DATA.</b>}</p>
+            {VERDICT_SHORT[t.verdict]}{adjustedSignificant(t) ? ', and significant after adjusting for 16 regions' : ''}. Regional mean of native {d.grid} cells{x?.coverage != null ? ` (valid land coverage ${Math.round(x.coverage * 100)} %)` : ''}; {d.nature.toLowerCase()}.
+            {x?.flag && <b className="im-warn"> Not drawn on the map: {FLAG_TEXT[x.flag]}.</b>}
+            {d.synthetic && <b className="im-warn"> SYNTHETIC DEMO DATA.</b>}</p>
         </>}
       </div>;
     })}
@@ -190,7 +188,7 @@ function StudyCard({ st, data, stage, close }: { st: Study; data: { terr: Territ
   </>;
 }
 
-function Evidence({ terr, sst, stage, cat, regional, study, setStudy }: { terr: Territory | null; sst: SST | null; stage: Stage | null; cat: Catalog | null; regional: Regional; study: Study | null; setStudy: (s: Study | null) => void }) {
+function Evidence({ terr, sst, stage, cat, regional, precipFile, study, setStudy }: { terr: Territory | null; sst: SST | null; stage: Stage | null; cat: Catalog | null; regional: Regional; precipFile?: VariableData | null; study: Study | null; setStudy: (s: Study | null) => void }) {
   const s = useStage();
   const cfg = SCENES[s.scene];
   const per = (cfg.periods as readonly string[]).includes(s.period) ? s.period : cfg.periods[0];
@@ -198,11 +196,11 @@ function Evidence({ terr, sst, stage, cat, regional, study, setStudy }: { terr: 
   const row = t4?.find((r) => r.period === dash(per));
   const mur = sst?.series.mur_sst?.trend;
   const title = { explore: 'Explore', trends: 'Trends', compare: 'Compare', methodology: 'Methodology' }[s.mode];
-  const reg = s.layer !== 'cells' ? regional[s.layer] : null, info = cat?.variables.find((v) => v.id === s.layer);
+  const reg = s.layer !== 'cells' ? regional[s.layer] : null;
   const sceneRegion = s.region && Object.values(REGION_OF).includes(s.region);
   return (
     <Panel side="right" index="02" title={study ? 'Study' : title}>
-      {study ? <StudyCard st={study} data={{ terr, sst, precip: regional.precip ?? null }} stage={stage} close={() => setStudy(null)} />
+      {study ? <StudyCard st={study} data={{ terr, sst, precip: precipFile ?? null }} stage={stage} close={() => setStudy(null)} />
         : <>
           {s.mode === 'explore' && (s.picked ? <>
             <div className="im-mono im-dim">{s.picked.note ? 'Selected study area · dashed outline' : 'Selected cell · outlined in cyan'}</div>
@@ -211,7 +209,7 @@ function Evidence({ terr, sst, stage, cat, regional, study, setStudy }: { terr: 
             {s.picked.lines.slice(1).map((l) => <p key={l} className="im-note">{l}</p>)}
             <p className="im-note">{s.picked.note ?? `${cfg.product}. The value is the trend of the whole native cell, also where only part of it is drawn.`}</p>
             <div className="im-seg"><button type="button" onClick={() => useStage.setState({ selected: null, picked: null })}>Close cell</button></div>
-          </> : s.region && !(s.near && sceneRegion) ? <RegionCard id={s.region} cat={cat} regional={regional} stage={stage} />
+          </> : s.region && !(s.near && sceneRegion) ? <RegionCard id={s.region} regional={regional} stage={stage} />
             : s.near ? <>
               <h3 className="im-h">{REGION_NAME[s.scene]}</h3>
               <p className="im-note">{cfg.product}. Period {dash(per)}.</p>
@@ -227,12 +225,12 @@ function Evidence({ terr, sst, stage, cat, regional, study, setStudy }: { terr: 
                 <span className="im-mono">Guided case</span>Investigate a changing coastline →</button>
             </>)}
           {s.mode === 'trends' && (reg && s.layer !== 'cells' ? <>
-            <h3 className="im-h">{REGIONAL[s.layer].short}, 16 regions</h3>
-            <table className="im-table im-tight"><thead><tr><th>Region</th><th>{info?.trend_unit}</th><th>p</th><th>q</th><th /></tr></thead>
-              <tbody>{(cat?.regions ?? []).map((r) => { const t = reg.regions[r.id]?.trend; return (
+            <h3 className="im-h">{reg.short}, 16 regions</h3>
+            <table className="im-table im-tight"><thead><tr><th>Region</th><th>{reg.unit}</th><th>p</th><th>q</th><th /></tr></thead>
+              <tbody>{(cat?.regions ?? []).map((r) => { const x = reg.regions[r.id], t = x?.trend; return (
                 <tr key={r.id} className={s.region === r.id ? 'is-on' : ''}><th scope="row"><button type="button" className="im-link" onClick={() => useStage.setState({ region: r.id, mode: 'explore' })}>{r.name}</button></th>
-                  {t ? <><td><b>{signed(t.slope_per_decade)}</b></td><td>{t.p_value < 0.001 ? '<0.001' : t.p_value.toFixed(3)}</td><td>{t.p_adjusted != null ? t.p_adjusted.toFixed(3) : '—'}</td><td>{t.significant_after_fdr ? '●' : t.p_value < 0.05 ? '○' : ''}</td></> : <td colSpan={4}>no result</td>}</tr>); })}</tbody></table>
-            <p className="im-note">{info?.product}, {info?.period.join('–')}. p: this region alone; q: adjusted for 16 regions (false discovery rate). ● significant after adjustment, ○ only before. A trend that is not significant is not evidence of stability.</p>
+                  {t ? <><td><b>{signed(t.slope_per_decade)}</b>{x?.flag ? '*' : ''}</td><td>{t.p_value < 0.001 ? '<0.001' : t.p_value.toFixed(3)}</td><td>{t.p_adjusted != null ? t.p_adjusted.toFixed(3) : '—'}</td><td>{adjustedSignificant(t) ? '●' : t.p_value < 0.05 ? '○' : ''}</td></> : <td colSpan={4}>no result</td>}</tr>); })}</tbody></table>
+            <p className="im-note">{reg.product}, {reg.period}{reg.exploratory ? ' (exploratory, land-surface model)' : ''}. p: this region alone; q: adjusted for 16 regions (false discovery rate). ● significant after adjustment, ○ only before. A trend that is not significant is not evidence of stability.{Object.values(reg.regions).some((v) => v.flag) && ' * Not drawn on the map: negligible snow or glacier cells (not seasonal snow).'}</p>
           </> : row ? <>
             <h3 className="im-h">Antofagasta, {row.period}</h3>
             <table className="im-table"><thead><tr><th>Group</th><th>°C per decade</th><th>95 % interval</th><th>p</th></tr></thead>
@@ -396,7 +394,7 @@ export default function Immersive() {
   const [terr, setTerr] = useState<Territory | null>(null);
   const [sst, setSst] = useState<SST | null>(null);
   const [cat, setCat] = useState<Catalog | null>(null);
-  const [regional, setRegional] = useState<Regional>({});
+  const [files, setFiles] = useState<RawFiles>({});
   const [study, setStudy] = useState<Study | null>(null);
   const [snd, setSnd] = useState(sound.enabled());
   const s = useStage();
@@ -408,19 +406,24 @@ export default function Immersive() {
   }, []);
 
   // regional files are fetched only when a region, a regional layer or a study needs them
-  const want = s.region || study ? (['t2m', 'precip'] as const) : s.layer !== 'cells' ? [s.layer] : [];
+  const want: (keyof RawFiles)[] = [...new Set<keyof RawFiles>([...(s.region || study ? ['t2m', 'precip'] as const : []), ...(s.layer !== 'cells' ? [sourceOf(s.layer)] : [])])];
   useEffect(() => {
-    for (const v of want) if (!(v in regional)) {
-      setRegional((r) => ({ ...r, [v]: undefined }));
-      load<VariableData>(REGIONAL[v].file).then((d) => setRegional((r) => ({ ...r, [v]: d })), () => setRegional((r) => ({ ...r, [v]: null })));
+    for (const f of want) if (!(f in files)) {
+      setFiles((r) => ({ ...r, [f]: undefined }));
+      load<VariableData & MultiVar>(`${f}.json`).then((d) => setFiles((r) => ({ ...r, [f]: d })), () => setFiles((r) => ({ ...r, [f]: null })));
     }
   }, [want.join()]);   // eslint-disable-line react-hooks/exhaustive-deps
+  // both result shapes → one view per layer (regional.ts); the confirmatory ones need catalog.json for their metadata
+  const regional: Regional = Object.fromEntries(LAYERS.map((l) => {
+    const f = files[sourceOf(l.id)];
+    if (f === null) return [l.id, null];
+    if (!f || (l.source === 'confirmatory' && !cat)) return [l.id, undefined];
+    return [l.id, l.source === 'confirmatory' ? fromConfirmatory(l.id as 't2m' | 'precip', f as VariableData, cat!) : fromMultivar(l.id as Exclude<RegionalLayer, 't2m' | 'precip'>, f as MultiVar)];
+  }));
+  const view = s.layer !== 'cells' ? regional[s.layer] : null;
   useEffect(() => {
-    const d = s.layer !== 'cells' ? regional[s.layer] : null;
-    if (!stage || !d || s.layer === 'cells') return;
-    const D = domainOf(d), stops = REGIONAL[s.layer].stops;
-    stage.setRegionFill(s.layer, Object.fromEntries(Object.entries(d.regions).map(([id, r]) => [id, Number.isFinite(r.trend?.slope_per_decade) ? `#${ramp(stops, (r.trend.slope_per_decade / D + 1) / 2).getHexString()}` : null])));
-  }, [stage, s.layer, regional]);
+    if (stage && view) stage.setRegionFill(view.id, fills(view));
+  }, [stage, view?.id, !!view]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let dead = false, st: Stage | null = null, done: () => void = () => undefined;
@@ -435,11 +438,11 @@ export default function Immersive() {
         w.tdlStage = x; dispatchEvent(new CustomEvent('tdl-stage'));   // presenter mode (?present=1) drives this stage
         if (Q.has('t')) await x.renderAt(Number(Q.get('t')), flushSync);
         else if (Q.get('mode') === 'cinematic' && !CAPTURE && !matchMedia('(prefers-reduced-motion: reduce)').matches) await x.play();
-        else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|t2m|precip&relief=0&period=2003-2025
+        else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|<regional layer>&relief=0&period=2003-2025
           if (Q.get('period')) useStage.setState({ period: Q.get('period')! });   // an unknown window falls back to the scene's first one
           if (Q.get('scale') === 'fixed' || Q.get('scale') === 'spatial') useStage.setState({ scaleMode: Q.get('scale') as 'fixed' | 'spatial' });
           const layer = Q.get('layer');
-          if (layer === 't2m' || layer === 'precip') useStage.setState({ layer });
+          if (layer && isRegional(layer)) useStage.setState({ layer });
           if (Q.get('relief') === '0') useStage.setState({ terrainOn: false });
           if (Q.get('region')) x.flyTo(Q.get('region')!);     // also the way back from the Research Lab
         }
@@ -501,7 +504,7 @@ export default function Immersive() {
         </div>
       </header>
       <Controls stage={stage} cat={cat} regional={regional} />
-      <Evidence terr={terr} sst={sst} stage={stage} cat={cat} regional={regional} study={study} setStudy={setStudy} />
+      <Evidence terr={terr} sst={sst} stage={stage} cat={cat} regional={regional} precipFile={files.precip} study={study} setStudy={setStudy} />
       <div className="im-cam im-ui" role="group" aria-label="Camera">
         <button type="button" aria-label="Zoom in" onClick={() => stage?.nudge('in')}>+</button>
         <button type="button" aria-label="Zoom out" onClick={() => stage?.nudge('out')}>−</button>

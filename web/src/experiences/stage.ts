@@ -14,11 +14,12 @@ import { createTrendScale, type ScaleMode, type TrendScale } from '../engine/sca
 import { num, pval, signed, VERDICT_SHORT } from '../format';
 import { extremesOf, kmBetween, sstLines, visibleCellAt, type AreaTrend, type Extreme } from './pure';
 import type { Regions } from '../types';
+import type { RegionalLayer } from './regional';
 
 export type Mode = 'explore' | 'trends' | 'compare' | 'methodology';
 export type PanelState = 'closed' | 'minimized' | 'expanded';
 /** what the globe is coloured by: the native cells of the two study territories, or one regional trend for the 16 regions */
-export type Layer = 'cells' | 't2m' | 'precip';
+export type Layer = 'cells' | RegionalLayer;
 export type Atlas = {
   cells: Record<SceneId, [number, number][][][][]>;
   sst_sea: [number, number][][][];

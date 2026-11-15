@@ -130,7 +130,7 @@ try {
     metrics.flight_los_lagos_antofagasta_ms = await until(ARRIVED('antofagasta')); return `${metrics.flight_los_lagos_antofagasta_ms} ms after the interruption`;
   });
   await test('09 the 16 regions: list, region card, regional layer', async () => {
-    const n = await ev(`document.querySelectorAll('.im-left select optgroup option').length`);
+    const n = await ev(`document.querySelectorAll('.im-left select')[0].querySelectorAll('optgroup option').length`);   // the Territory list
     assert(n === 16, `${n} regions in the list`);
     await choose('.im-left select', 'maule'); await until(`document.querySelector('.im-right h3')?.textContent === 'Maule'`);
     await until(`document.querySelectorAll('.im-right .im-big').length === 2`);
@@ -250,6 +250,26 @@ try {
     assert(!new URL(await ev('location.href')).searchParams.has('present'), 'exit kept present=1');
     await size(1440, 900);
     return `${pw}×${ph}, cue ready (ms): ${JSON.stringify(times)}; rehearsal log rows ${log}`;
+  });
+
+  await test('22 six regional layers: legend unit, 16-row table, region card, snow flags, no zero colours', async () => {
+    const units = { t2m: '°C per decade', precip: 'mm/month per decade', soilm_root: 'mm per decade', soilm_surface: 'mm per decade', evap: 'mm/month per decade', swe: 'mm per decade' };
+    const seen = [];
+    for (const [id, unit] of Object.entries(units)) {
+      await go(`?region=maule&layer=${id}`); await until(`document.querySelector('.im-left select:nth-of-type(1)') && [...document.querySelectorAll('.im-left select')][1].value === '${id}' && /Loading/.test(document.querySelector('.im-left').textContent) === false`, 20000);
+      const leg = await ev(`document.querySelector('.im-legend').textContent`);
+      assert(leg.includes(unit), `${id}: legend without unit ${unit}: ${leg.slice(0, 80)}`);
+      assert(/regional mean/.test(leg) && /never zero/.test(leg), `${id}: legend note missing`);
+      if (id !== 't2m' && id !== 'precip') assert(/land-surface model/.test(leg), `${id}: no model caveat`);
+      await until(`[...document.querySelectorAll('.im-right .im-card')].some((c) => /${id === 't2m' ? 'Air temperature' : id === 'precip' ? 'Precipitation' : 'GLDAS'}/.test(c.textContent))`, 10000);
+      await click('Trends'); await until(`document.querySelectorAll('.im-right tbody tr').length === 16`, 10000);
+      const flagged = await ev(`[...document.querySelectorAll('.im-right tbody tr')].filter((r) => r.textContent.includes('*')).length`);
+      if (id === 'swe') assert(flagged === 6, `snow: ${flagged} flagged regions instead of 6 (4 negligible + Aysén + Magallanes)`);
+      else assert(flagged === 0, `${id}: ${flagged} rows flagged`);
+      await click('Explore'); await wait(2500); await shot(`22_${id}`);
+      seen.push(id);
+    }
+    return seen.join(', ');
   });
 
   // layout: nothing floating covers anything else, at the sizes the report had left unchecked
