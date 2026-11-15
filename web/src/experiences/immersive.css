@@ -1,0 +1,121 @@
+/* Immersive Earth. Tokens: PR #8 visual contract (space, surface, accent, warning) + ProGarLabs purple from the brand isotype.
+   Type grammar from the team's editorial system: Anton display in capitals, Archivo text, Space Mono for every datum; square corners. */
+.im-root {
+  --space: #060D1A; --surface: #101A2C; --line: #34465C; --ink: #EFF6FF; --ink2: #A8BDD0; --accent: #4CD9E6; --warn: #F59E0B;
+  --pgl: #7B00FF; --pgl-deep: #330099;
+  --ui: 1;
+  position: fixed; inset: 0; height: 100vh; height: 100dvh; overflow: hidden; background: var(--space); color: var(--ink);
+  font: 500 15px/1.45 Archivo, system-ui, sans-serif;
+}
+.im-root *, .im-root *::before { box-sizing: border-box; }
+.im-globe, .im-terrain, .im-input, .im-labels, .im-film { position: absolute; inset: 0; }
+.im-globe .cesium-viewer, .im-globe .cesium-widget, .im-globe canvas { width: 100%; height: 100%; }
+.im-globe .cesium-viewer-bottom { left: 8px; bottom: 30px; opacity: 0.7; transform: scale(0.8); transform-origin: left bottom; }
+.im-terrain, .im-labels, .im-film { pointer-events: none; }
+.im-terrain canvas { display: block; width: 100%; height: 100%; }
+.im-input { touch-action: none; cursor: grab; }
+.im-input:active { cursor: grabbing; }
+.im-mono { font-family: "Space Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.im-dim { color: var(--ink2); }
+.im-labels span { position: absolute; left: 0; top: 0; margin: -22px 0 0 8px; font: 700 12px Archivo, system-ui, sans-serif; color: var(--ink);
+  text-shadow: 0 0 4px #000, 0 0 2px #000; white-space: nowrap; }
+.im-labels span::before { content: ""; position: absolute; left: -8px; top: 22px; width: 5px; height: 5px; background: var(--ink); margin: -2.5px; }
+.im-tip { position: absolute; z-index: 5; max-width: 300px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); pointer-events: none; font-size: 13px; }
+.im-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); }
+.im-status a, .im-root a { color: var(--accent); }
+
+/* floating interface: fades with --ui (the film brings it in); never resizes the canvas */
+.im-ui { opacity: var(--ui); transition: opacity 190ms; z-index: 3; }
+.ui-off .im-ui { pointer-events: none; }
+.is-film .im-ui { transition: none; }
+.im-root button, .im-root select, .im-root .im-cta, .im-actions a {
+  font: 700 12px "Space Mono", ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+  background: transparent; border: 1px solid var(--line); border-radius: 0; padding: 7px 10px; cursor: pointer; text-decoration: none;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+.im-root select { background: var(--surface); width: 100%; }
+.im-root button:hover, .im-actions a:hover, .im-root .im-cta:hover { border-color: var(--accent); }
+.im-root button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--space); }
+.im-root :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.im-top { position: absolute; left: 16px; right: 16px; top: 14px; display: flex; align-items: center; gap: 16px; padding: 8px 12px;
+  background: rgba(16, 26, 44, 0.86); border: 1px solid var(--line); border-top: 3px solid var(--pgl); backdrop-filter: blur(6px); }
+.im-brand { display: flex; align-items: center; gap: 10px; color: var(--ink) !important; text-decoration: none; }
+.im-brand strong { display: block; font: 400 22px/1 Anton, Impact, sans-serif; letter-spacing: 0.02em; text-transform: uppercase; }
+.im-brand em { display: block; font-style: normal; font-size: 10px; color: var(--ink2); margin-top: 3px; }
+.im-top nav { display: flex; gap: 6px; margin: 0 auto; }
+.im-actions { display: flex; gap: 6px; }
+
+.im-panel { position: absolute; top: 86px; width: 318px; max-height: calc(100% - 190px); display: flex; flex-direction: column;
+  background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); backdrop-filter: blur(6px); box-shadow: 8px 8px 0 rgba(6, 13, 26, 0.6);
+  animation: im-in 220ms ease-out; }
+@keyframes im-in { from { transform: translateY(8px); } }
+.im-left { left: 16px; } .im-right { right: 16px; width: 372px; }
+.im-panel > header { display: flex; border-bottom: 1px solid var(--line); }
+.im-panel.is-minimized > header { border-bottom: 0; }
+.im-root .im-ptitle { flex: 1; text-align: left; border: 0; font: 700 14px Archivo, system-ui, sans-serif; letter-spacing: 0; text-transform: none; padding: 10px 12px; }
+.im-root .im-ptitle .im-mono { color: var(--accent); }
+.im-root .im-x { border: 0; border-left: 1px solid var(--line); font-size: 16px; padding: 0 12px; }
+.im-pbody { padding: 12px; overflow: auto; }
+.im-pbody p { margin: 0 0 10px; }
+.im-root .im-reopen { position: absolute; top: 86px; background: rgba(16, 26, 44, 0.9); }
+.im-field { display: block; margin: 0 0 12px; } .im-field > span { display: block; margin-bottom: 5px; }
+.im-field input[type="range"] { width: 100%; accent-color: var(--accent); }
+.im-check { display: block; margin: 0 0 8px; } .im-check input { accent-color: var(--accent); }
+.im-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.im-note { font-size: 12.5px; color: var(--ink2); margin: 0 0 10px; }
+.im-root .im-warn { color: var(--warn); }
+.im-h { font: 400 26px/1 Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.02em; margin: 0 0 10px; }
+.im-list { margin: 0 0 12px; padding-left: 18px; font-size: 13px; color: var(--ink2); } .im-list li { margin-bottom: 6px; }
+.im-table { width: 100%; border-collapse: collapse; margin: 0 0 10px; font-size: 13px; }
+.im-table th, .im-table td { text-align: left; padding: 5px 6px 5px 0; border-bottom: 1px solid var(--line); font-weight: 500; }
+.im-table thead th { font: 400 10.5px "Space Mono", monospace; text-transform: uppercase; color: var(--ink2); }
+.im-table td b { font: 700 14px "Space Mono", monospace; }
+.im-root .im-cta { display: block; text-align: center; margin-top: 4px; border-color: var(--accent); color: var(--accent); }
+.im-legend { margin-top: 4px; }
+.im-ramp { height: 12px; margin: 6px 0 3px; border: 1px solid var(--line); }
+.im-ticks { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0; margin-bottom: 8px; }
+
+.im-cam { position: absolute; right: 16px; bottom: 96px; display: flex; flex-direction: column; gap: 4px; }
+.im-root .im-cam button { width: 36px; height: 36px; padding: 0; font-size: 16px; background: rgba(16, 26, 44, 0.9); }
+.im-dock { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); width: min(560px, calc(100% - 140px)); display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); }
+.im-axis { position: relative; flex: 1; height: 40px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.im-root .im-axis button { position: absolute; height: 11px; padding: 0; border: 1px solid var(--ink2); background: transparent; }
+.im-root .im-axis button[aria-pressed="true"] { background: var(--accent); }
+.im-axis button span { position: absolute; left: 0; top: -1px; font-size: 9px; line-height: 11px; padding-left: 3px; white-space: nowrap; }
+.im-foot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 7px 16px; background: var(--ink); color: var(--space); font-size: 10.5px; }
+.im-root .im-skip { position: absolute; right: 16px; top: 14px; z-index: 6; background: rgba(16, 26, 44, 0.9); }
+
+/* film overlay: sized in vw so 1080p and 4K frames are the same picture */
+.im-film { z-index: 2; }
+.im-caption { position: absolute; left: 3.75vw; bottom: 7.5vw; max-width: 44vw; text-shadow: 0 0 1.6vw rgba(6, 13, 26, 0.9); }
+.im-eyebrow { font-size: 0.95vw; color: var(--accent); margin-bottom: 0.9vw; letter-spacing: 0.2em; }
+.im-display { font: 400 4.5vw/0.96 Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.01em; }
+.im-display span { display: inline-block; }
+.im-sub { font: 700 1.25vw/1.3 Archivo, system-ui, sans-serif; color: var(--ink); margin-top: 1vw; max-width: 40vw; }
+.im-chips { position: absolute; right: 3.75vw; top: 5vw; display: grid; grid-template-columns: auto auto; gap: 0.9vw 2.2vw; padding: 1.4vw 1.6vw;
+  background: rgba(16, 26, 44, 0.92); border: 1px solid var(--line); box-shadow: 0.6vw 0.6vw 0 var(--pgl-deep); }
+.im-period { grid-column: 1 / -1; font-size: 2.3vw; font-weight: 700; letter-spacing: 0.02em; color: var(--accent); }
+.im-chips > div > span { display: block; font-size: 0.85vw; color: var(--ink2); }
+.im-chips b { font: 400 4.4vw/1 Anton, Impact, sans-serif; }
+.im-chipnote { grid-column: 1 / -1; font-size: 0.8vw; color: var(--ink2); }
+.im-filmlegend { position: absolute; right: 3.75vw; bottom: 5.6vw; width: 24vw; padding: 0.9vw 1.1vw; background: rgba(16, 26, 44, 0.92); border: 1px solid var(--line); }
+.im-filmlegend .im-mono { font-size: 0.72vw; } .im-filmlegend .im-ramp { height: 0.9vw; } .im-filmlegend .im-ticks { font-size: 0.72vw; margin: 0; }
+.im-title { position: absolute; left: 0; right: 0; top: 30%; text-align: center; text-shadow: 0 0 2vw rgba(6, 13, 26, 0.95); }
+.im-title .im-display { font-size: 7.4vw; }
+.im-title .im-sub { max-width: none; font-size: 1.7vw; }
+.im-credits { margin-top: 1.6vw; font-size: 0.85vw; color: var(--ink); }
+.im-folio { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: 0.9vw 3.75vw; background: var(--ink); color: var(--space); font-size: 0.85vw; }
+
+@media (max-width: 1100px) { .im-top nav { order: 3; } .im-top { flex-wrap: wrap; } .im-panel, .im-root .im-reopen { top: 132px; max-height: calc(100% - 236px); } }
+@media (max-width: 760px) {
+  .im-top { left: 8px; right: 8px; top: 8px; gap: 8px; } .im-actions button { display: none; }
+  .im-top nav { gap: 4px; width: 100%; } .im-root .im-top nav button { flex: 1; padding: 7px 2px; font-size: 10.5px; letter-spacing: 0; }
+  /* one bottom sheet for evidence, a compact bar under the header for layers: about half the scene stays free */
+  .im-right { left: 8px; right: 8px; width: auto; top: auto; bottom: 96px; max-height: 40dvh; }
+  .im-left { left: 8px; right: 52px; width: auto; top: 150px; max-height: 46dvh; }
+  .im-root .im-reopen.im-left { top: 150px; } .im-root .im-reopen.im-right { top: auto; bottom: 96px; right: 8px; }
+  .im-cam { bottom: auto; top: 150px; right: 8px; } .im-dock { width: calc(100% - 16px); bottom: 40px; } .im-foot span:last-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .im-root, .im-root * { transition: none !important; animation: none !important; } }
