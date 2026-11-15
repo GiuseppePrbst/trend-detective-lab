@@ -178,6 +178,22 @@ try {
     assert(JSON.parse(await ev(`localStorage.getItem('tdl-sound')`)).on === false, 'switching off not stored');
   });
 
+  await test('19 SST study area: card from sst.json on the sea, gone when switched off or outside 2003–2025', async () => {
+    await go('?region=antofagasta&period=2003-2025'); await until(ARRIVED('antofagasta')); await wait(3500);
+    await tap(520, 540); await wait(500);                                  // open Pacific inside the dashed outline (1440×900 arrival pose)
+    const card = await ev(`document.querySelector('.im-right').textContent`);
+    assert(card.includes('NASA MUR SST'), 'no SST card on the sea'); assert(card.includes('not a spatial temperature map'), 'card does not say it is one area average');
+    const t = await ev(`fetch('data/sst.json').then((r) => r.json()).then((d) => d.series.mur_sst.trend.slope_per_decade.toFixed(2))`);
+    assert(card.includes(t), `card does not show the published slope ${t}`);
+    await ev(`[...document.querySelectorAll('.im-check')].find((l) => /SST/.test(l.textContent)).querySelector('input').click()`); await wait(400);
+    await tap(520, 540); await wait(500);
+    assert(!(await ev(`document.querySelector('.im-right').textContent`)).includes('NASA MUR SST'), 'SST card opens although the layer is off');
+    await shot('19_sst_off');
+    await go('?region=antofagasta&period=1980-2025'); await until(ARRIVED('antofagasta')); await wait(3000); await tap(520, 540); await wait(500);
+    assert(!(await ev(`document.querySelector('.im-right').textContent`)).includes('NASA MUR SST'), 'SST card opens outside 2003–2025');
+    return `+${t} °C per decade`;
+  });
+
   // layout: nothing floating covers anything else, at the sizes the report had left unchecked
   for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [768, 1024], [844, 390], [390, 844]]) {
     await test(`16 layout ${w}×${h}: Antofagasta and a region card`, async () => {

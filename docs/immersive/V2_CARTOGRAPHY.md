@@ -9,7 +9,7 @@
 | When | Always; the only layer above ~2 900 km and wherever there is no relief scene | Below ~2 900 km inside Antofagasta or Los Lagos, if "3D relief up close" is on |
 | Cells | One polygon per clipped footprint on the WGS84 ellipsoid (`Primitive` + `PolygonGeometry`, rhumb edges, per-instance colour). 154 cells, synchronous build | The same clipped footprints painted on the relief texture |
 | Regions | Outlines (16) and, for the regional layers, one fill per region | — |
-| SST | The sea part of the MUR box, one translucent polygon with a white outline, 2003–2025 only | Not drawn (an ocean product is never draped on land relief) |
+| SST | The sea part of the MUR box as a **study area**: dashed turquoise outline and an 8 % wash, 2003–2025 only; hover or click gives its one area-averaged trend from `sst.json` (before 2026-11-15 it was filled with the air-temperature colour at the cells' opacity, which read as a grey slab: `v2/sst_before.jpg` → `v2/sst_after.jpg`) | Not drawn (an ocean product is never draped on land relief) |
 | Relief | None (no terrain service is used); the basemap's shaded relief is context | GMTED2010 2 km mesh, exaggeration declared in the panel |
 
 Evaluated and not used: `GroundPrimitive` (classification needs asynchronous worker builds and gives nothing extra without a terrain provider — on the bare ellipsoid a polygon at height 0 is already on the surface); a Cesium terrain provider (would need a tile service or ion: the project uses no token and no paid service).

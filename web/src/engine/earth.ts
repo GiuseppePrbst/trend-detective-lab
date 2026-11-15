@@ -89,13 +89,27 @@ export async function createEarth(el: HTMLElement, regions: RegionShape[]) {
     }
     return pending;
   }
+  // dashed study-area outlines (a delimitation, not data): polylines on the ellipsoid, like the region outlines
+  const dashes = new Map<string, { es: InstanceType<typeof C.Entity>[]; css: string; key: string }>();
+  function addDash(name: string, rings: Ring[], css: string) {
+    dashes.set(name, { css, key: '', es: rings.map((r) => viewer.entities.add({ show: false, polyline: { positions: C.Cartesian3.fromDegreesArray(r.flat()),
+      width: 1.6, arcType: C.ArcType.RHUMB, material: C.Color.WHITE } })) });
+  }
+  function setDash(name: string, alpha: number) {
+    const d = dashes.get(name);
+    const key = alpha < 0.01 ? 'off' : alpha.toFixed(2);
+    if (!d || key === d.key) return;
+    d.key = key;
+    const m = new C.PolylineDashMaterialProperty({ color: C.Color.fromCssColorString(d.css).withAlpha(alpha), gapColor: C.Color.TRANSPARENT, dashLength: 12 });
+    for (const e of d.es) { e.show = alpha >= 0.01; e.polyline!.material = m; }
+  }
   let busy = false;
   const occluder = new C.EllipsoidalOccluder(C.Ellipsoid.WGS84, camera.positionWC);
   const scratch = new C.Cartesian2();
 
   return {
     basemap: online ? 'gibs' as const : 'bundled' as const,
-    addLayer, setLayer,
+    addLayer, setLayer, addDash, setDash,
     hasLayer: (name: string) => layers.has(name),
     /** lon/lat → canvas pixel, or null when the point is behind the planet or off screen */
     project(lon: number, lat: number): [number, number] | null {

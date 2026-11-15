@@ -10,8 +10,8 @@ import { load } from '../data';
 import { createEarth, type Earth, type RegionShape } from '../engine/earth';
 import { FOV_Y, poseToLocal, toUV, type Pose } from '../engine/geo';
 import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, ramp, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
-import { num, pval, signed } from '../format';
-import { extremesOf, kmBetween, visibleCellAt, type Extreme } from './pure';
+import { num, pval, signed, VERDICT_SHORT } from '../format';
+import { extremesOf, kmBetween, sstLines, visibleCellAt, type AreaTrend, type Extreme } from './pure';
 import type { Regions } from '../types';
 
 export type Mode = 'explore' | 'trends' | 'compare' | 'methodology';
@@ -40,10 +40,11 @@ export type StageState = typeof DEFAULTS & {
   /** highest and lowest CELL TREND of the active territory and period (not observed extremes) */
   extremes: { scene: SceneId; period: string; max: Extreme; min: Extreme } | null;
   /** the selected cell, kept until it is closed (touch has no hover) */
-  picked: { title: string; lines: string[] } | null;
+  picked: { title: string; lines: string[]; note?: string } | null;
   atlas: Atlas | null;
   basemap: 'gibs' | 'bundled' | null;
   sstSlope: number | undefined;  // from sst.json, set by the UI once loaded
+  sstTrend: (AreaTrend & { verdict: string }) | undefined;
   scale: number; sources: string[]; places: string[];
   tip: { x: number; y: number; lines: string[] } | null;
 };
@@ -52,7 +53,7 @@ export const useStage = create<StageState>(() => ({
   ...DEFAULTS, mode: 'explore', left: matchMedia(PHONE).matches ? 'minimized' : 'expanded', right: matchMedia(PHONE).matches ? 'minimized' : 'expanded',   // phones open on the planet
   hideUi: false, film: false, t: 0,
   status: 'loading', error: '', near: false, region: null, regionNames: {}, extremes: null, picked: null, atlas: null,
-  basemap: null, sstSlope: undefined, scale: 1, sources: [], places: [], tip: null,
+  basemap: null, sstSlope: undefined, sstTrend: undefined, scale: 1, sources: [], places: [], tip: null,
 }));
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -74,7 +75,10 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   set({ regionNames: Object.fromEntries(feats.map((f) => [f.properties.id, f.properties.name])), atlas });
   const earth: Earth = await createEarth(els.globe, shapes);
   if (atlas) for (const id of IDS) earth.addLayer(`cells:${id}`, atlas.cells[id]);
-  if (atlas) earth.addLayer('sst', [atlas.sst_sea]);          // the ocean product lies on the sea of the globe, never on the land relief
+  if (atlas) {                                                // the ocean product lies on the sea of the globe, never on the land relief
+    earth.addLayer('sst', [atlas.sst_sea]);                   // a barely visible wash, so the ocean stays the ocean
+    earth.addDash('sst', atlas.sst_sea.map((rings) => rings[0]), '#8FE9F0');   // the study footprint, dashed
+  }
   const regionAt = (ll: [number, number]) => shapes.find((sh) => sh.rings.some((r, i) => { const b = sh.boxes[i]; return ll[0] >= b[0] && ll[0] <= b[2] && ll[1] >= b[1] && ll[1] <= b[3] && inside(ll, r); }))?.id ?? null;
   const perOf = (id: SceneId, period: string) => ((SCENES[id].periods as readonly string[]).includes(period) ? period : SCENES[id].periods[0]);
   const css = (id: SceneId, slope: number) => `#${ramp(stopsFor(id) as unknown as string[], (slope / scaleOf[id] + 1) / 2).getHexString()}`;
@@ -187,8 +191,10 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       earth.setLayer(`cells:${id}`, ver, c.fill, c.line, fs || s.layer !== 'cells' || !s.cells ? 0 : far * s.opacity * (id === loadedId ? 1 - a : 1));
     }
     // NASA MUR SST: one value for the sea box, only for the window it was computed for (2003–2025)
-    const sstA = s.sst && s.sstSlope != null && (fs ? fs.period : perOf('antofagasta', s.period)) === '2003-2025' && (fs || (s.layer === 'cells' && s.cells)) ? (fs ? fs.cellFade : far) * s.opacity : 0;
-    earth.setLayer('sst', String(s.sstSlope), [s.sstSlope != null ? css('antofagasta', s.sstSlope) : null], ['#ffffff'], sstA);
+    // a study area, not a coloured cell: dashed turquoise outline and an 8 % wash, never the air-temperature colour scale
+    const sstA = sstVisible(fs) ? (fs ? fs.cellFade : far) : 0;
+    earth.setLayer('sst', 'study-area', ['#4CD9E6'], [null], sstA * 0.08);
+    earth.setDash('sst', sstA * 0.9);
     if (regionFill && earth.hasLayer('regions')) earth.setLayer('regions', regionFill.version, shapes.map((sh) => regionFill!.colours[sh.id] ?? null), shapes.map(() => null), fs || s.layer === 'cells' ? 0 : 0.7);
     earth.render();
     settled = earth.loaded();
@@ -225,6 +231,17 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     placeMarkers(p.range, a, !!fs);
   }
 
+  function sstVisible(fs: FilmState | null) {
+    const s = get();
+    return !!atlas && s.sst && s.sstSlope != null && (fs ? fs.period : perOf('antofagasta', s.period)) === '2003-2025' && (!!fs || (s.layer === 'cells' && s.cells));
+  }
+  /** the SST study area under a screen point (when it is shown): one area-averaged trend from sst.json */
+  function sstAt(x: number, y: number) {
+    const s = get(), ll = earth.pick(x, y);
+    if (!ll || !atlas || !s.sstTrend || !sstVisible(null) || visibleCellAt(ll, [atlas.sst_sea]) !== 0) return null;
+    return sstLines(s.sstTrend, VERDICT_SHORT[s.sstTrend.verdict as keyof typeof VERDICT_SHORT]?.toLowerCase() ?? s.sstTrend.verdict);
+  }
+  const SST_TITLE = 'NASA MUR SST · Coastal study area';
   function endFilm(at = TOTAL) {
     const fs = stateAt(at);
     pose = fs.pose;
@@ -293,14 +310,17 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       if (q) {
         const i = cellAt(q);
         if (i >= 0 && data.scene.cells[i].trends[perOf(loadedId, s.period)]) lines = cellLines(loadedId, i);
-        else if (onLand(q)) {
+        else if (!onLand(q)) { const t = sstAt(x, y); if (t) lines = [SST_TITLE, ...t.slice(0, 2)]; }
+        else {
           const hk = Math.floor(q[1] * data.scene.grid.ny) * data.scene.grid.nx + Math.floor(q[0] * data.scene.grid.nx);
           lines = [data.heights[hk] === -32768 ? 'Ocean' : `Terrain ${Math.max(0, data.heights[hk])} m (2 km mean, GMTED2010)`];
         }
       }
     } else if (pose.range < 9500) {
       const ll = earth.pick(x, y), c = ll && cellAtGeo(ll), reg = ll && !c ? regionAt(ll) : null;
+      const t = !c ? sstAt(x, y) : null;
       if (c) lines = cellLines(c.id, c.i);
+      else if (t) lines = [SST_TITLE, ...t.slice(0, 2)];
       else if (reg) lines = [s.regionNames[reg] ?? reg, 'Click to open this region'];
     }
     els.input.classList.toggle('is-hot', !!lines);
@@ -336,17 +356,25 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       pose = { ...pose, lat: clamp(pose.lat + north / 110.574, -85, 85), lon: pose.lon + east / (111.32 * Math.max(0.15, Math.cos(pose.lat * R))) };
     }
   };
+  const pickSst = (x: number, y: number) => {
+    const t = sstAt(x, y);
+    if (t) set({ selected: null, picked: { title: SST_TITLE, lines: t.slice(0, 2), note: `${t[2]} NASA JPL MUR v4.1 (doi:10.5067/GHGMR-4FJ04).` } });
+    return !!t;
+  };
   const onUp = (e: PointerEvent) => {
     pts.delete(e.pointerId); pinch = 0;
     els.input.classList.remove('is-drag');
     if (moved >= 5) return;
+    const r = els.input.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     if (onTerrain() && loadedId) {
       const q = hit(e), i = q ? cellAt(q) : -1;
-      if (i >= 0 && data!.scene.cells[i].trends[perOf(loadedId, get().period)]) select(loadedId, i); else set({ selected: null, picked: null });
+      if (i >= 0 && data!.scene.cells[i].trends[perOf(loadedId, get().period)]) select(loadedId, i);
+      else if (!(q && !onLand(q) && pickSst(x, y))) set({ selected: null, picked: null });
       return;
     }
-    const r = els.input.getBoundingClientRect(), ll = earth.pick(e.clientX - r.left, e.clientY - r.top), c = ll && pose.range < 9500 ? cellAtGeo(ll) : null;
+    const ll = earth.pick(x, y), c = ll && pose.range < 9500 ? cellAtGeo(ll) : null;
     if (c) select(c.id, c.i);
+    else if (pose.range < 9500 && pickSst(x, y)) return;
     else set({ selected: null, picked: null, region: ll && pose.range < 12000 ? regionAt(ll) : null });
   };
   const onWheel = (e: WheelEvent) => { e.preventDefault(); interrupt(); pose = { ...pose, range: clamp(pose.range * Math.exp(e.deltaY * 0.0012), 180, 30000) }; };

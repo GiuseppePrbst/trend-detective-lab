@@ -18,6 +18,15 @@ export function visibleCellAt(q: [number, number], clip: [number, number][][][][
   return clip.findIndex((polys) => polys.some(([outer, ...holes]) => inside(q, outer) && !holes.some((h) => inside(q, h))));
 }
 
+export type AreaTrend = { slope_per_decade: number; ci_low: number; ci_high: number; p_value: number; start: string; end: string };
+/** What the globe says about the NASA MUR SST study area: one area-averaged trend read from sst.json, never a spatial field. */
+export function sstLines(t: AreaTrend, verdict: string): string[] {
+  const s = (x: number) => `${x < 0 ? '−' : '+'}${Math.abs(x).toFixed(2)}`;
+  return [`${s(t.slope_per_decade)} °C per decade (${t.start.slice(0, 4)}–${t.end.slice(0, 4)})`,
+    `95 % interval ${s(t.ci_low)} to ${s(t.ci_high)} · p = ${t.p_value.toFixed(3)} · ${verdict}`,
+    'One area-averaged sea-surface temperature trend. The outline is the study footprint, not a spatial temperature map.'];
+}
+
 /** Highest and lowest CELL TREND of a period, straight from the published per-cell values (not observed extremes). */
 export function extremesOf(cells: Scene['cells'], period: string): { max: Extreme; min: Extreme } | null {
   let max: Extreme | null = null, min: Extreme | null = null;
