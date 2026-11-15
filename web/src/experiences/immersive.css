@@ -30,6 +30,7 @@
 
 /* georeferenced markers: anchored at left/top 0 and moved by the stage; hidden behind the planet */
 .im-markers { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.im-markers.im-ui { z-index: 2; }   /* below the panels (3) whatever its place in the page */
 .im-markers > * { position: absolute; left: 0; top: 0; pointer-events: auto; white-space: nowrap; }
 .im-place { margin: -22px 0 0 8px; font: 700 12px Archivo, system-ui, sans-serif; color: var(--ink); text-shadow: 0 0 4px #000, 0 0 2px #000; pointer-events: none !important; }
 .im-markers > .is-crowded span { display: none; }

@@ -479,7 +479,6 @@ export default function Immersive() {
       <div ref={terrain} className="im-terrain" />
       <div ref={input} className="im-input" aria-label="Earth view. Drag to turn, scroll to zoom, click a region or a cell to inspect it. Every region is also in the Territory list." role="application" />
       <PlaceLabels ref={labels} />
-      <div ref={markers} className="im-markers im-ui"><Markers stage={stage} setStudy={setStudy} /></div>
       {s.tip && !s.film && <div className="im-tip" style={{ left: s.tip.x + 18, top: s.tip.y + 18 }}>{s.tip.lines.map((l, i) => (i ? <div key={l}>{l}</div> : <b key={l}>{l}</b>))}</div>}
 
       {s.status !== 'ready' && <div className="im-status im-mono" role="status">{s.status === 'error' ? <>Could not start the 3D view ({s.error}). <a href={LAB}>Open the Research Lab</a></> : <>Loading the 3D Earth… <a href={LAB}>The Research Lab works without it ↗</a></>}</div>}
@@ -521,6 +520,8 @@ export default function Immersive() {
         <span>// ProGarLabs · Using NASA Earth science data · Developed for NASA Space Apps Challenge 2026</span>
         <span>Independent project: not affiliated with or endorsed by NASA</span>
       </footer>
+      {/* map markers last in the page: keyboard focus reaches the header, panels and camera first (they stay below the panels: z-index in immersive.css) */}
+      <div ref={markers} className="im-markers im-ui" role="group" aria-label="Places on the map"><Markers stage={stage} setStudy={setStudy} /></div>
     </div>
   );
 }

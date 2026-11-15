@@ -72,6 +72,8 @@ try {
     const t0 = Date.now(); await go(''); metrics.ready_ms = Date.now() - t0;
     assert(await ev(TERR) === 'earth', 'territory is not Whole Earth');
     assert(await ev(`document.querySelectorAll('h1').length`) === 1, 'the page needs exactly one h1 (screen readers)');
+    const order = await ev(`[...document.querySelectorAll('a[href],button,select,input')].filter((e) => e.offsetParent !== null && e.tabIndex >= 0).map((e) => e.closest('.im-markers') ? 'marker' : e.closest('.im-top') ? 'header' : 'other')`);
+    assert(order.indexOf('header') < order.indexOf('marker') && order.lastIndexOf('header') < order.indexOf('marker'), `keyboard reaches map markers before the header: ${order.join(',')}`);
     await wait(4000);
     const px = await ev(`(() => { const c = document.querySelector('.im-globe canvas'), gl = c.getContext('webgl2') || c.getContext('webgl'), p = new Uint8Array(4); gl.readPixels(c.width >> 1, c.height >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p); return [...p]; })()`);
     assert(px[0] + px[1] + px[2] > 30, `centre pixel is black: ${px}`);
