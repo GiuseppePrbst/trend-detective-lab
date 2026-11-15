@@ -6,11 +6,11 @@ Deadline: Sunday 15 Nov 2026, 23:59 America/Santiago. Feature freeze 21:30; targ
 
 | Milestone | State | Time (−03:00) | main SHA | PR | Internal score /5 | Deliverable | Blockers |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| H0 Secure the submission | **PREPARED, SAVED, NOT SUBMITTED** (18:14) | 18:14 | 733fb59 | #20, #21 | 3.9 | demo public; form filled and saved 18:08 with declarations | **Human:** click *Submit for Judging* |
-| H1 README | DONE | 18:35 | (this PR) | this PR | 4.0 | yes | — |
-| H2 Official 30 s video | demo hosted in H0; audit pending | | | | | | — |
-| H3 Six national layers | pending | | | | | | |
-| H4 Science and technical audit | pending | | | | | | |
+| H0 Secure the submission | **PREPARED, SAVED, NOT SUBMITTED** (18:47) | 18:47 | 733fb59 | #20, #21 | 3.9 | demo public; form filled and saved 18:08 with declarations | **Human:** click *Submit for Judging* |
+| H1 README | DONE | 18:20 | ddd5fd1 | #22 | 4.0 | yes | — |
+| H2 Official 30 s video | DONE (no code) | 18:25 | ddd5fd1 | — | 4.1 | release text improved, MP4 unchanged (SHA-256 ef0b9568…), PDF audited, presenter mode OK in production | — |
+| H3 Six national layers | DONE | 18:47 | 7ffb02a | #23 | 4.2 | yes; production smoke 01/09/10/21/22 pass | saved form text still names two layers (human may update) |
+| H4 Science and technical audit | DONE | 19:00 | (this PR) | this PR | 4.3 | numbers in README/cards = JSON; a11y: one h1 added; full production smoke | — |
 | H5 Freeze and final report | pending | | | | | | form submitted |
 
 ## H0 facts

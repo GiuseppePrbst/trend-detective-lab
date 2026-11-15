@@ -71,6 +71,7 @@ try {
   await test('01 Whole Earth loads and draws the planet', async () => {
     const t0 = Date.now(); await go(''); metrics.ready_ms = Date.now() - t0;
     assert(await ev(TERR) === 'earth', 'territory is not Whole Earth');
+    assert(await ev(`document.querySelectorAll('h1').length`) === 1, 'the page needs exactly one h1 (screen readers)');
     await wait(4000);
     const px = await ev(`(() => { const c = document.querySelector('.im-globe canvas'), gl = c.getContext('webgl2') || c.getContext('webgl'), p = new Uint8Array(4); gl.readPixels(c.width >> 1, c.height >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p); return [...p]; })()`);
     assert(px[0] + px[1] + px[2] > 30, `centre pixel is black: ${px}`);
