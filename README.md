@@ -6,6 +6,8 @@ A regional average can hide opposite changes inside a region, two NASA products 
 
 **[▶ Live Earth Atlas](https://giuseppeprbst.github.io/trend-detective-lab/)** · **[Official 30-second demo](https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo)** · **[Research Lab](https://giuseppeprbst.github.io/trend-detective-lab/?view=lab)** · **[Presenter mode](https://giuseppeprbst.github.io/trend-detective-lab/?present=1)** · **[Scientific evidence](docs/discovery/EVIDENCE_CARDS.md)**
 
+**[🎓 Try a 15-minute Earth science investigation](docs/education/CLASSROOM_INVESTIGATION_EN.md)** — three short exercises in the live app, with a [teacher guide and answers](docs/education/TEACHER_GUIDE_EN.md).
+
 NASA Space Apps Challenge 2026 — *Be An Earth System Trend Detective!* · Team **ProGarLabs** (Local Event Quemchi, Chile): Giuseppe Proboste, Fabiana García · Apache-2.0
 
 ![Earth Atlas: Antofagasta, 2003–2025 — NASA MERRA-2 cell trends on the 3D relief, the NASA MUR sea-surface temperature study area (dashed) and the highest/lowest cell trend](docs/readme/hero_antofagasta.jpg)

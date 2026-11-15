@@ -273,6 +273,25 @@ try {
     return seen.join(', ');
   });
 
+  // the classroom investigation (docs/education/CLASSROOM_INVESTIGATION_EN.md), step by step as a student would
+  await test('23 classroom investigation: the three exercises find their values where the worksheet says', async () => {
+    const T = (s) => ev(`document.body.innerText.includes(${JSON.stringify(s)})`);
+    await go('?view=lab', `!!document.querySelector('#h-region')`);
+    await click('Is southern Chile warming as fast as the desert north?'); await wait(2500);
+    for (const s of ['+0.05 °C per decade', '+0.23 °C per decade', '−0.18 °C per decade', 'p = 0.006', 'trends differ']) assert(await T(s), `exercise 1: "${s}" not on the page`);
+    await go('?region=antofagasta&period=1980-2025&scale=fixed'); await until(ARRIVED('antofagasta'));
+    assert((await ev(`document.querySelector('.im-legend').textContent`)).includes('Fixed comparison'), 'exercise 2: fixed scale not on');
+    await click('Compare'); await wait(500);
+    const cmp = await ev(`document.querySelector('.im-right').textContent`);
+    for (const s of ['Coast minus interior', '1980–2025', '2003–2025', 'p = 0.634']) assert(cmp.includes(s), `exercise 2: "${s}" missing in Compare`);
+    assert(await ev(`!![...document.querySelectorAll('.im-left select')].find((x) => [...x.options].some((o) => o.value === 'spatial'))`), 'exercise 2: no colour-scale selector');
+    await click('2003–2025', '.im-dock button'); await wait(800);
+    assert((await ev(`document.querySelector('.im-extremes').textContent`)).includes('2003–2025'), 'exercise 2: window did not change');
+    await go('?q=disagreement', `!!document.querySelector('#h-magallanes')`); await wait(2000);
+    for (const s of ['When Earth observation datasets disagree: Magallanes', 'Punta Arenas', 'ERA5']) assert(await T(s), `exercise 3: "${s}" missing`);
+    return 'three exercises';
+  });
+
   // layout: nothing floating covers anything else, at the sizes the report had left unchecked
   for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [768, 1024], [844, 390], [390, 844]]) {
     await test(`16 layout ${w}×${h}: Antofagasta and a region card`, async () => {
