@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { create } from 'zustand';
 import { EVENTS, DEST, flightPose, PERIOD_B, planFlight, poseAt, reliefRise, smooth, stateAt, terrainAlpha, TOTAL, WHOLE_EARTH, type FilmState, type Flight } from '../cinematic/timeline';
 import { load } from '../data';
-import { createEarth, type Earth, type RegionShape } from '../engine/earth';
+import { createEarth, preloadCesium, type Earth, type RegionShape } from '../engine/earth';
 import { FOV_Y, poseToLocal, toUV, type Pose } from '../engine/geo';
 import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
 import { createTrendScale, type ScaleMode, type TrendScale } from '../engine/scale';
@@ -64,6 +64,7 @@ const R = Math.PI / 180;
 const bboxOf = (r: [number, number][]) => r.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [Infinity, Infinity, -Infinity, -Infinity]);
 export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; terrain: HTMLElement; input: HTMLElement; labels: HTMLElement; markers: HTMLElement }, capture: boolean) {
   const set = useStage.setState, get = useStage.getState;
+  preloadCesium();                                           // first load: the globe engine downloads while the data files do
   const [geo, atlas, ...metaList] = await Promise.all([load<Regions>('regions.geojson'), load<Atlas>('atlas.json'),
     ...IDS.map((id) => fetch(`${import.meta.env.BASE_URL}scene3d/${id}/scene.json`).then((r) => r.json() as Promise<Scene>))]);
   const metas = Object.fromEntries(IDS.map((id, i) => [id, metaList[i]])) as Record<SceneId, Scene>;
@@ -104,9 +105,14 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   let paintKey = '', maskKey = '', frameKey = '', settled = false, dead = false, raf = 0;
   let clipUV: [number, number][][][][] | undefined, landUV: [number, number][][] = [];
 
-  async function ensureScene(id: SceneId) {
-    if (wanted === id) return;
+  /** load a territory's relief; a second call for the same territory returns the load in progress */
+  let sceneLoad: Promise<void> = Promise.resolve();
+  function ensureScene(id: SceneId): Promise<void> {
+    if (wanted === id) return sceneLoad;
     wanted = id;
+    return (sceneLoad = loadInto(id));
+  }
+  async function loadInto(id: SceneId) {
     const d = await loadScene(id);
     if (wanted !== id || dead) return;
     terrain?.dispose();                                    // one regional relief in memory at a time
@@ -410,7 +416,8 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   };
   const sceneOf = (region: string) => IDS.find((id) => REGION_OF[id] === region) ?? null;
 
-  await ensureScene(DEFAULTS.scene);
+  // the whole-Earth view does not need the relief: it loads in the background (about 0.6 MB); the film and flights wait for it
+  if (capture) await ensureScene(DEFAULTS.scene); else void ensureScene(DEFAULTS.scene);
   await document.fonts.ready;
   set({ status: 'ready', basemap: earth.basemap });
   raf = requestAnimationFrame(tick);

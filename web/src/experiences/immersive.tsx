@@ -482,7 +482,7 @@ export default function Immersive() {
       <div ref={markers} className="im-markers im-ui"><Markers stage={stage} setStudy={setStudy} /></div>
       {s.tip && !s.film && <div className="im-tip" style={{ left: s.tip.x + 18, top: s.tip.y + 18 }}>{s.tip.lines.map((l, i) => (i ? <div key={l}>{l}</div> : <b key={l}>{l}</b>))}</div>}
 
-      {s.status !== 'ready' && <div className="im-status im-mono" role="status">{s.status === 'error' ? <>Could not start the 3D view ({s.error}). <a href={LAB}>Open the Research Lab</a></> : 'Loading Earth…'}</div>}
+      {s.status !== 'ready' && <div className="im-status im-mono" role="status">{s.status === 'error' ? <>Could not start the 3D view ({s.error}). <a href={LAB}>Open the Research Lab</a></> : <>Loading the 3D Earth… <a href={LAB}>The Research Lab works without it ↗</a></>}</div>}
       {s.film && <Film terr={terr} atlas={s.atlas} />}
       {s.film && !CAPTURE && <div className="im-skip">
         <button type="button" className="im-mono" onClick={() => stage?.skip()}>Skip intro</button>

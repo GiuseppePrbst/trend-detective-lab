@@ -14,9 +14,15 @@ export const BASEMAPS = {
 type Ring = [number, number][];
 export type RegionShape = { id: string; rings: Ring[] };
 
-export async function createEarth(el: HTMLElement, regions: RegionShape[]) {
+const loadCesium = () => {
   (window as unknown as { CESIUM_BASE_URL: string }).CESIUM_BASE_URL = `${import.meta.env.BASE_URL}cesium/`;
-  const C = await import('cesium');
+  return import('cesium');
+};
+/** start downloading the Cesium bundle (about 1.4 MB gzipped) now, in parallel with the data files */
+export const preloadCesium = () => { void loadCesium(); };
+
+export async function createEarth(el: HTMLElement, regions: RegionShape[]) {
+  const C = await loadCesium();
   const online = await fetch(GIBS.replace('{z}/{y}/{x}', '0/0/0'), { signal: AbortSignal.timeout(6000) }).then((r) => r.ok, () => false);
   const provider = online
     ? new C.UrlTemplateImageryProvider({ url: GIBS, maximumLevel: 8, credit: 'NASA EOSDIS GIBS — Blue Marble' })
