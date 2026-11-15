@@ -7,8 +7,10 @@
 | Film soundtrack | State |
 | --- | --- |
 | Mix of five Epidemic Sound effects (`film_audio.py`) | **Rejected by the team.** Not to be published or rebuilt. Kept only as a local, labelled backup. |
-| MiniMax music track, edited to the film (`mix_film_music.py`) | **Candidate**, pending (1) listening and approval by Giuseppe and Fabiana and (2) confirmation of the rights by whoever holds the MiniMax account. |
-| Silent V2 | Safe delivery until both are done. The approved V1 film is unchanged. |
+| MiniMax track with a beat join at 22 s (candidate 1) | **Rejected by Giuseppe**: the join at 0:22 is noticeable. |
+| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6d50217e…`). Rights **confirmed by Giuseppe** (the track is his; use in the film and its publication approved, 2026-11-15). This is the film to publish. |
+| MiniMax track, the last 30 s of the piece (candidate 2b) | Not chosen. |
+| Silent V2 | Fallback. The approved V1 film is unchanged. |
 
 The web application is not affected: its interface cues are synthesised in the browser and ship no audio file.
 
@@ -37,18 +39,31 @@ Off until the visitor presses "Sound off/on" (browsers also require a gesture); 
 
 **Analysis** (librosa, measured): 129.2 beats per minute; an ambient introduction without pulse from 0 to 14.5 s; the pulse enters at 14.54 s; the loudest moment of the piece is at about 10.6–11.6 s; the piece ends by itself (final hit about 172 s, silent by 173 s).
 
-**Edit** (`web/scripts/mix_film_music.py --offset 1.10 --join 22.03:165.33`):
+**Current candidates: one continuous passage each, no join** (the team rejected any cut inside the music):
+
+| File (`web/out/music/`) | Music | Ending | Levels (MP4, measured) |
+| --- | --- | --- | --- |
+| `trend-detective-lab-v2-minimax-candidate-2-continuous.mp4` | 1.10 – 31.10 s (`--offset 1.10 --fade-out 2.5`): the ambient introduction carries Earth, Chile and the relief, its loudest swell on the relief rising, the pulse enters with the cells (13.4 s) | 2.5 s fade-out to the end of the film | −19.5 LUFS, −1.5 dBTP |
+| `trend-detective-lab-v2-minimax-candidate-2b-ending.mp4` | 143.30 – 173.30 s (`--offset 143.30 --fade-in 1.0`): the last 30 s of the piece, pulse from the start | the piece's own ending (swell on the title, final hit at about 28.7 s), no fade | −19.4 LUFS, −1.5 dBTP |
+
+Both: 900 frames, 30.000 s, AAC 48 kHz stereo, decode clean, gain only (no limiter). 720p copies (`…-preview-720p.mp4`) for listening on a phone.
+
+**Rejected edit, candidate 1** (`--offset 1.10 --join 22.03:165.33`, files renamed `…-REJECTED-cut-at-22s…`):
 
 | Film | Music | Why (interpretation, not heard) |
 | --- | --- | --- |
 | 0 – 22.03 s | 1.10 – 23.13 s | The introduction carries Earth, Chile and the relief; its loudest swell lands on the relief rising (film 9.6–10.5 s); the pulse enters at film 13.44 s, with the cells (13.4 s), and drives the yearly chart. |
 | 22.03 – 30.00 s | 165.33 – 173.30 s | Joined on a beat of both passages (0.5 s equal-power crossfade) at the change of window (22 s): the music steps down for the contrast. The piece's own ending plays out: a swell at film 25.2 s (title) and its final hit at about 28.7 s. Nothing is cut: the last 0.2 s are at −45 dBFS. |
 
-**Levels** (ffmpeg `ebur128`, measured on the delivered MP4): integrated **−19.6 LUFS**, true peak **−1.5 dBTP**, no limiter. The −16 LUFS starting target was not reached: the source already peaks at 0 dBTP during its loudest swell, and the script lowers the gain instead of limiting. If the listeners find it quiet, raise it with `--gain` and accept a limiter, or choose another passage.
+**Levels of candidate 1** (ffmpeg `ebur128`, measured on the MP4): integrated **−19.6 LUFS**, true peak **−1.5 dBTP**, no limiter. The −16 LUFS starting target was not reached: the source already peaks at 0 dBTP during its loudest swell, and the script lowers the gain instead of limiting. If the listeners find it quiet, raise it with `--gain` and accept a limiter, or choose another passage.
 
-**Not verified:** how it sounds. Listen for: the join at 22 s (any bump or change of key), the balance of the swell at 10 s against the rest, whether the ending feels complete with the title.
+**Listening:** Giuseppe listened to candidates 2 and 2b and approved 2. The tool did not listen to either. Listen for: in 2, whether the fade-out under the hand-off feels natural; in 2b, whether a pulse from the first frame suits the whole-Earth opening.
 
-## Rights — what must be confirmed before publishing the film with music
+## Rights
+
+**Confirmed on 2026-11-15 by Giuseppe Proboste**, team member and holder of the MiniMax account: the track is his and he approves its use in the film, including YouTube and the Space Apps project page. Credit to use: *"Original instrumental music generated with MiniMax Music 3.0; edited and reviewed by ProGarLabs."*, also declared in the contest's AI-use form.
+
+### Background read before that confirmation
 
 Not legal advice; read on 2026-11-15:
 
