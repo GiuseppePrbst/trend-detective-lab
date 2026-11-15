@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { CHART, DEST, flightPose, PERIOD_A, PERIOD_B, PERIOD_SWAP, planFlight, poseAt, SHOTS, stateAt, terrainAlpha, TITLE, TOTAL, WHOLE_EARTH } from './cinematic/timeline';
 import type { Scene } from './engine/terrain';
 import { toUV } from './engine/geo';
-import { inside } from './engine/terrain';
+import { createTrendScale } from './engine/scale';
+import { colourDomain, inside } from './engine/terrain';
 import { extremesOf, kmBetween, sstLines, visibleCellAt } from './experiences/pure';
 import { STUDIES } from './experiences/studies';
 
@@ -53,6 +54,48 @@ describe('SST study area', () => {
     expect(l[1]).toContain(`${t.ci_low < 0 ? '−' : '+'}${Math.abs(t.ci_low).toFixed(2)} to +${t.ci_high.toFixed(2)}`);
     expect(l[2]).toMatch(/not a spatial temperature map/);
     expect(sst.period).toEqual([2003, 2025]);
+  });
+});
+
+describe('cell colour scales', () => {
+  const vals = (id: 'antofagasta' | 'los_lagos', p: string) => scenes[id].cells.flatMap((c) => (c.trends[p] ? [c.trends[p].slope] : []));
+  const lum = (h: string) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const D = colourDomain(scenes.antofagasta, 'antofagasta');
+  it('Antofagasta 2003–2025, spatial: all positive → warm sequential from the real min to the real max', () => {
+    const v = vals('antofagasta', '2003-2025'), s = createTrendScale(v, 'antofagasta', 'spatial', D, 3);
+    expect(s.kind).toBe('sequential-positive');
+    expect(s.lo).toBe(Math.min(...v)); expect(s.hi).toBe(Math.max(...v));
+    expect(s.lo).toBeCloseTo(0.12, 1); expect(s.hi).toBeCloseTo(0.64, 1);
+    expect(s.colour(s.lo)).not.toBe('#f7f7f7');                          // the smallest warming is not drawn as zero
+    const sorted = [...v].sort((a, b) => a - b).map(s.colour).map(lum);
+    for (let i = 1; i < sorted.length; i++) expect(sorted[i]).toBeLessThanOrEqual(sorted[i - 1] + 1e-9);   // larger trend → darker, never the reverse
+    expect(lum(s.colour(s.lo)) - lum(s.colour(s.hi))).toBeGreaterThan(150);   // the contrast the fixed scale lacked
+    const f = createTrendScale(v, 'antofagasta', 'fixed', D, 3);
+    expect(lum(f.colour(Math.min(...v))) - lum(f.colour(Math.max(...v)))).toBeLessThan(lum(s.colour(s.lo)) - lum(s.colour(s.hi)));
+    expect(s.warning).toMatch(/not directly comparable between periods/);
+  });
+  it('fixed: one symmetric domain for every window, white at zero, sign preserved', () => {
+    const fs = ['1980-2025', '1980-2002', '2003-2025'].map((p) => createTrendScale(vals('antofagasta', p), 'antofagasta', 'fixed', D, 3));
+    for (const f of fs) { expect([f.lo, f.hi]).toEqual([-D, D]); expect(f.colour(0)).toBe('#f7f7f7'); expect(f.warning).toBeNull(); expect(f.note).toMatch(/directly comparable/); }
+    expect(fs[0].colour(0.3)).toBe(fs[2].colour(0.3));
+    expect(parseInt(fs[0].colour(0.3).slice(1, 3), 16)).toBeGreaterThan(parseInt(fs[0].colour(0.3).slice(5, 7), 16));    // warming is red
+    expect(parseInt(fs[0].colour(-0.3).slice(5, 7), 16)).toBeGreaterThan(parseInt(fs[0].colour(-0.3).slice(1, 3), 16));  // cooling is blue
+  });
+  it('spatial with both signs (Antofagasta 1980–2025) is diverging around zero; no data is never zero', () => {
+    const v = vals('antofagasta', '1980-2025'), s = createTrendScale(v, 'antofagasta', 'spatial', D, 3);
+    expect(Math.min(...v)).toBeLessThan(0); expect(s.kind).toBe('diverging');
+    expect(s.colour(0)).toBe('#f7f7f7'); expect(s.hi).toBe(-s.lo); expect(s.hi).toBe(Math.max(...v.map(Math.abs)));
+    expect(createTrendScale([NaN, ...v], 'antofagasta', 'spatial', D, 3).key).toBe(s.key);
+  });
+  it('soil moisture (Los Lagos) keeps its own palette and unit domain; one window → no between-period warning', () => {
+    const v = vals('los_lagos', '2000-2024'), s = createTrendScale(v, 'los_lagos', 'spatial', colourDomain(scenes.los_lagos, 'los_lagos'), 1);
+    expect(s.lo).toBeLessThanOrEqual(Math.min(...v)); expect(s.hi).toBeGreaterThanOrEqual(Math.max(...v));
+    expect(s.warning).toBeNull();
+    expect(createTrendScale(v, 'los_lagos', 'fixed', 50, 1).colour(0)).toBe('#f5f5f5');   // BrBG neutral, not the temperature palette
+  });
+  it('a near-uniform field is not stretched beyond the minimum span', () => {
+    const s = createTrendScale([0.30, 0.31], 'antofagasta', 'spatial', D, 3);
+    expect(s.hi - s.lo).toBeCloseTo(0.1, 9); expect(s.kind).toBe('sequential-positive');
   });
 });
 
