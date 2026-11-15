@@ -1,0 +1,153 @@
+{
+ "base": "http://localhost:5199/",
+ "at": "2026-11-15T19:10:34.049Z",
+ "passed": 27,
+ "failed": 0,
+ "results": [
+  {
+   "name": "01 Whole Earth loads and draws the planet",
+   "ok": true,
+   "note": "ready in 2233 ms"
+  },
+  {
+   "name": "02 two flags, sound off by default",
+   "ok": true,
+   "note": "Antofagasta, Chile / Los Lagos, Chile"
+  },
+  {
+   "name": "03 flag → flight → Antofagasta with relief",
+   "ok": true,
+   "note": "5368 ms"
+  },
+  {
+   "name": "04 extremes appear without a click and equal the published cell trends",
+   "ok": true,
+   "note": "+0.37 / −0.14"
+  },
+  {
+   "name": "05 window 2003–2025: extremes follow, SST layer on",
+   "ok": true,
+   "note": "+0.64 / +0.12"
+  },
+  {
+   "name": "06 a click keeps a cell selected",
+   "ok": true,
+   "note": "MERRA-2 cell −24.00°, −69.38°"
+  },
+  {
+   "name": "07 Antofagasta → Los Lagos: one flight, no cut",
+   "ok": true,
+   "note": "4005 ms, relief hidden at the top"
+  },
+  {
+   "name": "08 Los Lagos → Antofagasta, interrupted and resumed",
+   "ok": true,
+   "note": "4113 ms after the interruption"
+  },
+  {
+   "name": "09 the 16 regions: list, region card, regional layer",
+   "ok": true,
+   "note": "+0.13 °C per decade | −6.95 mm/month per decade"
+  },
+  {
+   "name": "10 Research Lab opens on the same region, one way back",
+   "ok": true,
+   "note": "← Back to the globe → ./?region=maule"
+  },
+  {
+   "name": "11 intro: Skip jumps to the interactive last frame",
+   "ok": true
+  },
+  {
+   "name": "12 intro: Stop stays where the camera is",
+   "ok": true
+  },
+  {
+   "name": "13 old URL ?embed=3d still draws the terrain",
+   "ok": true
+  },
+  {
+   "name": "14 shareable ?region=los-lagos&relief=0 draws cells on the globe",
+   "ok": true
+  },
+  {
+   "name": "15 sound: on/off, volume, remembered; the page works either way",
+   "ok": true
+  },
+  {
+   "name": "19 SST study area: card from sst.json on the sea, gone when switched off or outside 2003–2025",
+   "ok": true,
+   "note": "+0.11 °C per decade"
+  },
+  {
+   "name": "20 colour scale: spatial legend from the real cell range, Fixed comparison restores the common scale",
+   "ok": true,
+   "note": "spatial ↔ fixed"
+  },
+  {
+   "name": "21 presenter mode: eight cues with the keyboard, ready in time, figures from the JSON, Lab and back",
+   "ok": true,
+   "note": "1440×900, cue ready (ms): {\"01\":2413,\"02\":7203,\"03\":439,\"03_film_end\":30097,\"04\":4466,\"05\":4747,\"05b\":2668,\"06\":916,\"07\":893,\"08\":7174}; rehearsal log rows 0"
+  },
+  {
+   "name": "16 layout 1920×1080: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 1440×900: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 1366×768: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 1280×720: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 768×1024: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 844×390: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "16 layout 390×844: Antofagasta and a region card",
+   "ok": true
+  },
+  {
+   "name": "17 no WebGL → Research Lab with a notice, no globe",
+   "ok": true
+  },
+  {
+   "name": "18 free orbit around both reliefs (captures for visual review)",
+   "ok": true
+  }
+ ],
+ "metrics": {
+  "ready_ms": 2233,
+  "flight_earth_antofagasta_ms": 5368,
+  "flight_antofagasta_los_lagos_ms": 4005,
+  "flight_los_lagos_antofagasta_ms": 4113,
+  "presenter_load_ms": 1891,
+  "presenter_ready_ms": {
+   "01": 2413,
+   "02": 7203,
+   "03": 439,
+   "03_film_end": 30097,
+   "04": 4466,
+   "05": 4747,
+   "05b": 2668,
+   "06": 916,
+   "07": 893,
+   "08": 7174
+  },
+  "fps_idle_territory": 144,
+  "fps_during_flight": 142,
+  "js_heap_mb_after_6_flights": 283,
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 SUPER (0x00002187) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+ }
+}

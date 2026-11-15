@@ -432,6 +432,7 @@ export default function Immersive() {
         if (dead) { x.dispose(); return; }
         st = x; setStage(x);
         w.renderAt = (t: number) => x.renderAt(t, flushSync);
+        w.tdlStage = x; dispatchEvent(new CustomEvent('tdl-stage'));   // presenter mode (?present=1) drives this stage
         if (Q.has('t')) await x.renderAt(Number(Q.get('t')), flushSync);
         else if (Q.get('mode') === 'cinematic' && !CAPTURE && !matchMedia('(prefers-reduced-motion: reduce)').matches) await x.play();
         else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|t2m|precip&relief=0&period=2003-2025

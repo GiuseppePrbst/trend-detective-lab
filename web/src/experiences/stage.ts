@@ -448,6 +448,14 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     stop: () => { if (get().film) endFilm(get().t); },
     skip: () => { if (get().film) endFilm(TOTAL); },
     interrupt,
+    /** Fly to a framing that is not a territory or a region (presenter mode: Chile, two regions side by side). */
+    flyToPose(to: Pose) {
+      if (get().film) endFilm(get().t);
+      set({ region: null, selected: null, picked: null, tip: null });
+      flight = { ...planFlight(pose, to, kmBetween(pose, to), reduced()), t0: performance.now(), swap: null };
+    },
+    /** true while the film plays or the camera is flying */
+    busy: () => !!flight || get().film,
     /** deterministic frame for capture: same state for the same t, every time */
     async renderAt(t: number, flush: (f: () => void) => void) {
       await ensureScene('antofagasta');

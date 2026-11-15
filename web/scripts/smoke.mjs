@@ -56,6 +56,7 @@ const OVERLAPS = `(() => { const q = ['.im-top', '.im-panel.im-left', '.im-panel
 
 const results = [], metrics = {};
 const test = async (name, fn) => {
+  if (process.env.ONLY && !process.env.ONLY.split(',').some((p) => name.startsWith(p))) return;   // e.g. ONLY=21 npm run smoke
   const e0 = errors.length;
   try { const note = await fn(); const errs = errors.slice(e0); if (errs.length) throw new Error(`console: ${errs[0]}`); results.push({ name, ok: true, note }); console.log(`ok   ${name}${note ? ` — ${note}` : ''}`); }
   catch (e) { results.push({ name, ok: false, note: String(e.message ?? e) }); console.log(`FAIL ${name} — ${e.message ?? e}`); await shot(`FAIL_${results.length}`).catch(() => undefined); }
@@ -207,6 +208,48 @@ try {
     assert(/Fixed comparison/.test(b) && /directly comparable/.test(b) && /0\.70/.test(b), 'fixed legend wrong');
     await shot('20_fixed');
     return 'spatial ↔ fixed';
+  });
+
+  // presenter mode: the whole jury run with the real keys, timed; one capture per cue (out/<dir>/presenter/)
+  await test('21 presenter mode: eight cues with the keyboard, ready in time, figures from the JSON, Lab and back', async () => {
+    mkdirSync(join(out, 'presenter'), { recursive: true });
+    const [pw, ph] = (process.env.PSIZE || '1440x900').split('x').map(Number); await size(pw, ph);   // PSIZE=1920x1080 for the backup captures
+    const key = async (k, code) => { await send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: { ArrowRight: 39, ArrowLeft: 37, Home: 36 }[k] }); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code }); };
+    const READY = `document.querySelector('.pr-dot')?.classList.contains('is-ok')`;
+    const t0 = Date.now(); await go('?present=1', `!!document.querySelector('.pr-start') && !!window.tdlStage`); metrics.presenter_load_ms = Date.now() - t0;
+    await ev(`[...document.querySelectorAll('.pr-start button')].find((b) => b.textContent.startsWith('Rehearsal')).click()`);
+    const t2m = await ev(`fetch('data/t2m.json').then((r) => r.json())`), f2 = (x) => `${x < 0 ? '−' : '+'}${Math.abs(x).toFixed(2)}`;
+    const want = { comparison: [f2(t2m.regions.antofagasta.trend.slope_per_decade), f2(t2m.regions['los-lagos'].trend.slope_per_decade), f2(t2m.comparisons['antofagasta|los-lagos'].slope_per_decade)] };
+    const steps = ['01', '02', '03', '04', '05', '05b', '06', '07', '08'], times = {};
+    for (let k = 0; k < steps.length; k++) {
+      const s0 = Date.now();
+      const before = await ev(`document.querySelector('.pr-n').textContent`);
+      if (k) { await key('ArrowRight', 'ArrowRight'); await until(`document.querySelector('.pr-n').textContent !== ${JSON.stringify(before)}`, 5000); await wait(300); }
+      await until(READY, 30000); times[steps[k]] = Date.now() - s0;
+      const label = await ev(`document.querySelector('.pr-n').textContent`);
+      assert(label.startsWith(steps[k].slice(0, 2)), `cue label ${label} instead of ${steps[k]}`);
+      if (steps[k] === '03') { await wait(1500); assert(await ev(`!!document.querySelector('.is-film')`), 'the film is not playing'); await shot('presenter/cue-03'); await until(`!document.querySelector('.is-film')`, 35000); times['03_film_end'] = Date.now() - s0; continue; }
+      if (steps[k] === '04') { const card = await ev(`document.querySelector('.pr-card').textContent`); for (const v of want.comparison) assert(card.includes(v), `card lacks ${v}: ${card}`); assert(card.includes('Pre-registered'), 'not labelled pre-registered'); }
+      if (steps[k] === '05b') assert((await ev(`document.querySelector('.pr-card').textContent`)).includes('2003–2025'), 'cue 5b not on 2003–2025');
+      if (steps[k] === '06' || steps[k] === '07') {
+        const id = steps[k] === '06' ? 'h-coast' : 'h-magallanes';
+        const top = await ev(`document.querySelector('.pr-lab').contentDocument.getElementById('${id}').getBoundingClientRect().top`);
+        assert(top >= -5 && top < 120, `Lab section ${id} not at the top (${top})`);
+        assert(await ev(`!!window.tdlStage && !!document.querySelector('.im-root')`), 'the globe was unmounted');
+      }
+      if (steps[k] === '08') assert((await ev(`document.querySelector('.pr-card').textContent`)).includes('Explore Earth. Understand Change.'), 'no closing card');
+      await wait(steps[k].startsWith('0') && +steps[k].slice(0, 2) <= 2 ? 3500 : 2000); await shot(`presenter/cue-${steps[k]}`);
+    }
+    metrics.presenter_ready_ms = times;
+    await key('ArrowLeft', 'ArrowLeft'); await wait(600); await until(READY, 15000);
+    assert((await ev(`document.querySelector('.pr-n').textContent`)).startsWith('07'), 'back did not return to cue 7');
+    await key('Home', 'Home'); await wait(600); await until(READY, 20000);
+    assert(new URL(await ev('location.href')).searchParams.get('cue') === 'problem', 'address does not keep the cue');
+    const log = await ev(`[...document.querySelectorAll('.pr-log tr')].length`);
+    await ev(`[...document.querySelectorAll('.pr-bar button')].find((b) => b.textContent === 'Exit').click()`); await wait(1500);
+    assert(!new URL(await ev('location.href')).searchParams.has('present'), 'exit kept present=1');
+    await size(1440, 900);
+    return `${pw}×${ph}, cue ready (ms): ${JSON.stringify(times)}; rehearsal log rows ${log}`;
   });
 
   // layout: nothing floating covers anything else, at the sizes the report had left unchecked
