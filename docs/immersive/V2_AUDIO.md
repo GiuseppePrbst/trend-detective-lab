@@ -8,8 +8,9 @@
 | --- | --- |
 | Mix of five Epidemic Sound effects (`film_audio.py`) | **Rejected by the team.** Not to be published or rebuilt. Kept only as a local, labelled backup. |
 | MiniMax track with a beat join at 22 s (candidate 1) | **Rejected by Giuseppe**: the join at 0:22 is noticeable. |
-| MiniMax track, one continuous passage, no join (candidates 2 and 2b) | **Candidates**, pending (1) listening and approval by Giuseppe and Fabiana and (2) confirmation of the rights by whoever holds the MiniMax account. |
-| Silent V2 | Safe delivery until both are done. The approved V1 film is unchanged. |
+| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6d50217e…`). Fabiana's approval not recorded. **Publication still waits for the MiniMax rights** to be confirmed by the account holder. |
+| MiniMax track, the last 30 s of the piece (candidate 2b) | Not chosen. |
+| Silent V2 | Safe delivery until the MiniMax rights are confirmed. The approved V1 film is unchanged. |
 
 The web application is not affected: its interface cues are synthesised in the browser and ship no audio file.
 
@@ -56,7 +57,7 @@ Both: 900 frames, 30.000 s, AAC 48 kHz stereo, decode clean, gain only (no limit
 
 **Levels of candidate 1** (ffmpeg `ebur128`, measured on the MP4): integrated **−19.6 LUFS**, true peak **−1.5 dBTP**, no limiter. The −16 LUFS starting target was not reached: the source already peaks at 0 dBTP during its loudest swell, and the script lowers the gain instead of limiting. If the listeners find it quiet, raise it with `--gain` and accept a limiter, or choose another passage.
 
-**Not verified by the tool:** how candidates 2 and 2b sound. Listen for: in 2, whether the fade-out under the hand-off feels natural; in 2b, whether a pulse from the first frame suits the whole-Earth opening.
+**Listening:** Giuseppe listened to candidates 2 and 2b and approved 2. The tool did not listen to either. Listen for: in 2, whether the fade-out under the hand-off feels natural; in 2b, whether a pulse from the first frame suits the whole-Earth opening.
 
 ## Rights — what must be confirmed before publishing the film with music
 
