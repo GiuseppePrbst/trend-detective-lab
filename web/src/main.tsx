@@ -11,6 +11,7 @@ if (noGl) document.documentElement.dataset.nogl = '1';   // styles.css hides "Ba
 
 const Lab = lazy(async () => { await import('./styles.css'); return import('./App'); });
 const Immersive = lazy(() => import('./experiences/immersive'));
+const Presenter = lazy(() => import('./presentation/PresenterOverlay'));   // ?present=1: the jury presentation driven over the real app
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
         </p>}
         <Lab />
       </> : <Immersive />}
+      {q.get('present') === '1' && <Presenter />}
     </Suspense>
   </StrictMode>,
 );

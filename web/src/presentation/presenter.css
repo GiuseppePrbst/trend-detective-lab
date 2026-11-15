@@ -1,0 +1,59 @@
+/* Presenter mode: same palette and type as Earth Atlas V2 (space background, Anton / Space Mono, cyan data, purple brand). */
+.pr-root { --pr-ink: #EFF6FF; --pr-ink2: #A8BDD0; --pr-accent: #4CD9E6; --pr-pgl: #7C3AED; --pr-bg: rgba(16, 26, 44, 0.9); --pr-line: #34465C;
+  position: fixed; inset: 0; pointer-events: none; z-index: 20; font: 500 14px/1.45 Archivo, system-ui, sans-serif; color: var(--pr-ink); }
+.pr-root > * { pointer-events: auto; }
+.pr-root button { font: 700 11px/1 "Space Mono", monospace; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pr-ink);
+  background: transparent; border: 1px solid var(--pr-line); padding: 6px 9px; cursor: pointer; }
+.pr-root button:hover, .pr-root button[aria-pressed="true"] { border-color: var(--pr-accent); }
+.pr-root :focus-visible { outline: 3px solid var(--pr-accent); outline-offset: 2px; }
+.pr-kicker { font: 400 10.5px/1.4 "Space Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pr-accent); }
+
+.pr-start { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100vw - 32px)); padding: 22px 24px;
+  background: var(--pr-bg); border: 1px solid var(--pr-line); border-top: 3px solid var(--pr-pgl); backdrop-filter: blur(6px); }
+.pr-start h2 { font: 400 30px/1.05 Anton, Impact, sans-serif; text-transform: uppercase; margin: 6px 0 10px; }
+.pr-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.pr-root .pr-primary { background: var(--pr-accent); border-color: var(--pr-accent); color: #060D1A; }
+.pr-keys { font: 400 11px/1.6 "Space Mono", monospace; color: var(--pr-ink2); margin: 0; }
+
+/* presenter bar: on the footer line (left), clear of the window strip, the highest/lowest card and the panels */
+.pr-bar { position: absolute; left: 8px; bottom: 1px; z-index: 3; display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: center; gap: 5px;
+  padding: 6px 8px; background: rgba(16, 26, 44, 0.82); border: 1px solid var(--pr-line); border-left: 3px solid var(--pr-pgl); font: 400 11px/1.2 "Space Mono", monospace; }
+.pr-bar.is-min { max-width: none; } .pr-root .pr-bar button { padding: 3px 6px; }
+.pr-n { font-weight: 700; } .pr-title { color: var(--pr-ink2); }
+.pr-root .pr-bar button { padding: 5px 7px; }
+@media (max-width: 1500px) { .pr-title { display: none; } }
+.pr-dot { width: 9px; height: 9px; border-radius: 50%; background: #F5B041; } .pr-dot.is-ok { background: #3DDC97; }
+.pr-time { font-variant-numeric: tabular-nums; } .pr-time.is-late { color: #F5B041; } .pr-time.is-limit { color: #FF7A7A; }
+.pr-warn { color: #F5B041; } .pr-warn.is-hard { color: #FF7A7A; }
+
+.pr-notes { position: absolute; left: 16px; top: 86px; bottom: 96px; width: min(440px, 40vw); overflow: auto; padding: 14px 16px; z-index: 2;
+  background: rgba(6, 13, 26, 0.94); border: 1px solid var(--pr-line); border-top: 3px solid var(--pr-accent); }
+.pr-say { font: 500 17px/1.5 Archivo, system-ui, sans-serif; margin: 8px 0 12px; }
+.pr-notes p { margin: 0 0 10px; } .pr-caution { color: #F5D08A; } .pr-dim { color: var(--pr-ink2); }
+.pr-log { width: 100%; border-collapse: collapse; font: 400 11px/1.6 "Space Mono", monospace; }
+.pr-log td { border-top: 1px solid var(--pr-line); padding: 1px 4px; } .pr-log tr.is-on { color: var(--pr-accent); }
+
+/* result card: between the two panels, under the header; values come from the published files */
+.pr-card { position: absolute; left: 50%; top: 88px; transform: translateX(-50%); width: min(620px, calc(100vw - 800px)); min-width: 300px; padding: 10px 14px;
+  background: rgba(16, 26, 44, 0.86); border: 1px solid var(--pr-line); border-top: 3px solid var(--pr-pgl); backdrop-filter: blur(6px); pointer-events: none; }
+.pr-card dl { margin: 6px 0 4px; display: grid; gap: 2px; }
+.pr-card dl > div { display: flex; gap: 12px; align-items: baseline; }
+.pr-card dt { font: 400 11px/1.3 "Space Mono", monospace; text-transform: uppercase; color: var(--pr-ink2); min-width: 160px; }
+.pr-card dd { margin: 0; font: 400 20px/1.15 Anton, Impact, sans-serif; letter-spacing: 0.01em; }
+.pr-foot { margin: 4px 0 0; font-size: 12px; color: var(--pr-ink2); }
+.pr-card.is-big { top: 50%; transform: translate(-50%, -50%); width: min(760px, calc(100vw - 64px)); text-align: center; padding: 22px 26px; }
+.pr-card.is-big .pr-kicker { font: 400 54px/1 Anton, Impact, sans-serif; letter-spacing: 0.02em; color: var(--pr-ink); }
+.pr-card.is-big dl > div { justify-content: center; } .pr-card.is-big dd { font: 500 18px/1.4 Archivo, system-ui, sans-serif; }
+.pr-card.is-low { top: auto; bottom: 40px; width: min(640px, calc(100vw - 640px)); }   /* national views: no window strip down there */
+.pr-card.is-error { color: #FF7A7A; }
+
+/* the real Research Lab, preloaded and hidden until its cue */
+.pr-lab { position: absolute; left: 16px; right: 16px; top: 86px; bottom: 34px; width: calc(100% - 32px); height: calc(100% - 120px); border: 1px solid var(--pr-line);
+  background: #fff; visibility: hidden; }
+.pr-lab.is-on { visibility: visible; }
+.pr-backup { position: absolute; inset: 0; margin: 0; background: #060D1A; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pr-backup img { max-width: 100%; max-height: calc(100% - 40px); object-fit: contain; }
+.pr-backup figcaption { font: 400 11px "Space Mono", monospace; color: var(--pr-ink2); padding: 6px; }
+.pr-error { position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%); background: #3a1020; border: 1px solid #FF7A7A; padding: 6px 10px; }
+
+@media (max-width: 1100px) { .pr-card { top: 134px; width: min(620px, calc(100vw - 32px)); } .pr-bar { bottom: 96px; } }

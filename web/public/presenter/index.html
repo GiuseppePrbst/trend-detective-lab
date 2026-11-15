@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trend Detective Lab — presentation backup</title>
+<!-- Backup of the presenter mode (?present=1) for a failing connection or GPU: the validated captures of the eight cues,
+     taken from the real application by web/scripts/smoke.mjs (check 20). No figure here is typed in: they are pictures of the app.
+     SI disclosure: written with the assistance of an SI coding tool (Claude) and reviewed by the team. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #060D1A; color: #EFF6FF; font: 14px/1.4 system-ui, sans-serif; }
+  main { position: fixed; inset: 0 0 34px; display: flex; align-items: center; justify-content: center; }
+  img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  footer { position: fixed; left: 0; right: 0; bottom: 0; height: 34px; display: flex; gap: 14px; align-items: center; padding: 0 12px;
+    font: 12px ui-monospace, monospace; background: #101A2C; border-top: 3px solid #7C3AED; }
+  button { font: inherit; color: inherit; background: none; border: 1px solid #34465C; padding: 3px 8px; cursor: pointer; }
+  .t { margin-left: auto; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main><img id="img" alt=""></main>
+<footer>
+  <button id="prev" type="button">←</button><button id="next" type="button">→</button>
+  <b id="n"></b><span id="title"></span>
+  <span class="t" id="t">0:00</span><button id="go" type="button">Start clock</button>
+  <a href="../?present=1" style="color:#4CD9E6">Live presenter mode</a>
+</footer>
+<script>
+  const S = [['01', 'The problem', 'cue-01.jpg'], ['02', 'Our solution', 'cue-02.jpg'], ['03', 'Cinematic introduction', 'cue-03.jpg'],
+    ['04', 'Regional comparison', 'cue-04.jpg'], ['05a', 'The Antofagasta finding (1980–2025)', 'cue-05.jpg'], ['05b', 'The Antofagasta finding (2003–2025)', 'cue-05b.jpg'],
+    ['06', 'Evidence and method', 'cue-06.jpg'], ['07', 'When sources disagree', 'cue-07.jpg'], ['08', 'Closing', 'cue-08.jpg']];
+  let i = 0, t0 = 0;
+  const show = () => { const [n, title, f] = S[i]; img.src = f; img.alt = `Cue ${n}: ${title} (capture of the real application)`; nEl.textContent = `${n}/08`; titleEl.textContent = title; };
+  const nEl = document.getElementById('n'), titleEl = document.getElementById('title'), img = document.getElementById('img');
+  const step = (d) => { i = Math.max(0, Math.min(S.length - 1, i + d)); show(); };
+  document.getElementById('prev').onclick = () => step(-1); document.getElementById('next').onclick = () => step(1);
+  document.getElementById('go').onclick = () => { t0 = performance.now(); };
+  addEventListener('keydown', (e) => { if (['ArrowRight', 'PageDown'].includes(e.key)) step(1); if (['ArrowLeft', 'PageUp'].includes(e.key)) step(-1);
+    if (e.key === 'Home') { i = 0; show(); } if (e.key === 'End') { i = S.length - 1; show(); } });
+  setInterval(() => { if (!t0) return; const s = (performance.now() - t0) / 1000; document.getElementById('t').textContent = `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')} / 4:35`; }, 250);
+  S.forEach(([, , f]) => { new Image().src = f; });   // all eight are local: preload them
+  show();
+</script>
+</body>
+</html>
