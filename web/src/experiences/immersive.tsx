@@ -17,7 +17,7 @@ import { BRBG, ramp, RDBU, SCENES, stopsFor, type SceneId } from '../engine/terr
 import { num, pval, signed, VERDICT_SHORT } from '../format';
 import type { Catalog, SST, Territory, VariableData } from '../types';
 import { sound } from './sound';
-import { EVENTS, mountStage, REGION_OF, TOTAL, useStage, type Atlas, type Layer, type Mode, type PanelState, type Stage } from './stage';
+import { EVENTS, mountStage, PHONE, REGION_OF, TOTAL, useStage, type Atlas, type Layer, type Mode, type PanelState, type Stage } from './stage';
 import { STUDIES, type Study } from './studies';
 
 const Q = new URLSearchParams(location.search);
@@ -46,7 +46,7 @@ const domainOf = (d: VariableData) => {
 function setPanel(side: 'left' | 'right', v: PanelState) {
   const other = side === 'left' ? 'right' : 'left';
   // small screens: one expanded sheet at a time
-  if (v === 'expanded' && matchMedia('(max-width: 760px)').matches && useStage.getState()[other] === 'expanded') useStage.setState({ [other]: 'minimized' } as never);
+  if (v === 'expanded' && matchMedia(PHONE).matches && useStage.getState()[other] === 'expanded') useStage.setState({ [other]: 'minimized' } as never);
   useStage.setState({ [side]: v } as never);
   sound.cue('panel');
 }

@@ -47,8 +47,9 @@ export type StageState = typeof DEFAULTS & {
   scale: number; sources: string[]; places: string[];
   tip: { x: number; y: number; lines: string[] } | null;
 };
+export const PHONE = '(max-width: 760px), (max-height: 500px)';   // same condition as the phone block of immersive.css
 export const useStage = create<StageState>(() => ({
-  ...DEFAULTS, mode: 'explore', left: matchMedia('(max-width: 760px)').matches ? 'minimized' : 'expanded', right: matchMedia('(max-width: 760px)').matches ? 'minimized' : 'expanded',   // phones open on the planet
+  ...DEFAULTS, mode: 'explore', left: matchMedia(PHONE).matches ? 'minimized' : 'expanded', right: matchMedia(PHONE).matches ? 'minimized' : 'expanded',   // phones open on the planet
   hideUi: false, film: false, t: 0,
   status: 'loading', error: '', near: false, region: null, regionNames: {}, extremes: null, picked: null, atlas: null,
   basemap: null, sstSlope: undefined, scale: 1, sources: [], places: [], tip: null,
@@ -207,13 +208,18 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       const L = poseToLocal(data.scene, terrain.W, terrain.H, p, EARTH_R);
       cam.position.set(...L.position); cam.up.set(...L.up); cam.lookAt(...L.target);
       renderer.render(scene3, cam);
+      const named: number[][] = [];
       data.scene.places.forEach((pl, i) => {               // place labels ride on the terrain
         const d = els.labels.children[i] as HTMLElement | undefined;
         if (!d) return;
         const x = (pl.uv[0] - 0.5) * terrain!.W, z = (pl.uv[1] - 0.5) * terrain!.H;
         const v = v3.set(x, (pl.z / KM) * terrain!.exag() - terrain!.dropAt(x, z) + 2, z).project(cam);
         d.style.display = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1 ? '' : 'none';
-        d.style.transform = `translate(${((v.x + 1) / 2) * W}px, ${((1 - v.y) / 2) * H}px)`;
+        const sx = ((v.x + 1) / 2) * W, sy = ((1 - v.y) / 2) * H, w = pl.name.length * 7.5 + 22;   // ponytail: width estimated from the name's length, measure the span if labels ever change font
+        d.style.transform = `translate(${sx}px, ${sy}px)`;
+        const crowded = d.style.display === '' && named.some((t) => sx < t[0] + t[2] && sx + w > t[0] && Math.abs(sy - t[1]) < 24);
+        d.classList.toggle('is-crowded', crowded);        // as for the markers: the icon stays, the name hides
+        if (!crowded && d.style.display === '') named.push([sx, sy, w]);
       });
     }
     placeMarkers(p.range, a, !!fs);
@@ -373,6 +379,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
      *  The camera rises, travels along Chile and descends; any pointer, wheel or Escape input interrupts it. */
     flyTo(dest: SceneId | 'earth' | string) {
       if (get().film) endFilm(get().t);
+      set({ tip: null });                                   // a tooltip belongs to the place the camera is leaving
       const id = dest in SCENES ? dest as SceneId : sceneOf(dest);
       const to = dest === 'earth' ? WHOLE_EARTH : id ? DEST[id] : regionPose(dest);
       if (!to) return;

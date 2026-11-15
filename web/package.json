@@ -10,7 +10,8 @@
     "build": "npm run cesium && tsc --noEmit && vite build",
     "preview": "vite preview",
     "film": "node --experimental-websocket scripts/render.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke": "node --experimental-websocket scripts/smoke.mjs"
   },
   "dependencies": {
     "@fontsource/anton": "5.3.0",

@@ -309,6 +309,7 @@ button:disabled { cursor: not-allowed; }
 .paper .eyebrow { font-family: var(--mono); font-weight: 400; font-size: 0.8rem; letter-spacing: 0.14em; color: var(--brand-deep); }
 .paper .to-globe { font-family: var(--mono); font-size: 0.78rem; text-decoration: none; color: var(--ink); border: 1px solid var(--ink); padding: 0.3rem 0.7rem; }
 .paper .to-globe:hover { background: var(--ink); color: #fff; }
+[data-nogl] .paper .to-globe { display: none; }
 .paper .paper-status { font-family: var(--mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 1rem;
   padding-left: 0.6rem; border-left: 0.6rem solid var(--accent); max-width: none; }
 .paper .lede { font-size: 1.2rem; font-weight: 500; color: var(--ink); max-width: 58ch; }
@@ -364,7 +365,7 @@ button:disabled { cursor: not-allowed; }
 /* ── Print (A4): the paper without its controls ── */
 @page { size: A4; margin: 18mm 16mm; }
 @media print {
-  /* interactive chrome; #root > p:first-child is the "← Immersive Earth" bar rendered by main.tsx */
+  /* interactive chrome; #root > p:first-child is the no-WebGL notice rendered by main.tsx */
   #root > p:first-child, .paper .skip, .paper .to-globe, .paper .q, .paper .primary, .paper .t3d-bar, .paper .t3d-cams, .paper .t3d-view,
   .paper .toggle button[aria-pressed='false'] { display: none !important; }
   /* the WebGL canvas does not print: say so; its legend, notes and sources stay */

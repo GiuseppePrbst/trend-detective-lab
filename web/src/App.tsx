@@ -143,7 +143,9 @@ function FullApp() {
   useEffect(() => {
     if (!cat || varId) return;
     setVarId(cat.variables[0]?.id ?? null);
-    const preferred = cat.regions.find((r) => r.id === 'los-lagos') ?? cat.regions[0];
+    // the region the visitor came with from the globe (?region=), else the default
+    const asked = new URLSearchParams(location.search).get('region');
+    const preferred = cat.regions.find((r) => r.id === asked) ?? cat.regions.find((r) => r.id === 'los-lagos') ?? cat.regions[0];
     setA(preferred?.id ?? '');
   }, [cat, varId]);
 

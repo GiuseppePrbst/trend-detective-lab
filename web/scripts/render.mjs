@@ -12,7 +12,7 @@
 // SI disclosure: adapted with the assistance of an SI coding tool (Claude) and reviewed by the team.
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setTimeout as wait } from 'node:timers/promises';
@@ -53,7 +53,7 @@ let mid = 0; const pend = new Map();
 ws.onmessage = (e) => { const m = JSON.parse(e.data); if (pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } };
 const send = (method, params = {}) => new Promise((r) => { const i = ++mid; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 const ev = async (x) => { const m = await send('Runtime.evaluate', { expression: x, awaitPromise: true, returnByValue: true }); if (m.result?.exceptionDetails) throw new Error(JSON.stringify(m.result.exceptionDetails).slice(0, 500)); return m.result.result.value; };
-const done = (code) => { try { ws.close(); } catch { /* closing */ } chrome.kill(); server?.close(); process.exit(code); };
+const done = (code) => { try { ws.close(); } catch { /* closing */ } chrome.kill(); server?.close(); try { rmSync(prof, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch { /* the throwaway profile (about 100 MB) stays in the temp folder */ } process.exit(code); };
 const shot = async (t, quality) => { await ev(`window.renderAt(${t}).then(() => true)`); return Buffer.from((await send('Page.captureScreenshot', { format: 'jpeg', quality })).result.data, 'base64'); };
 
 try {

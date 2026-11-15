@@ -32,6 +32,7 @@
 .im-markers > * { position: absolute; left: 0; top: 0; pointer-events: auto; white-space: nowrap; }
 .im-place { margin: -22px 0 0 8px; font: 700 12px Archivo, system-ui, sans-serif; color: var(--ink); text-shadow: 0 0 4px #000, 0 0 2px #000; pointer-events: none !important; }
 .im-markers > .is-crowded span { display: none; }
+.im-labels span.is-crowded { color: transparent; text-shadow: none; }
 .im-root .im-flag { margin: -58px 0 0 -1px; padding: 0; border: 0; background: none; height: 58px; display: flex; align-items: flex-start; cursor: pointer; }
 .im-flag i { width: 2px; height: 58px; background: var(--ink); box-shadow: 0 0 0 1px rgba(6, 13, 26, 0.7); position: relative; }
 .im-flag i::after { content: ""; position: absolute; left: -3px; bottom: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--space); }
@@ -101,7 +102,8 @@
 .im-ramp { height: 12px; margin: 6px 0 3px; border: 1px solid var(--line); }
 .im-ticks { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0; margin-bottom: 8px; }
 
-.im-cam { position: absolute; right: 16px; bottom: 96px; display: flex; flex-direction: column; gap: 4px; }
+/* a row in the bottom-right corner: below the right panel whatever its height, beside the window strip */
+.im-cam { position: absolute; right: 16px; bottom: 40px; display: flex; gap: 4px; }
 .im-root .im-cam button { width: 36px; height: 36px; padding: 0; font-size: 16px; background: rgba(16, 26, 44, 0.9); }
 /* statistical windows: a small floating strip, secondary to the planet; it never resizes the canvas */
 .im-dock { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px;
@@ -158,21 +160,33 @@
 .im-credits { margin-top: 1.6vw; font-size: 0.85vw; color: var(--ink); }
 .im-folio { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: 0.9vw 3.75vw; background: var(--ink); color: var(--space); font-size: 0.85vw; }
 
-@media (max-width: 1100px) { .im-top nav { order: 3; } .im-top { flex-wrap: wrap; } .im-panel, .im-root .im-reopen { top: 132px; max-height: calc(100% - 236px); } }
-@media (max-width: 760px) {
+/* narrower than 1280: the centred highest/lowest card reaches under the panels, so they end above it */
+@media (max-width: 1279px) { .im-panel { max-height: calc(100% - 294px); } }
+/* tablet: the header takes two rows and the footer wraps, so everything floating moves up a little */
+@media (max-width: 1100px) { .im-top nav { order: 3; } .im-top { flex-wrap: wrap; } .im-panel, .im-root .im-reopen { top: 132px; } .im-panel { max-height: calc(100% - 340px); }
+  .im-dock, .im-cam { bottom: 56px; } .im-dock > span { display: none; } .im-extremes { bottom: 100px; } }
+@media (max-width: 830px) { .im-panel, .im-root .im-reopen { top: 178px; } .im-panel { max-height: calc(100% - 420px); } }   /* header in three rows */
+@media (max-width: 760px), (max-height: 500px) {   /* phones, upright or lying down (PHONE in stage.ts) */
   .im-top { left: 8px; right: 8px; top: 8px; gap: 8px; } .im-actions button { display: none; }
   .im-top nav { gap: 4px; width: 100%; } .im-root .im-top nav button { flex: 1; padding: 7px 2px; font-size: 10.5px; letter-spacing: 0; }
   /* one bottom sheet for evidence, a compact bar under the header for layers: about half the scene stays free */
-  .im-right { left: 8px; right: 8px; width: auto; top: auto; bottom: 96px; max-height: 40dvh; }
-  .im-left { left: 8px; right: 52px; width: auto; top: 150px; max-height: 46dvh; }
+  .im-panel.im-right { left: 8px; right: 8px; width: auto; top: auto; bottom: 96px; max-height: 40dvh; }
+  .im-panel.im-left { left: 8px; right: 52px; width: auto; top: 150px; max-height: 46dvh; }
   .im-root .im-reopen.im-left { top: 150px; } .im-root .im-reopen.im-right { top: auto; bottom: 96px; right: 8px; }
-  .im-cam { bottom: auto; top: 150px; right: 8px; } .im-foot span:last-child { display: none; } .im-foot { padding: 4px 8px; font-size: 8.5px; }
+  .im-cam { bottom: auto; top: 150px; right: 8px; flex-direction: column; } .im-foot span:last-child { display: none; } .im-foot { padding: 4px 8px; font-size: 8.5px; }
   /* phone: the window strip shows only the chosen window (tap it to choose another); extremes shrink to one line each */
-  .im-dock { bottom: 26px; padding: 2px 4px 2px 8px; gap: 2px; } .im-dock > span { font-size: 8.5px; }
+  .im-dock { bottom: 38px; padding: 2px 4px 2px 8px; gap: 2px; } .im-dock > span { display: inline; font-size: 8.5px; }
   .im-root .im-dock button { display: none; padding: 9px 8px; } .im-root .im-dock button[aria-pressed="true"], .im-root .im-dock.is-open button { display: block; }
   .im-extremes { left: 8px; bottom: auto; top: 200px; transform: none; grid-template-columns: auto; padding: 5px 8px; gap: 2px; } .im-extremes b { font-size: 18px; } .im-extremes p, .im-extremes div span:last-child { display: none; }
   .im-panel.im-left.is-expanded ~ .im-extremes { display: none; }
   .im-flag span { font-size: 9.5px; padding: 4px 15px 4px 6px; } .im-study span { display: none; } .im-vol { display: none; }
   .im-skip { top: 8px; right: 8px; }
+}
+/* a phone lying down: one header row, layers under it, evidence as a short bottom sheet; the highest/lowest card gives way to its two markers on the cells */
+@media (max-height: 500px) {
+  .im-top { flex-wrap: nowrap; } .im-top nav { order: 0; width: auto; flex: 1; } .im-brand em, .im-actions a, .im-extremes { display: none; }
+  .im-panel.im-left, .im-root .im-reopen.im-left, .im-cam { top: 64px; } .im-panel.im-left { max-height: calc(100dvh - 170px); }
+  .im-panel.im-right, .im-root .im-reopen.im-right { bottom: 64px; } .im-panel.im-right { left: auto; width: min(372px, 60vw); max-height: calc(100dvh - 140px); }
+  .im-dock { left: 8px; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .im-root, .im-root * { transition: none !important; animation: none !important; } }

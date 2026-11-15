@@ -33,6 +33,8 @@ Built by `web/scripts/film_audio.py <sound folder> <silent film> <output>`; it w
 
 A +12 dB make-up gain, a limiter at −1 dBFS and a 1.2 s final fade close the mix. Measured on the result: integrated loudness −21.8 LUFS, peak −5.5 dBFS, no clipping (quiet by broadcast standards; raise `MASTER_DB` after listening).
 
+Closing pass (2026-11-15): the mix was rebuilt on the re-rendered picture with the same script and cues and measured again with ffmpeg (`ebur128`); the interface cues were exercised in a browser (on/off, volume slider, choice remembered, page unaffected). None of this is listening.
+
 **Not verified:** how it sounds. Files were chosen by name, duration and level only. Some of these files may hold several takes in one file; the peak alignment would then pick the loudest take. A person must listen before this version is shown.
 
 ## Licence — what must be confirmed before publishing the film with sound
