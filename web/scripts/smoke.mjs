@@ -331,6 +331,16 @@ try {
     }
   });
 
+  // a first visit on a slow connection (SLOW=1 npm run smoke): reported, not asserted — the Cesium bundle is about 1.4 MB gzipped
+  if (process.env.SLOW) await test('24 cold first visit on an emulated slow connection (1.6 Mb/s, 150 ms)', async () => {
+    await send('Network.enable'); await send('Network.clearBrowserCache');
+    await send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1.6e6 / 8, uploadThroughput: 0.75e6 / 8 });
+    try { const t0 = Date.now(); await go('', `${READY} && !!document.querySelector('.im-flag')`); metrics.slow_ready_ms = Date.now() - t0; }
+    finally { await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 }); }
+    assert((await ev(`document.querySelector('.im-right').textContent`)).includes('NASA data'), 'welcome card does not say what the data are');
+    return `globe usable after ${metrics.slow_ready_ms} ms`;
+  });
+
   // measurements (this machine, headless Chrome with GPU; reported only)
   await go('?region=antofagasta'); await until(ARRIVED('antofagasta')); await wait(3000);
   const FPS = `new Promise((r) => { let n = 0; const t0 = performance.now(); const f = () => { n++; performance.now() - t0 < 3000 ? requestAnimationFrame(f) : r(Math.round(n / 3)); }; requestAnimationFrame(f); })`;
