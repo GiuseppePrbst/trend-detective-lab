@@ -2,7 +2,20 @@
 
 *SI disclosure: written by an SI coding tool (Claude); pending review by Fabiana and Giuseppe.* 2026-11-15, America/Santiago.
 
-Branch `feat/immersive-earth-atlas-v2`, from `main` at `60318fb`. **Not merged and not deployed**: production still serves V1.
+Branch `feat/immersive-earth-atlas-v2`, from `main` at `60318fb`.
+
+## Release
+
+| | |
+| --- | --- |
+| Merged | PR #13, merge commit `d6f79441444bc689fb30e7093cd72c3e984d5d0f` (2026-11-15 15:00 −03:00), authorised by Giuseppe; head `fa4f8f5` |
+| CI on `main` | passed (pytest 54, vitest 21, build) |
+| GitHub Pages | deployed from `d6f7944`; https://giuseppeprbst.github.io/trend-detective-lab/ serves the same bundle as the local build (`index-D3TmRynp.js`) |
+| Smoke run against production | **24 passed** (`npm run smoke -- https://giuseppeprbst.github.io/trend-detective-lab/`): globe usable in 4.8 s, flights 4.0–5.4 s, Cesium workers and `atlas.json` served |
+| Still open | PR #8 (design contract) and PR #12 (Fabiana's observations) stay open for traceability |
+| Rollback | `git revert -m 1 d6f79441444bc689fb30e7093cd72c3e984d5d0f` on `main` and push: Pages redeploys V1 (`60318fb`) |
+
+The film's soundtrack is not part of the release: see `V2_AUDIO.md` (Epidemic Sound mix rejected; MiniMax candidate pending listening, approval and rights).
 What each request became is in [`V2_REQUIREMENTS_MATRIX.md`](V2_REQUIREMENTS_MATRIX.md); how the cartography works, in [`V2_CARTOGRAPHY.md`](V2_CARTOGRAPHY.md); sound, in [`V2_AUDIO.md`](V2_AUDIO.md).
 
 ## Tests
