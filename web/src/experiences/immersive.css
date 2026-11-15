@@ -36,6 +36,7 @@
 .im-flag i { width: 2px; height: 58px; background: var(--ink); box-shadow: 0 0 0 1px rgba(6, 13, 26, 0.7); position: relative; }
 .im-flag i::after { content: ""; position: absolute; left: -3px; bottom: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--space); }
 .im-flag span { padding: 5px 18px 5px 8px; background: var(--pgl); color: #fff; font-size: 11px; font-weight: 700; clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 50%, 100% 100%, 0 100%); transition: background 140ms; }
+.im-flag.is-flip { flex-direction: row-reverse; } .im-flag.is-flip span { padding: 5px 8px 5px 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 9px 50%); }
 .im-root .im-flag:hover span, .im-root .im-flag:focus-visible span { background: var(--accent); color: var(--space); }
 .im-root .im-study { margin: -9px 0 0 -9px; padding: 0; border: 0; background: none; display: flex; align-items: center; gap: 6px; font: 700 11.5px Archivo, system-ui, sans-serif; letter-spacing: 0; text-transform: none; text-shadow: 0 0 4px #000, 0 0 2px #000; }
 .im-study i { width: 18px; height: 18px; border: 2px solid var(--accent); background: rgba(6, 13, 26, 0.75); transform: rotate(45deg) scale(0.72); flex: none; }
@@ -106,6 +107,7 @@
 .im-dock { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px;
   background: rgba(16, 26, 44, 0.55); border: 1px solid rgba(52, 70, 92, 0.8); backdrop-filter: blur(5px); }
 .im-dock > span { font-size: 10px; margin-right: 4px; }
+.im-dock, .im-root .im-dock button { white-space: nowrap; }
 .im-root .im-dock button { padding: 4px 8px; font-size: 11px; border-color: transparent; color: var(--ink2); }
 .im-root .im-dock button[aria-pressed="true"] { background: transparent; border-color: var(--accent); color: var(--accent); }
 .im-extremes { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); display: grid; grid-template-columns: auto auto; gap: 2px 22px; padding: 8px 12px;
@@ -141,7 +143,7 @@
 .im-chips > div > span { display: block; font-size: 0.85vw; color: var(--ink2); }
 .im-chips b { font: 400 4.4vw/1 Anton, Impact, sans-serif; }
 .im-chipnote { grid-column: 1 / -1; font-size: 0.8vw; color: var(--ink2); }
-.im-chart { position: absolute; left: 3.75vw; top: 4.4vw; width: 37vw; padding: 1vw 1.2vw 0.8vw; background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); box-shadow: 0.6vw 0.6vw 0 var(--pgl-deep); }
+.im-chart { position: absolute; left: 3.75vw; top: 4.4vw; width: 31vw; padding: 1vw 1.2vw 0.8vw; background: rgba(16, 26, 44, 0.9); border: 1px solid var(--line); box-shadow: 0.6vw 0.6vw 0 var(--pgl-deep); }
 .im-chart svg { display: block; width: 100%; overflow: visible; }
 .im-charthead { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.78vw; color: var(--ink2); }
 .im-charthead b { font-size: 2vw; color: var(--accent); letter-spacing: 0.02em; }
@@ -168,7 +170,7 @@
   /* phone: the window strip shows only the chosen window (tap it to choose another); extremes shrink to one line each */
   .im-dock { bottom: 26px; padding: 2px 4px 2px 8px; gap: 2px; } .im-dock > span { font-size: 8.5px; }
   .im-root .im-dock button { display: none; padding: 9px 8px; } .im-root .im-dock button[aria-pressed="true"], .im-root .im-dock.is-open button { display: block; }
-  .im-extremes { left: 8px; bottom: auto; top: 150px; transform: none; grid-template-columns: auto; padding: 5px 8px; gap: 2px; } .im-extremes b { font-size: 18px; } .im-extremes p, .im-extremes div span:last-child { display: none; }
+  .im-extremes { left: 8px; bottom: auto; top: 200px; transform: none; grid-template-columns: auto; padding: 5px 8px; gap: 2px; } .im-extremes b { font-size: 18px; } .im-extremes p, .im-extremes div span:last-child { display: none; }
   .im-panel.im-left.is-expanded ~ .im-extremes { display: none; }
   .im-flag span { font-size: 9.5px; padding: 4px 15px 4px 6px; } .im-study span { display: none; } .im-vol { display: none; }
   .im-skip { top: 8px; right: 8px; }

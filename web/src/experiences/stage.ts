@@ -11,15 +11,16 @@ import { createEarth, type Earth, type RegionShape } from '../engine/earth';
 import { FOV_Y, poseToLocal, toUV, type Pose } from '../engine/geo';
 import { buildTerrain, colourDomain, EARTH_R, inside, KM, loadScene, paintMask, paintOverlay, ramp, SCENES, stopsFor, type Loaded, type Scene, type SceneId } from '../engine/terrain';
 import { num, pval, signed } from '../format';
+import { extremesOf, kmBetween, type Extreme } from './pure';
 import type { Regions } from '../types';
 
 export type Mode = 'explore' | 'trends' | 'compare' | 'methodology';
 export type PanelState = 'closed' | 'minimized' | 'expanded';
 /** what the globe is coloured by: the native cells of the two study territories, or one regional trend for the 16 regions */
 export type Layer = 'cells' | 't2m' | 'precip';
-export type Extreme = { i: number; slope: number; lat: number; lon: number; p: number };
 export type Atlas = {
   cells: Record<SceneId, [number, number][][][][]>;
+  sst_sea: [number, number][][][];
   places: { name: string; lat: number; lon: number; kind: 'city' | 'landmark'; scene: SceneId }[];
   series: { antofagasta: { years: number[]; coastal: number[]; interior: number[]; n_coastal: number; n_interior: number; unit: string; what: string; product: string } };
 };
@@ -47,7 +48,8 @@ export type StageState = typeof DEFAULTS & {
   tip: { x: number; y: number; lines: string[] } | null;
 };
 export const useStage = create<StageState>(() => ({
-  ...DEFAULTS, mode: 'explore', left: matchMedia('(max-width: 760px)').matches ? 'minimized' : 'expanded', right: 'expanded', hideUi: false, film: false, t: 0,
+  ...DEFAULTS, mode: 'explore', left: matchMedia('(max-width: 760px)').matches ? 'minimized' : 'expanded', right: matchMedia('(max-width: 760px)').matches ? 'minimized' : 'expanded',   // phones open on the planet
+  hideUi: false, film: false, t: 0,
   status: 'loading', error: '', near: false, region: null, regionNames: {}, extremes: null, picked: null, atlas: null,
   basemap: null, sstSlope: undefined, scale: 1, sources: [], places: [], tip: null,
 }));
@@ -56,23 +58,6 @@ const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const R = Math.PI / 180;
 const bboxOf = (r: [number, number][]) => r.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [Infinity, Infinity, -Infinity, -Infinity]);
-export const kmBetween = (a: { lon: number; lat: number }, b: { lon: number; lat: number }) => {
-  const h = Math.sin(((b.lat - a.lat) * R) / 2) ** 2 + Math.cos(a.lat * R) * Math.cos(b.lat * R) * Math.sin(((b.lon - a.lon) * R) / 2) ** 2;
-  return 2 * EARTH_R * Math.asin(Math.sqrt(h));
-};
-/** Highest and lowest cell trend of a period, straight from the published per-cell values. */
-export function extremesOf(cells: Scene['cells'], period: string): { max: Extreme; min: Extreme } | null {
-  let max: Extreme | null = null, min: Extreme | null = null;
-  cells.forEach((c, i) => {
-    const t = c.trends[period];
-    if (!t || !Number.isFinite(t.slope)) return;       // a cell without a value is skipped, never read as zero
-    const e = { i, slope: t.slope, lat: c.lat, lon: c.lon, p: t.p };
-    if (!max || t.slope > max.slope) max = e;
-    if (!min || t.slope < min.slope) min = e;
-  });
-  return max && min ? { max, min } : null;
-}
-
 export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; terrain: HTMLElement; input: HTMLElement; labels: HTMLElement; markers: HTMLElement }, capture: boolean) {
   const set = useStage.setState, get = useStage.getState;
   const [geo, atlas, ...metaList] = await Promise.all([load<Regions>('regions.geojson'), load<Atlas>('atlas.json'),
@@ -88,6 +73,7 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   set({ regionNames: Object.fromEntries(feats.map((f) => [f.properties.id, f.properties.name])), atlas });
   const earth: Earth = await createEarth(els.globe, shapes);
   if (atlas) for (const id of IDS) earth.addLayer(`cells:${id}`, atlas.cells[id]);
+  if (atlas) earth.addLayer('sst', [atlas.sst_sea]);          // the ocean product lies on the sea of the globe, never on the land relief
   const regionAt = (ll: [number, number]) => shapes.find((sh) => sh.rings.some((r, i) => { const b = sh.boxes[i]; return ll[0] >= b[0] && ll[0] <= b[2] && ll[1] >= b[1] && ll[1] <= b[3] && inside(ll, r); }))?.id ?? null;
   const perOf = (id: SceneId, period: string) => ((SCENES[id].periods as readonly string[]).includes(period) ? period : SCENES[id].periods[0]);
   const css = (id: SceneId, slope: number) => `#${ramp(stopsFor(id) as unknown as string[], (slope / scaleOf[id] + 1) / 2).getHexString()}`;
@@ -157,9 +143,11 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       const xy = hidden ? null : toScreen(Number(d.lon), Number(d.lat), a, d.scene);
       if (!xy) { el.style.display = 'none'; continue; }
       el.style.display = '';
-      el.style.transform = `translate(${Math.round(xy[0])}px, ${Math.round(xy[1])}px)`;
       let w = widths.get(el);
       if (w == null) { w = el.offsetWidth; widths.set(el, w); }
+      const flip = el.classList.contains('im-flag') && xy[0] + w > W - 4;      // a flag near the right edge flies to the left
+      el.classList.toggle('is-flip', flip);
+      el.style.transform = `translate(${Math.round(xy[0] - (flip ? w - 2 : 0))}px, ${Math.round(xy[1])}px)`;
       const box = [xy[0] - 8, xy[1] - 22, xy[0] + w, xy[1] + 8];
       const crowded = d.keep !== '1' && taken.some((t) => box[0] < t[2] && box[2] > t[0] && box[1] < t[3] && box[3] > t[1]);
       el.classList.toggle('is-crowded', crowded);          // the icon stays, the name hides
@@ -175,8 +163,8 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     els.root.classList.toggle('ui-off', ui < 0.5);
     const per = loadedId ? (fs ? fs.period : perOf(loadedId, s.period)) : s.period;
     const nearK = terrainAlpha(p.range);
-    const home = loadedId ? kmBetween(p, DEST[loadedId]) < 700 : false;
-    const a = data && terrain && (fs || (s.terrainOn && home)) ? nearK : 0;
+    const home = kmBetween(p, DEST[fs ? 'antofagasta' : s.scene]) < 700;      // inside the active study territory (whether or not its relief has loaded)
+    const a = data && terrain && (fs || (s.terrainOn && home && loadedId === s.scene)) ? nearK : 0;
     const key = JSON.stringify([p, loadedId, per, s.period, s.scene, s.cells, s.sst, s.opacity, s.exag, s.selected, s.sstSlope, s.terrainOn, s.layer, s.region, regionFill?.version,
       s.extremes?.max.i, s.extremes?.min.i, els.markers.childElementCount, fs?.reveal, fs?.cellFade, W, H]);
     if (key === frameKey && settled) return;
@@ -197,6 +185,9 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
       }
       earth.setLayer(`cells:${id}`, ver, c.fill, c.line, fs || s.layer !== 'cells' || !s.cells ? 0 : far * s.opacity * (id === loadedId ? 1 - a : 1));
     }
+    // NASA MUR SST: one value for the sea box, only for the window it was computed for (2003–2025)
+    const sstA = s.sst && s.sstSlope != null && (fs ? fs.period : perOf('antofagasta', s.period)) === '2003-2025' && (fs || (s.layer === 'cells' && s.cells)) ? (fs ? fs.cellFade : far) * s.opacity : 0;
+    earth.setLayer('sst', String(s.sstSlope), [s.sstSlope != null ? css('antofagasta', s.sstSlope) : null], ['#ffffff'], sstA);
     if (regionFill && earth.hasLayer('regions')) earth.setLayer('regions', regionFill.version, shapes.map((sh) => regionFill!.colours[sh.id] ?? null), shapes.map(() => null), fs || s.layer === 'cells' ? 0 : 0.7);
     earth.render();
     settled = earth.loaded();
@@ -207,12 +198,10 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
     if (s.near !== inTerritory) set({ near: inTerritory });
     if (a > 0.001 && data && terrain && loadedId) {
       terrain.setExag(Math.round(s.exag * reliefRise(p.range) * 40) / 40);
-      const sstOn = !!(s.sst && s.sstSlope != null && per === '2003-2025' && data.scene.sst_box);
-      const mk = `${loadedId}|${sstOn}`;
-      if (mk !== maskKey) { maskKey = mk; terrain.setMask(paintMask(data, landUV, sstOn, maskCanvas)); }
+      if (loadedId !== maskKey) { maskKey = loadedId; terrain.setMask(paintMask(data, landUV, false, maskCanvas)); }
       const ex = !fs && s.extremes?.scene === loadedId && s.extremes.period === per ? [s.extremes.max.i, s.extremes.min.i] : undefined;
       const o = { tex: 'relief', period: per, cells: s.cells && (!!fs || s.layer === 'cells'), opacity: s.opacity * (fs ? fs.cellFade : 1), D: scaleOf[loadedId], stops: stopsFor(loadedId) as unknown as string[],
-        sstSlope: s.sst ? s.sstSlope : undefined, reveal: fs ? fs.reveal : 1, selected: s.scene === loadedId ? s.selected ?? undefined : undefined, marks: ex };
+        reveal: fs ? fs.reveal : 1, selected: s.scene === loadedId ? s.selected ?? undefined : undefined, marks: ex };
       const pk = loadedId + JSON.stringify(o);
       if (pk !== paintKey) { paintKey = pk; terrain.setMap(paintOverlay(data, { ...o, clip: clipUV }, paint)); }
       const L = poseToLocal(data.scene, terrain.W, terrain.H, p, EARTH_R);
@@ -434,4 +423,5 @@ export async function mountStage(els: { root: HTMLElement; globe: HTMLElement; t
   return api;
 }
 export type Stage = Awaited<ReturnType<typeof mountStage>>;
-export { EVENTS, TOTAL };
+export { EVENTS, extremesOf, kmBetween, TOTAL };
+export type { Extreme };

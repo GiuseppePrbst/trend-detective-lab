@@ -5,6 +5,7 @@ Writes web/public/data/atlas.json:
 - cells: for each terrain scene, the VISIBLE footprint of every native cell = native lon/lat box ∩ region polygon
   (geoBoundaries ADM1). The trend of a cell is still the trend of the whole native cell (scene.json); only the drawing is
   clipped. Same order as scene.json["cells"].
+- sst_sea: the MUR SST box of sst.json minus land (the sea part, where the product is defined).
 - places: the labelled places of the terrain scenes with their lon/lat (the same coordinates build_3d_terrain.py uses)
   and a kind (city | landmark), so a volcano or a lake is not drawn as a town.
 - series: yearly means of the monthly anomalies (trend.annual_means — the values the main test runs on) of the
@@ -56,6 +57,15 @@ def clipped_cells(scene: dict, region):
     return out
 
 
+def sst_sea(regions):
+    """The SST box of sst.json minus the land of the 16 regions: SST is an ocean product and is drawn on the sea only."""
+    x0, y0, x1, y1 = (float(v) for v in json.loads((OUT / "sst.json").read_text(encoding="utf-8"))["box"].split(","))
+    sea = box(x0, y0, x1, y1)
+    for g in regions.values():
+        sea = sea.difference(g)
+    return rings(sea)
+
+
 def antofagasta_series():
     cells = read("cell_context_antofagasta_merra2_t2m.csv")
     weights = {(float(r["cell_lat"]), float(r["cell_lon"])): float(r["weight"])
@@ -81,7 +91,7 @@ def main() -> None:
         places += [dict(name=n, lat=la, lon=lo, kind=k, scene=sid) for n, la, lo, k in PLACES[sid]]
     out = dict(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
                note="Display geometry only. A clipped footprint does not mean the value was computed over that smaller area.",
-               cells=cells, places=places, series=dict(antofagasta=antofagasta_series()))
+               cells=cells, places=places, sst_sea=sst_sea(regions), series=dict(antofagasta=antofagasta_series()))
     (OUT / "atlas.json").write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     print({k: len(v) for k, v in cells.items()}, "cells;", len(places), "places;", len(out["series"]["antofagasta"]["years"]), "years")

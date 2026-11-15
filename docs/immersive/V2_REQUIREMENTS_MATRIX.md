@@ -1,0 +1,47 @@
+# Earth Atlas V2 — requirements matrix
+
+*SI disclosure: written by an SI coding tool (Claude); pending review by Fabiana and Giuseppe.* Branch `feat/immersive-earth-atlas-v2`, 2026-11-15.
+
+Sources: Fabiana's eight observations in PR #12 (`docs/frontend/OBSERVACIONES_EXPERIENCIA_INMERSIVA.md`, read from the branch `docs/observaciones-inmersivas`), Giuseppe's requests, and the technical audit. Design contract: PR #8. Base: PR #10 / #11.
+
+Status words: **Done** (implemented and checked as described), **Partial** (what is missing is stated), **Not done**.
+Captures are in [`v2/`](v2/); tests are `tests/test_atlas.py` (pytest) and `web/src/atlas.test.ts` (vitest).
+
+## Fabiana — PR #12
+
+| ID | Observation | What was done | Code | Check | Status |
+| --- | --- | --- | --- | --- | --- |
+| F1 | Intro approved, no changes | Camera spline, shots, captions, title and hand-off untouched (`K`, `SHOTS` in `timeline.ts` unchanged). V1 masters kept. V2 differs in three declared ways: the yearly chart (G6), the relief without its block (F8), SST drawn on the sea. | `web/src/cinematic/timeline.ts` | vitest "film timeline" (camera, 30 s, hand-off); `v2/film_v1_v2.jpg` | Done — **needs Fabiana's eye on the three differences** |
+| F2 | Bottom bar smaller / transparent; much smaller on mobile | The full-width year axis became a small centred strip "Statistical window" with the computed windows as buttons, 55 % opaque. Phone: only the chosen window shows; tapping it lists the others. The footer credit line is thinner on phones. The canvas never resizes. | `Dock` in `immersive.tsx`, `.im-dock` in `immersive.css` | `v2/earth.jpg` vs production; `v2/mobile_earth.jpg` | Done |
+| F3 | Two flags on Whole Earth: ANTOFAGASTA, CHILE / LOS LAGOS, CHILE; click enters the territory with its statistics | Two georeferenced flag buttons (keyboard-focusable), hidden when behind the planet, pinned on Antofagasta city and Puerto Montt. Click → arc flight → relief, cells, extremes and panel of that territory. | `FLAGS`, `Markers` in `immersive.tsx`; `placeMarkers`, `flyTo` in `stage.ts` | Browser: click → territory (`v2/antofagasta.jpg`, `v2/los_lagos.jpg`) | Done |
+| F4 | Magnifier cursor | SVG magnifier on the planet only (cyan lens over something inspectable, grabbing hand while dragging). Buttons, selects, links and inputs keep their own cursors. No cursor on touch. | `.im-input` in `immersive.css` | Browser, by hand | Done — hot-spot and size not checked on a high-DPR screen |
+| F5 | Population icon at each town, exact location | Town icon for the 9 towns and a different triangle for the 3 landmarks (Llullaillaco, Lago Llanquihue, Volcán Osorno are not towns). Coordinates are those the terrain pipeline uses; names hide when they collide, icons stay; hidden behind the planet and at far scales. | `pipeline/atlas.py` (`PLACES`), `.im-place`, `.im-labels` | pytest `test_places_sit_where_the_terrain_put_them`; `v2/antofagasta.jpg` | Done |
+| F6 | Visible journey through Chile between Antofagasta and Los Lagos | One flight: the camera rises until neither relief is on screen (about 4 400 km), travels along the ground and descends. The destination's relief is loaded at the top of the arc, so there is no cut. Pointer, wheel or Escape stops it. Instant with reduced motion. | `planFlight`, `flightPose` in `timeline.ts`; `tick` in `stage.ts` | vitest "flights between territories"; browser both ways | Done |
+| F7 | Maximum and minimum shown automatically | "Highest cell trend" / "Lowest cell trend" card and two markers on the cells appear on arrival, for the territory, variable and window on screen. They are the largest and smallest **published per-cell trends**, labelled as trends, with unit, product, window, cell centre and p-value. | `extremesOf` in `pure.ts`; `Extremes` in `immersive.tsx` | vitest "highest and lowest cell trend" (4 scene/window cases against the sorted published slopes) | Done |
+| F8 | Trend layer follows the Earth's curvature and relief; not flat and square | Far and mid range: cells are polygons on the Cesium ellipsoid, clipped to the region. Up close: the relief is cut to the region's shape (alpha mask), bent by d²/2R and viewed with a camera whose vertical tilts with the planet; the grey block is gone. | `addLayer` in `earth.ts`; `paintMask`, `dropAt` in `terrain.ts`; `poseToLocal` in `geo.ts` | `v2/cells_on_globe.jpg`, `v2/antofagasta.jpg`, free orbit by hand | Done — the relief texture is still the pipeline's hypsometric tint, so its colour differs from the basemap around it |
+
+## Giuseppe
+
+| ID | Request | What was done | Status |
+| --- | --- | --- | --- |
+| G1 | Cells clipped to the territory | `pipeline/atlas.py` writes `visible = native cell ∩ region` for the 51 + 103 cells (shapely, offline). Values, intervals and p stay in `scene.json`; the legend and Methodology say the value is that of the whole native cell. SST is not clipped by land: it is drawn on the sea part of its box only. pytest checks containment, completeness and that the atlas file carries no statistics. | Done for the two territories with native-cell scenes. No national cell layer exists in the published files. |
+| G2 | Materials, transparency, glow | Translucent fills with a thin outline; coastal cells dark outline; selected cell cyan outline (kept until closed); extremes double outline; no fill where there is no value. No bloom, no emissive: colours must match the legend. | Partial — significance is given in the tooltip, the cell card and the tables, not as a pattern on the cells. |
+| G3 | Clean Explore without the pasted block | The rectangular terrain and its grey base are gone from the globe. "3D relief up close" can be switched off to keep only cells on the globe. | Done |
+| G4 | The 16 regions | Click any region on the globe, or choose it in the Territory list (keyboard), to fly there and read its published regional trends (air temperature MERRA-2, precipitation IMERG): slope, unit, period, interval, p, q, verdict, product, grid. Two regional choropleths with their own scale and legend; a 16-row table in Trends. Shareable `?region=<id>&layer=t2m`. | Partial — no search box (the list is a native select with type-ahead); GLDAS regional variables stay in the Research Lab. |
+| G5 | Studies with visual support | Four study pins (coast/interior, SST, Magallanes precipitation, Los Lagos soil moisture), each labelled *Study area* or *Regional anchor*; none is drawn as a station. Card: question, place, result read from the JSON, product, period, limitation, link to the full study. One image (the team's own QGIS map). | Partial — one image only; no observation-site pins. |
+| G6 | Animated time chart in the intro | Yearly anomalies 1980–2025 of the coastal (10 cells) and interior (41 cells) groups, drawn year by year from 14.8 s to 21.4 s; 2003–2025 is shaded when the film changes window. Series exported by `pipeline/atlas.py`; their OLS slopes equal the published ones (pytest). | Done |
+| G7 | Sound | Interface: seven short cues synthesised with Web Audio (no file shipped), off by default, on/off + volume, remembered. Film: `web/scripts/film_audio.py` builds a mix from five local Epidemic Sound files on the film's beats. See `V2_AUDIO.md`. | Partial — the film mix was **not listened to by a person** and its licence must be confirmed by the subscriber. |
+| G8 | Research Lab as a scientific publication | Editorial layer (Archivo / Anton / Space Mono, 72-character measure, ruled tables with tabular numerals), masthead with "Working paper · exploratory results · not peer-reviewed", contents, numbered figures and tables, A4 print styles, "Back to the globe" keeping the region. No scientific text or number was edited. | Partial — the eleven-section paper structure per investigation was not written; print preview was not opened. |
+
+## Audit
+
+| Item | What was done | Status |
+| --- | --- | --- |
+| Skip vs Stop | "Skip intro" jumps to the last frame (interactive state); "Stop here" and Escape stop at the current pose. | Done |
+| Persistent selection | Click or tap keeps the cell: cyan outline and a card with its values until closed. | Done |
+| Guided start | "Investigate a changing coastline" → Antofagasta, cells, 1980–2025, study card. | Done |
+| One data source | Globe and Lab read the same published JSON; region ids shared; `?region=` goes both ways. | Done (the Lab does not preselect its own region from `?region=`) |
+| Tooltip safety | Tooltips are React text nodes; `dangerouslySetInnerHTML` removed. | Done |
+| Old URLs | `?view=lab`, `?view=3d`, `?embed=3d` with `scene`, `period`, `cam`, `exag`, `tex`. | Checked after the change — see `V2_FINAL_REPORT.md` |
+| Node | CI and local stay on Node 20 (the machine has 20.11.1). Cesium 1.147 declares ≥ 22.17 as advisory; build and tests pass on 20. | Not changed — decision for the team |
+| Frontend tests | vitest added (19 tests), run in CI before the build. No browser E2E suite. | Partial |

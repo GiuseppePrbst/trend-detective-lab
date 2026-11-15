@@ -86,7 +86,7 @@ function Legend({ compact = false, regional, cat }: { compact?: boolean; regiona
       {!compact && (reg
         ? <p className="im-note">One colour = one region's mean trend over its whole record. Colour shows the size of the trend, not whether it is significant: see the table in Trends. Regions without a value are left uncoloured (never zero).</p>
         : <p className="im-note">One coloured footprint = one native cell and one computed trend, drawn only over the region's land; the value is still that of the whole native cell. Scale fixed across periods. No cell, no colour (never zero).
-          {scene === 'antofagasta' && ' Dark outline: coastal cells. Hatched box over the sea: NASA MUR sea-surface temperature, 2003–2025 only.'}</p>)}
+          {scene === 'antofagasta' && ' Dark outline: coastal cells. White-outlined area over the sea: NASA MUR sea-surface temperature, one value for the box, 2003–2025 only.'}</p>)}
     </div>
   );
 }
@@ -422,7 +422,12 @@ export default function Immersive() {
         w.renderAt = (t: number) => x.renderAt(t, flushSync);
         if (Q.has('t')) await x.renderAt(Number(Q.get('t')), flushSync);
         else if (Q.get('mode') === 'cinematic' && !CAPTURE && !matchMedia('(prefers-reduced-motion: reduce)').matches) await x.play();
-        else if (Q.get('region') && !CAPTURE) x.flyTo(Q.get('region')!);   // shared link, or coming back from the Research Lab
+        else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|t2m|precip&relief=0
+          const layer = Q.get('layer');
+          if (layer === 't2m' || layer === 'precip') useStage.setState({ layer });
+          if (Q.get('relief') === '0') useStage.setState({ terrainOn: false });
+          if (Q.get('region')) x.flyTo(Q.get('region')!);     // also the way back from the Research Lab
+        }
         done();
       })
       .catch((e) => useStage.setState({ status: 'error', error: String(e) }));
