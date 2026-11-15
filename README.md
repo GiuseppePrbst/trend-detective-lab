@@ -1,117 +1,80 @@
 # Trend Detective Lab
 
-**What is changing, where, how fast — and how certain are we?**
+**Explore Earth. Understand Change.**
 
-An evidence-first climate trend laboratory: pick an Earth-science variable and a region, see the record, and get an
-honest statistical answer — including whether two regions really differ.
+A regional average can hide opposite changes inside a region, two NASA products can disagree, and a trend can flip with the period you choose. **Trend Detective Lab** puts NASA Earth data for Chile's 16 regions on a 3D globe and runs every trend through an honest statistical test — with its uncertainty, a direct test of differences between places, and a plain statement of what the evidence can and cannot show.
 
-- **Live app:** https://giuseppeprbst.github.io/trend-detective-lab/
-- **Challenge:** NASA Space Apps Challenge 2026 — *Be An Earth System Trend Detective!*
-- **Team:** ProGarLabs (Local Event: Quemchi, Chile) — Giuseppe Proboste, Fabiana García
+**[▶ Live Earth Atlas](https://giuseppeprbst.github.io/trend-detective-lab/)** · **[Official 30-second demo](https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo)** · **[Research Lab](https://giuseppeprbst.github.io/trend-detective-lab/?view=lab)** · **[Presenter mode](https://giuseppeprbst.github.io/trend-detective-lab/?present=1)** · **[Scientific evidence](docs/discovery/EVIDENCE_CARDS.md)**
 
-## At a glance
+NASA Space Apps Challenge 2026 — *Be An Earth System Trend Detective!* · Team **ProGarLabs** (Local Event Quemchi, Chile): Giuseppe Proboste, Fabiana García · Apache-2.0
 
-**What it does.** Trend Detective Lab takes you from an environmental question to an evidence-backed answer: it suggests
-the NASA variables that can help, shows the record and its trend with uncertainty, tests whether two places really
-differ, reveals what regional averages hide, and states for every key result what it supports and what it does not.
+![Earth Atlas: Antofagasta, 2003–2025 — NASA MERRA-2 cell trends on the 3D relief, the NASA MUR sea-surface temperature study area (dashed) and the highest/lowest cell trend](docs/readme/hero_antofagasta.jpg)
 
-**Why it matters.** Detecting a trend is easy; knowing what it means is not. Regional averages hide spatial contrasts,
-products can disagree, short records depend on their start year, and "significant" is routinely over-read. This tool
-makes those pitfalls visible instead of hiding them.
+*Real screenshot of the live app: Antofagasta, 2003–2025. Each coloured footprint is one native MERRA-2 cell and its computed air-temperature trend, clipped to the region; dashed outline: the NASA MUR sea-surface temperature study area.*
 
-**Live demo:** https://giuseppeprbst.github.io/trend-detective-lab/ (try `?q=coast` or `?q=disagreement`)
+## 1. The challenge
 
-![Start with a question: suggested NASA variables with their integration status](docs/presentation/app_screens/01_question.png)
+Anyone can draw a line through a climate record. The hard part is knowing whether that line means anything. Monthly climate data are not independent measurements, records are short, regional averages hide where change happens, products disagree, and "one region is significant and the other is not" is routinely misread as "the two regions are different". The challenge asks for a tool to select Earth-science variables, see how they change over time and determine what is changing, where, and whether it is significant. We built one that also shows **what the data do not allow us to conclude**.
 
-**NASA data:** MERRA-2 air temperature (1980–2025), GPM IMERG Final V07 precipitation (1998–2024), GLDAS-2.1 soil
-moisture, evapotranspiration and snow (2000–2024), all through NASA Giovanni; JPL MUR v4.1 sea-surface temperature
-(2003–2025, coastal box, via NASA Harmony); our averaging reproduces Giovanni's own
-area averages to 0.0003 °C.
+## 2. What we built
 
-**Main findings** (numbers: `docs/discovery/EVIDENCE_CARDS.md`, generated):
-- *Confirmatory:* in MERRA-2 the regional trends of Antofagasta and Los Lagos differ (difference +0.18 °C/decade, p = 0.006).
-- *Exploratory:* inside Antofagasta over 1980–2025, no statistically significant warming is detected in the coastal
-  cells while the interior warmed (difference −0.29 °C/decade); ERA5 at matching points shows the same contrast. The
-  contrast comes from 1980–2002 (coastal cells cooled); since 2003 both parts warmed, and the coastal ocean (NASA MUR SST)
-  shows no significant trend.
-- *Exploratory:* in central Chile, detrended yearly rainfall and modelled root-zone soil moisture vary together
-  (r ≈ 0.8) — partly by construction, because the model is driven by observed rain.
-- *Disagreement:* in Magallanes, IMERG's significant drying and MERRA-2's lack of warming are not reproduced by ERA5 or
-  the Punta Arenas station.
+| Layer | What you get |
+| --- | --- |
+| **Discovery — Earth Atlas** ([live](https://giuseppeprbst.github.io/trend-detective-lab/)) | A CesiumJS globe with Chile's 16 regions coloured by their NASA trends (air temperature, precipitation); native NASA cells clipped to two study territories (Antofagasta, Los Lagos) on 3D relief (Three.js); the highest and lowest cell trend shown automatically; statistical windows 1980–2025, 1980–2002, 2003–2025; a colour scale that is either adjusted to the window (*spatial contrast*) or fixed across windows (*fixed comparison*), always labelled; the coastal sea-surface temperature study area; four georeferenced study pins; flights between territories. |
+| **Evidence — Research Lab** ([live](https://giuseppeprbst.github.io/trend-detective-lab/?view=lab)) | For any region and variable: time series, trend with 95 % confidence interval, p-value and false-discovery-rate q across 16 regions, a direct test of the difference between two regions, period sensitivity, cross-checks against ERA5 and weather stations with their dependencies stated, a multivariable lab (GLDAS soil moisture, evapotranspiration, snow), and evidence cards saying what each result supports and what it does not. |
+| **Film** ([30 s demo](https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo)) | A 30-second film rendered frame by frame from the app itself: descent to Antofagasta, the relief, the cells, the yearly anomalies 1980–2025 drawn year by year, and the change of conclusion between windows. |
+| **Presenter mode** ([`?present=1`](https://giuseppeprbst.github.io/trend-detective-lab/?present=1)) | The jury presentation runs inside the live app: eight cues, one key per step, the figures read from the published results, the real Research Lab over the globe, timer, notes and backup captures ([guide](docs/presentation/PRESENTER_GUIDE.md)). |
+| **Reproducibility** | An open Python pipeline (fetch from NASA Giovanni → aggregate → test → validate → JSON for the app), science and frontend tests in CI, browser smoke tests. **The web app computes no statistics**: it shows what the pipeline calculated. |
 
-**Scientific cautions.** Trends only, no causes or forecasts; "not significant" is not "no change"; the main test's
-worst simulated false-positive rate is 8.6 % (46 years) and 10.1 % (27 years) instead of 5 %; ERA5 and MERRA-2 share
-observations; 25–50 km cells cannot resolve finer terrain even when the DEM can.
+![The 16 regions of Chile coloured by their MERRA-2 air-temperature trend, 1980–2025 (presenter mode, cue 2)](docs/readme/chile_regions.jpg)
 
-**Run it.** `cd web && npm ci && npm run dev` uses the published results; §9 explains how to regenerate them from the
-cache or repeat the downloads.
+## 3. Explore in 60 seconds
 
-**Team ProGarLabs:** Giuseppe Proboste (data, GIS, statistics) and Fabiana García (design, texts, independent review).
-**AI assistance:** declared in §11.
+1. **Open the planet:** https://giuseppeprbst.github.io/trend-detective-lab/ (drag to turn, wheel to zoom).
+2. **Chile:** click any region, or pick one in *Territory*; *Data on the globe* switches to the regional air-temperature or precipitation layer for all 16 regions.
+3. **Antofagasta:** click the *ANTOFAGASTA, CHILE* flag — or open [`?region=antofagasta`](https://giuseppeprbst.github.io/trend-detective-lab/?region=antofagasta). Point at a cell for its trend, interval and p-value.
+4. **Compare periods:** switch the *Statistical window* to 2003–2025 ([direct link](https://giuseppeprbst.github.io/trend-detective-lab/?region=antofagasta&period=2003-2025)); choose *Fixed comparison* to compare windows on one colour scale.
+5. **Open the evidence:** *View scientific evidence ↗* → the [coast-and-interior investigation](https://giuseppeprbst.github.io/trend-detective-lab/?view=lab&q=coast) in the Research Lab.
 
-## 1. The problem
+## 4. Scientific findings
 
-Anyone can draw a line through a climate record. The hard part is knowing whether that line means anything.
-Monthly climate data are not independent measurements, records are short, and "one region is significant and the
-other is not" is routinely misread as "the two regions are different". This project lets a non-specialist run the
-investigation properly and see **what the data allow us to conclude — and what they do not**.
+All numbers are generated by the pipeline: [`docs/results.md`](docs/results.md), [`docs/multivariable/TERRITORIAL_RESULTS.md`](docs/multivariable/TERRITORIAL_RESULTS.md), [`docs/discovery/EVIDENCE_CARDS.md`](docs/discovery/EVIDENCE_CARDS.md).
 
-## 2. The app
+**A. Antofagasta vs Los Lagos — confirmatory (question fixed before any data were downloaded).** In MERRA-2, 1980–2025, Antofagasta warmed +0.23 °C per decade (95 % CI +0.11 to +0.35) and Los Lagos +0.05 (−0.04 to +0.14). Tested directly on the difference series, the trends differ by **+0.18 °C per decade (95 % CI +0.05 to +0.31, p = 0.006)**. ERA5 at matching points agrees on the regional samples; the coastal Antofagasta station does not show the regional warming — which led to finding B.
 
-Choose a guided case or investigate freely: variable → region → time series → trend with its uncertainty →
-comparison with a second region → the evidence behind every number. The web app **computes no statistics**: it only
-displays what the reproducible pipeline in this repository calculated.
+**B. Antofagasta, coast vs interior — exploratory, and sensitive to the period.** Over 1980–2025 the coastal cells show −0.03 °C per decade (CI −0.19 to +0.14) and the interior +0.27 (+0.14 to +0.39): difference −0.29, p < 0.001; ERA5 shows the same contrast. The contrast comes from 1980–2002 (coastal cells cooled). **In 2003–2025 both warm (+0.43 and +0.52) and the difference is not significant**; the coastal sea-surface temperature (NASA MUR, 2003–2025) is +0.11 °C per decade, not significant. Coast and elevation are confounded at this resolution (ρ = 0.90): an ocean influence is plausible, not proven.
 
-Three guided cases, all with real results:
+**C. Magallanes — the datasets disagree.** IMERG shows a significant precipitation decline (−12.2 mm/month per decade, 1998–2024, p = 0.001, q = 0.02 across 16 regions) that neither the Punta Arenas station nor ERA5 reproduces; MERRA-2 shows no warming (p = 0.97) while ERA5 and the station show significant warming. The app shows the disagreement instead of choosing a winner.
+
+What we do **not** claim: causes, forecasts, or that "not significant" means "no change".
+
+## 5. NASA data
+
+| Product | Variable | Native resolution | Nature | Period | DOI | Accessed through |
+| --- | --- | --- | --- | --- | --- | --- |
+| MERRA-2 `M2IMNXASM` v5.12.4 (GMAO) | 2-m air temperature (`T2M`) | 0.5° × 0.625° (~50 km) | **Reanalysis** (weather model + observations) | 1980–2025 | [10.5067/5ESKGQTZG7FO](https://doi.org/10.5067/5ESKGQTZG7FO) | NASA Giovanni time-series service (GES DISC) |
+| GPM IMERG Final Run `GPM_3IMERGM` V07 | Precipitation | 0.1° (~10 km) | **Satellite** estimate merged with rain gauges | 1998–2024 | [10.5067/GPM/IMERG/3B-MONTH/07](https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07) | Same service |
+| GLDAS-2.1 Noah `GLDAS_NOAH025_M` | Root-zone and surface soil moisture, evapotranspiration, snow water equivalent | 0.25° (~25 km) | **Land-surface model** driven by observed weather — simulated, not measured | 2000–2024 | [10.5067/SXAVCZFAQLNO](https://doi.org/10.5067/SXAVCZFAQLNO) | Same service |
+| JPL MUR v4.1 (GHRSST L4) | Sea-surface temperature, coastal box off Antofagasta | 0.01° | **Satellite**-based blended analysis | 2003–2025 | [10.5067/GHGMR-4FJ04](https://doi.org/10.5067/GHGMR-4FJ04) | NASA Harmony (PO.DAAC) |
+| NASA EOSDIS GIBS Blue Marble | Basemap of the globe | — | Imagery, **context only** (not analysed) | — | — | GIBS WMTS |
+
+NASA Giovanni and the GES DISC Hydrology Time Series are listed in the challenge Resources tab. One request per native grid cell (`https://api.giovanni.earthdata.nasa.gov/timeseries`): 419 MERRA-2 cells and 9,694 IMERG cells cover the 16 regions; `data/weights/*.csv` lists the cells and weights of every region. Our area averaging reproduces Giovanni's own area averages to 0.0003 °C (`docs/validation/GIOVANNI_COMPARISON.md`).
+
+## 6. Interactive features
+
+Globe and regions (CesiumJS, rendered on demand, no token or paid service) · regional layers with their own scale and legend · native cells clipped to the region (`pipeline/atlas.py`; the value is always that of the whole native cell) · relief cut to the region and bent with the planet (Three.js, GMTED2010, exaggeration declared) · colour scale *spatial contrast* or *fixed comparison*, with a warning that window-adjusted colours are not comparable between windows · NASA MUR SST as a dashed study area with its one area-averaged trend · highest/lowest cell trend, labelled as trends, not observed extremes · four study pins · town and landmark icons · flights between territories · persistent cell selection · shareable addresses (`?region=`, `&period=`, `&layer=`, `&relief=0`) · Research Lab with time series, intervals, comparisons and evidence cards · start-with-a-question and guided cases (`?q=coast`, `?q=disagreement`) · the earlier 3D page (`?embed=3d`) · without WebGL the Research Lab and its 2D maps open instead · interface sounds synthesised in the browser, off by default.
+
+The guided cases of the Research Lab use the comparisons written into the pre-registration:
 
 | Case | Regions | What it teaches |
 |---|---|---|
-| A. A real difference? | Temperature, Los Lagos vs Antofagasta | The difference between the two trends is itself significant in MERRA-2. ERA5 checks individual regional samples; the Antofagasta station does not corroborate its regional trend |
+| A. A real difference? | Temperature, Los Lagos vs Antofagasta | The difference between the two trends is itself significant in MERRA-2 |
 | B. Too little evidence | Temperature, Los Lagos vs Magallanes | "Not significant" is not "no change": ERA5 and the Punta Arenas station show warming in Magallanes that MERRA-2 does not |
-| C. One significant, one not | Precipitation, Los Lagos vs Magallanes | That pattern does **not** show the regions differ; and only one of several nominally significant regions survives adjustment for 16 tests |
+| C. One significant, one not | Precipitation, Los Lagos vs Magallanes | That pattern does **not** show the regions differ; only one of several nominally significant regions survives adjustment for 16 tests |
 
-All three use the comparisons written into the pre-registration. Their lessons were rewritten after the final results.
+Variable suggestions follow documented rules (`docs/discovery/VARIABLE_CATALOG.md`, generated by `pipeline/discovery.py`); no language model chooses or explains variables.
 
-**Start with a question (v3).** Six questions (water availability, coastal climate, Andean snow, dataset disagreement,
-climate change by region, vegetation response) lead to the variables that can help, each with a reason, its product, and
-its status: *integrated*, *available but not processed*, *planned* or *validation only*. Rules are documented
-(`docs/discovery/VARIABLE_CATALOG.md`, generated by `pipeline/discovery.py`); no language model chooses or explains
-variables. Unavailable combinations say why and suggest an alternative.
-
-**Evidence cards (v3).** Six key results, each with the same sections — result, source, analysis (method, correction,
-period sensitivity), cross-checks (with dependencies between sources), what it supports, what it does not, limitations —
-generated from the result files (`docs/discovery/EVIDENCE_CARDS.md`). Missing items read "Not evaluated".
-
-**Guided cases (v3).** *Why does Antofagasta's coast behave differently from its interior?* (seven steps: regional mean,
-station problem, split, terrain, external check, sensitivity, interpretation) and *When Earth observation datasets
-disagree: Magallanes* (each source compared on the same sample).
-
-**Period selector.** Full record, WMO normal 1991–2020 (temperature) and 2000–2024 (common with soil moisture); every
-window is recomputed by the pipeline and shown as a sensitivity check.
-
-**See it on the terrain (3D).** The same native cells and trends draped over the relief (Pacific, coastal range,
-desert, Andes) for Antofagasta (MERRA-2, 1980–2025 / 1980–2002 / 2003–2025, NASA MUR SST box over the sea) and Los Lagos
-(GLDAS soil moisture over relief or CONAF land cover). One footprint = one native cell; the terrain adds no data; the
-vertical exaggeration is shown in the legend. Three.js loads only when the view is opened; without WebGL the 2D map is
-shown. Built by `qgis/scripts/build_3d_terrain.py` from USGS GMTED2010; design and checks in `docs/gis/GIS_3D_ARCHITECTURE.md`
-and `docs/gis/THREE_D_VALIDATION.md`. A stand-alone page: `?embed=3d` (add `scene=los_lagos`, `period=2003-2025`, `cam=coast`).
-
-**Multivariable lab (exploratory).** Choose a phenomenon (water availability, Andean snow, climate) and the app suggests
-variables by documented rules; compare trends, see year-to-year association of detrended anomalies, native-cell trend
-maps, and the territorial case *Why does Antofagasta's coast behave differently from its interior?* (relief from a
-12.5 m DEM and distance to the coast, processed in QGIS; ERA5 check).
-
-## 3. NASA data
-
-| Variable | Collection | Accessed through | Period used |
-|---|---|---|---|
-| Air temperature at 2 m | MERRA-2 `M2IMNXASM` v5.12.4 (`T2M`), doi:[10.5067/5ESKGQTZG7FO](https://doi.org/10.5067/5ESKGQTZG7FO) — a **reanalysis** | NASA **Giovanni** time-series service (GES DISC) — Giovanni and the GES DISC Hydrology Time Series are listed in the challenge Resources | 1980–2025 |
-| Precipitation | GPM IMERG Final Run `GPM_3IMERGM` v07, doi:[10.5067/GPM/IMERG/3B-MONTH/07](https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07) — satellite estimate merged with rain gauges | Same service | 1998–2024 |
-
-One request per native grid cell (`https://api.giovanni.earthdata.nasa.gov/timeseries`): 419 MERRA-2 cells and
-9,694 IMERG cells cover the 16 regions of Chile. `data/weights/*.csv` lists the cells and weights of every region.
-
-## 4. Method
+## 7. Method
 
 1. **Regional series.** Area-weighted mean of the native grid cells (weight = area of the cell inside the region). No resampling.
 2. **Seasonal cycle removed.** Each month minus the mean of that calendar month.
@@ -142,7 +105,7 @@ beforehand. With slowly decaying memory the pre-registered test gave up to 47 % 
 a moving-block bootstrap 20 %, and the yearly-means test 9 %. **No method reached the nominal 5 % everywhere; we use
 the best calibrated one, say so, and still show in the app what the two earlier methods would have concluded.**
 
-## 5. Findings (all numbers in `docs/results.md`, generated by the pipeline)
+## 8. All regional results (numbers in `docs/results.md`, generated by the pipeline)
 
 **Temperature (MERRA-2 reanalysis, 1980–2025).**
 - The main test detects warming in 11 of 16 regions (p < 0.05); 9 remain below 0.05 after adjustment for 16 regions. Coquimbo is method-dependent, so not all 11 are robust across both methods.
@@ -163,7 +126,7 @@ the best calibrated one, say so, and still show in the app what the two earlier 
 Under our pre-registered method several of these would have looked far more certain (for example Los Ríos
 precipitation: p = 0.0003 then, p = 0.03 now, 0.17 after adjustment). That gap is the point of the project.
 
-## 5b. Exploratory extensions (v2) — not confirmatory
+## 8b. Exploratory extensions — not confirmatory
 
 Everything here was decided after the main results; families and corrections were written down before computing
 (`docs/multivariable/HYPOTHESES_AND_TEST_FAMILIES.md`, `TERRITORIAL_EXPLORATORY_HYPOTHESES.md`). Numbers:
@@ -193,7 +156,7 @@ Everything here was decided after the main results; families and corrections wer
   decline (ρ ≈ −0.6), but GLDAS does not use the CONAF map and those covers sit in the lowland valley: location, not land
   use, may explain it. Not presented as a finding.
 
-## 6. Validation
+## 9. Validation
 
 | Check | What it tests | Result |
 |---|---|---|
@@ -211,7 +174,7 @@ Everything here was decided after the main results; families and corrections wer
 What this means: the north–south warming contrast and the Los Lagos results are supported by a second reanalysis; the
 Magallanes results (no significant warming in MERRA-2, significant drying in IMERG) are **not** confirmed by ERA5 or by the Punta Arenas station and
 should be read as product-dependent. A coastal station (Antofagasta, 135 m) and a mostly inland desert region are not the
-same quantity. The exploratory coast/interior analysis (§5b) found no statistically significant warming in MERRA-2's coastal cells, like the
+same quantity. The exploratory coast/interior analysis (§8b) found no statistically significant warming in MERRA-2's coastal cells, like the
 station, while interior cells warm; ERA5 shows the same contrast. The disagreement is largely a matter of *where* in the region.
 ERA5 and MERRA-2 assimilate many of the same observations, so their agreement is supporting, not independent, evidence.
 
@@ -221,7 +184,7 @@ has (corrected in v3; before, our full record was compared with the station's sh
 Giovanni offers no polygons for Chile's regions, so the Giovanni check uses boxes of whole cells inside each region: it
 validates the computation exactly, not our treatment of region borders (checked separately against geodesic areas).
 
-## 7. Limitations
+## 10. Limitations
 
 - MERRA-2 is a reanalysis, not a measurement; its ~50 km cells do not separate coast from mountains, and most cells of a region straddle its border.
 - The test looks for a straight-line trend over the whole period. It says nothing about causes and is not a forecast.
@@ -229,12 +192,12 @@ validates the computation exactly, not our treatment of region borders (checked 
 - The test is still not perfectly calibrated (worst simulated case: 8.6 % false positives for 46 years, 10.1 % for 27). No
   method met the 7.5 % criterion fixed beforehand; the fallback rule and the requirement of a confidence interval are
   stated as exceptions in `docs/calibration.md`.
-- For Magallanes, independent checks disagree with our NASA products (see §6).
+- For Magallanes, independent checks disagree with our NASA products (see §9).
 - Measurement uncertainty of the data products is not propagated.
 - IMERG is less accurate over steep terrain; 27 years is short for precipitation.
 - Two changes were made after pre-registration (documented above).
 
-## 8. Architecture
+## 11. Architecture
 
 ```
 NASA Giovanni time-series service ──► pipeline/fetch.py ──► data/raw (cache, not committed)
@@ -245,11 +208,14 @@ NASA Giovanni time-series service ──► pipeline/fetch.py ──► data/raw
         pipeline/trend.py (all statistics)┘                      ▼
         calibration.py, validate.py, validate_external.py,       web/ (React, static) ──► GitHub Pages
         validate_giovanni.py (Giovanni ArAvTs)
+   pipeline/atlas.py (cells clipped to regions, film series) ──► web/public/data/atlas.json
 ```
+
+Web (`web/`): React 19 + TypeScript + Vite 6. The Earth Atlas uses CesiumJS 1.147 (globe, regional layers, cells on the ellipsoid; NASA GIBS basemap, no Cesium ion) and Three.js (regional relief), driven by one camera pose; the Research Lab uses Observable Plot. The film is rendered from the same page (`web/scripts/render.mjs`, headless Chrome + FFmpeg) and the presenter mode drives the same stage (`web/src/presentation/`).
 
 No server, no database: a reproducible batch pipeline and a static site.
 
-## 9. Reproduce
+## 12. Reproduce
 
 Three levels, from cheapest to complete:
 
@@ -265,7 +231,7 @@ Three levels, from cheapest to complete:
    Giovanni's area-averaging service was failing for all variables on 2026-11-14 afternoon, which blocked the coastal SST
    extension; the main pipeline uses the time-series API, which was working.
 
-Requires [uv](https://docs.astral.sh/uv/) (Python ≥ 3.12), Node 20, and a free [Earthdata Login](https://urs.earthdata.nasa.gov)
+Requires [uv](https://docs.astral.sh/uv/) (Python ≥ 3.12), Node 20 (used locally and in CI; CesiumJS 1.147 declares Node ≥ 22.17 as its supported range — tests, build and browser checks pass on 20.11, but use Node 22 LTS if you can), and a free [Earthdata Login](https://urs.earthdata.nasa.gov)
 token (approve the "NASA GESDISC DATA ARCHIVE" application in your profile).
 
 ```bash
@@ -291,19 +257,32 @@ uv run pytest
 cd web && npm ci && npm run dev
 ```
 
-## 10. Evidence of development during the event
+Frontend checks (in `web/`): `npm test` (vitest), `npm run build`, and `npm run smoke` (browser smoke tests against a running dev server or the public site; needs a GPU and network).
+## 13. Evidence of development during the event
 
 Work started on 2026-11-14 at 09:03 (UTC−03:00), after the official start. The commit history is the record:
 pre-registration first, then data, engine and tests, first results, validation, each method revision, and the app.
 
-## 11. Use of SI
+## 14. Team and contributions
 
-SI coding tools (Claude, Anthropic, via Claude Code) wrote most of the code, tests and documentation in this
-repository and ran the analyses, under the direction and review of the team. Files written this way carry an
-"SI disclosure" note in their header and commits are marked `Co-Authored-By: Claude`. No images, video or audio were
-generated with SI. OpenAI Codex assisted the independent review and subsequent documentation and interface revisions; team review of those revisions is pending. Every number shown comes from the reproducible code in `pipeline/`, never from a language model.
+- **Giuseppe Proboste** — data, GIS, statistics, scientific choices and review, direction of the SI-assisted development.
+- **Fabiana García** — design, texts, independent review of the experience and the submission.
+- **ProGarLabs** — the team's lab (Osorno, Chile); Local Event: Quemchi.
 
-## 12. References
+## 15. Use of SI (AI disclosure)
+
+| What | How it was made |
+| --- | --- |
+| Idea, scientific questions, choices and approval | The team (human). SI was not used to come up with the idea. |
+| Code, tests, documentation | Written mostly with SI coding assistants — Anthropic Claude via Claude Code — under the team's direction and review; OpenAI Codex assisted an independent review and some documentation and interface revisions. Files written this way carry an "SI disclosure" note in their header; commits are marked `Co-Authored-By: Claude`. |
+| Statistics and every number shown | Computed by the reproducible Python code in `pipeline/` from NASA data — never by a language model. |
+| Maps, globe, charts, the 30 s film | Programmatic visualisations: the film is a frame-by-frame render of the live app (`web/scripts/render.mjs`). **No image or video generator was used.** |
+| Film music | **Original instrumental music generated with MiniMax Music 3.0 (AI-generated)**, edited to the film by `web/scripts/mix_film_music.py` and approved by the team; the track belongs to a team member. Stated in the video's description and metadata (the MiniMax AIGC label is kept in the MP4). |
+| Interface sounds | Synthesised in the browser by our code (`web/src/experiences/sound.ts`); no audio file. |
+
+An earlier version of this section said that no audio was generated with SI; that was true before the film's music was added and is now corrected.
+
+## 16. Sources, licences and references
 
 Data
 - Global Modeling and Assimilation Office (GMAO), MERRA-2 instM_2d_asm_Nx V5.12.4, GES DISC, doi:10.5067/5ESKGQTZG7FO.
@@ -333,13 +312,21 @@ Methods
 - Wasserstein, R.L., and N.A. Lazar (2016), Am. Stat. 70, 129–133, doi:10.1080/00031305.2016.1154108.
 - Hussain, M., and I. Mahmud (2019), pyMannKendall, J. Open Source Softw. 4(39), 1556, doi:10.21105/joss.01556.
 
+Imagery and tools
+- NASA EOSDIS GIBS, Blue Marble: Next Generation with shaded relief and bathymetry (basemap of the globe, context only): https://nasa-gibs.github.io/gibs-api-docs/
+- MiniMax Music 3.0 (https://www.minimax.io/audio): AI-generated instrumental music of the film, used under MiniMax's terms (no ownership claimed by MiniMax; output labelled as AI-generated).
+- SI assistants: Anthropic Claude (Claude Code), OpenAI Codex — see §15.
+
 Software (all open source): QGIS 4.2 (GPL-2.0+) with GDAL/OGR (MIT) for the spatial workflow (`qgis/`); h5py (BSD-3) for the Giovanni check. Python — NumPy (BSD-3), SciPy (BSD-3), Shapely (BSD-3), Requests (Apache-2.0),
 pyMannKendall (MIT), pytest (MIT), pyproj (MIT). Web — React (MIT), Vite (MIT), TypeScript (Apache-2.0),
-Observable Plot (ISC), d3-geo (ISC).
+Observable Plot (ISC), d3-geo (ISC), CesiumJS (Apache-2.0), Three.js (MIT), zustand (MIT), Vitest (MIT); fonts Anton, Archivo and Space Mono (SIL OFL 1.1, via Fontsource); FFmpeg (LGPL/GPL, used as a tool, not distributed).
 
-## 13. License and links
+## 17. Licence and links
 
-Apache-2.0 (`LICENSE`). No NASA or Space Apps logos are used. NASA does not endorse this project.
+Code and the project's own documentation: Apache-2.0 (`LICENSE`). Third-party data keep their own licences (§16); CIREN and CONAF sources are not redistributed (`docs/gis/DATA_LICENSES.md`). The 30-second video and its music are published as a release asset for the contest and are **not** covered by Apache-2.0. No NASA or Space Apps logos are used. NASA does not endorse this project.
+
+- Official 30-second demo: https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo
+- Presenter mode: https://giuseppeprbst.github.io/trend-detective-lab/?present=1
 
 - Live app: https://giuseppeprbst.github.io/trend-detective-lab/
 - Repository: https://github.com/GiuseppePrbst/trend-detective-lab
