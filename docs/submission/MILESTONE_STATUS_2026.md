@@ -10,8 +10,8 @@ Deadline: Sunday 15 Nov 2026, 23:59 America/Santiago. Feature freeze 21:30; targ
 | H1 README | DONE | 18:20 | ddd5fd1 | #22 | 4.0 | yes | — |
 | H2 Official 30 s video | DONE (no code) | 18:25 | ddd5fd1 | — | 4.1 | release text improved, MP4 unchanged (SHA-256 ef0b9568…), PDF audited, presenter mode OK in production | — |
 | H3 Six national layers | DONE | 18:47 | 7ffb02a | #23 | 4.2 | yes; production smoke 01/09/10/21/22 pass | saved form text still names two layers (human may update) |
-| H4 Science and technical audit | DONE | 19:00 | (this PR) | this PR | 4.3 | numbers in README/cards = JSON; a11y: one h1 added; full production smoke | — |
-| H5 Freeze and final report | pending | | | | | | form submitted |
+| H4 Science and technical audit | DONE | 18:58 | 275b073 | #24 | 4.3 | numbers in README/cards = JSON; a11y h1 added; production smoke 28/28 | — |
+| H5 Freeze and final report | DONE — READY BUT NOT SUBMITTED | 19:05 | (this PR) | this PR | 4.3 | `FINAL_SUBMISSION_REPORT_2026.md` | **Human:** Submit for Judging |
 
 ## H0 facts
 
