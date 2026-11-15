@@ -2,7 +2,7 @@
 
 *SI disclosure: drafted with an SI coding tool (Claude) for the team to review, adapt in its own words and paste. Nothing here submits anything.*
 
-**Status checked on 2026-11-15 17:52 −03:00 (public team page, not logged in): the project "Project ProGarLabs" exists, is linked to the right challenge, has every field empty and is NOT submitted (`isSubmitted: false`, `savedAt: null`).** A team member must log in, fill the fields below, tick the declarations and click **Submit for Judging** before 23:59 local time, then check that the page says it was submitted.
+**Status checked on 2026-11-15 17:47 −03:00 (public team page, not logged in): the project "Project ProGarLabs" exists, is linked to the right challenge, has every field empty and is NOT submitted (`isSubmitted: false`, `savedAt: null`).** A team member must log in, fill the fields below, tick the declarations and click **Submit for Judging** before 23:59 local time, then check that the page says it was submitted.
 
 Field names below are those the platform uses for the project (`name`, `summary`, `demoLink`, `projectLink`, `details`, `solution`, `aiToolsUsage`, `aiReferences`, `dataReferences`, `projectReferences`). Character limits were not visible without logging in: if a box is shorter, cut from the end of each paragraph.
 
@@ -20,7 +20,9 @@ Trend Detective Lab turns NASA Earth data into tested evidence about environment
 
 ## Demo link (official demo: video of 30 seconds or less)
 
-`<public link to trend-detective-lab-earth-experience-v2-final.mp4 — PENDING: see docs/submission/MILESTONE_STATUS_2026.md>`
+https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo
+
+(The release page plays nothing by itself: it lists the MP4, which opens and plays in the browser from https://github.com/GiuseppePrbst/trend-detective-lab/releases/download/nasa-spaceapps-2026-demo/trend-detective-lab-30s-demo.mp4 — 1920×1080, 30.0 s, SHA-256 `ef0b95684fd6a16a1e6e6ae9de161252874e569a9cff797635512f9fe646c7f5`; checked without logging in, 18:0x −03:00. If the form wants a direct video link, paste the second URL.)
 
 Fallback if the video cannot be hosted in time: the 7-slide English deck `docs/presentation/TrendDetectiveLab_demo.pdf` (public link: https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/presentation/TrendDetectiveLab_demo.pdf).
 
