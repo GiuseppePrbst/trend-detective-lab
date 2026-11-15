@@ -8,7 +8,7 @@
 | --- | --- |
 | Mix of five Epidemic Sound effects (`film_audio.py`) | **Rejected by the team.** Not to be published or rebuilt. Kept only as a local, labelled backup. |
 | MiniMax track with a beat join at 22 s (candidate 1) | **Rejected by Giuseppe**: the join at 0:22 is noticeable. |
-| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6d50217e…`). Rights **confirmed by Giuseppe** (the track is his; use in the film and its publication approved, 2026-11-15). This is the film to publish. |
+| MiniMax track, one continuous passage from 1.10 s, fade-out at the end (candidate 2) | **Approved by Giuseppe** (listened, 2026-11-15). Copied, unchanged, to `web/out/trend-detective-lab-earth-experience-v2-final.mp4` (SHA-256 `6f7e10a7…`; picture re-rendered on 2026-11-15 after PRs #15–#17 — SST study area, fixed colour scale in the film — with the same music and edit parameters, decoded audio identical; previous file kept as `…-v2-final-prev.mp4` and in `web/out/v2_prev2/`). Rights **confirmed by Giuseppe** (the track is his; use in the film and its publication approved, 2026-11-15). This is the film to publish. |
 | MiniMax track, the last 30 s of the piece (candidate 2b) | Not chosen. |
 | Silent V2 | Fallback. The approved V1 film is unchanged. |
 
