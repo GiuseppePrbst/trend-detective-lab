@@ -488,6 +488,7 @@ export default function Immersive() {
       </div>}
       {s.hideUi && !s.film && <div className="im-skip"><button type="button" className="im-mono" onClick={() => useStage.setState({ hideUi: false })}>Exit immersive mode (Esc)</button></div>}
 
+      <h1 className="im-sr">Trend Detective Lab — NASA Earth trends for the 16 regions of Chile</h1>   {/* page title for screen readers; the brand below is the visual one */}
       <header className="im-top im-ui">
         <a className="im-brand" href="./" aria-label="Trend Detective Lab, home">
           <img src={`${import.meta.env.BASE_URL}img/progarlabs-isotipo.svg`} alt="" width={30} height={30} />
