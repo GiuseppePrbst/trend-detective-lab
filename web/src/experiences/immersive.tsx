@@ -86,7 +86,7 @@ function Legend({ compact = false, regional, cat }: { compact?: boolean; regiona
       {!compact && (reg
         ? <p className="im-note">One colour = one region's mean trend over its whole record. Colour shows the size of the trend, not whether it is significant: see the table in Trends. Regions without a value are left uncoloured (never zero).</p>
         : <p className="im-note">One coloured footprint = one native cell and one computed trend, drawn only over the region's land; the value is still that of the whole native cell. Scale fixed across periods. No cell, no colour (never zero).
-          {scene === 'antofagasta' && ' Dark outline: coastal cells. White-outlined area over the sea: NASA MUR sea-surface temperature, one value for the box, 2003–2025 only.'}</p>)}
+          {scene === 'antofagasta' && ' Dark outline: coastal cells. Dashed turquoise outline over the sea: the NASA MUR sea-surface temperature study area, one area-averaged trend, 2003–2025 only — a study footprint, not a temperature map.'}</p>)}
     </div>
   );
 }
@@ -115,7 +115,7 @@ function Controls({ stage, cat, regional }: { stage: Stage | null; cat: Catalog 
         <div className="im-field"><span className="im-mono im-dim">Variable in {REGION_NAME[s.scene]}</span>
           <p className="im-note">{cfg.product}.</p></div>
         <label className="im-check"><input type="checkbox" checked={s.cells} onChange={(e) => { sound.cue('layer'); useStage.setState({ cells: e.target.checked }); }} /> Climate cells</label>
-        {s.scene === 'antofagasta' && <label className="im-check"><input type="checkbox" checked={s.sst} onChange={(e) => { sound.cue('layer'); useStage.setState({ sst: e.target.checked }); }} /> Ocean SST box (2003–2025)</label>}
+        {s.scene === 'antofagasta' && <label className="im-check"><input type="checkbox" checked={s.sst} onChange={(e) => { sound.cue('layer'); useStage.setState({ sst: e.target.checked }); }} /> Ocean SST study area (2003–2025)</label>}
         <label className="im-check"><input type="checkbox" checked={s.terrainOn} onChange={(e) => { sound.cue('terrain'); useStage.setState({ terrainOn: e.target.checked }); }} /> 3D relief up close (scientific terrain)</label>
         <label className="im-field"><span className="im-mono im-dim">Cell opacity {Math.round(s.opacity * 100)} %</span>
           <input type="range" min={0.2} max={1} step={0.05} value={s.opacity} onChange={(e) => useStage.setState({ opacity: Number(e.target.value) })} /></label>
@@ -193,11 +193,11 @@ function Evidence({ terr, sst, stage, cat, regional, study, setStudy }: { terr: 
       {study ? <StudyCard st={study} data={{ terr, sst, precip: regional.precip ?? null }} stage={stage} close={() => setStudy(null)} />
         : <>
           {s.mode === 'explore' && (s.picked ? <>
-            <div className="im-mono im-dim">Selected cell · outlined in cyan</div>
+            <div className="im-mono im-dim">{s.picked.note ? 'Selected study area · dashed outline' : 'Selected cell · outlined in cyan'}</div>
             <h3 className="im-h">{s.picked.title}</h3>
             <p className="im-big"><b>{s.picked.lines[0].split(' ')[0]}</b> <span>{s.picked.lines[0].split(' ').slice(1).join(' ')}</span></p>
             {s.picked.lines.slice(1).map((l) => <p key={l} className="im-note">{l}</p>)}
-            <p className="im-note">{cfg.product}. The value is the trend of the whole native cell, also where only part of it is drawn.</p>
+            <p className="im-note">{s.picked.note ?? `${cfg.product}. The value is the trend of the whole native cell, also where only part of it is drawn.`}</p>
             <div className="im-seg"><button type="button" onClick={() => useStage.setState({ selected: null, picked: null })}>Close cell</button></div>
           </> : s.region && !(s.near && sceneRegion) ? <RegionCard id={s.region} cat={cat} regional={regional} stage={stage} />
             : s.near ? <>
@@ -392,7 +392,7 @@ export default function Immersive() {
   useEffect(() => {
     load<Territory>('territory.json').then(setTerr, () => undefined);
     load<Catalog>('catalog.json').then(setCat, () => undefined);
-    load<SST>('sst.json').then((d) => { setSst(d); useStage.setState({ sstSlope: d?.series.mur_sst?.trend.slope_per_decade }); }, () => undefined);
+    load<SST>('sst.json').then((d) => { setSst(d); const t = d?.series.mur_sst?.trend; useStage.setState({ sstSlope: t?.slope_per_decade, sstTrend: t }); }, () => undefined);
   }, []);
 
   // regional files are fetched only when a region, a regional layer or a study needs them
@@ -422,7 +422,8 @@ export default function Immersive() {
         w.renderAt = (t: number) => x.renderAt(t, flushSync);
         if (Q.has('t')) await x.renderAt(Number(Q.get('t')), flushSync);
         else if (Q.get('mode') === 'cinematic' && !CAPTURE && !matchMedia('(prefers-reduced-motion: reduce)').matches) await x.play();
-        else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|t2m|precip&relief=0
+        else if (!CAPTURE) {                                  // shareable state: ?region=<id>&layer=cells|t2m|precip&relief=0&period=2003-2025
+          if (Q.get('period')) useStage.setState({ period: Q.get('period')! });   // an unknown window falls back to the scene's first one
           const layer = Q.get('layer');
           if (layer === 't2m' || layer === 'precip') useStage.setState({ layer });
           if (Q.get('relief') === '0') useStage.setState({ terrainOn: false });

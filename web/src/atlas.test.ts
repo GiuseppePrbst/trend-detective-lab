@@ -6,7 +6,7 @@ import { CHART, DEST, flightPose, PERIOD_A, PERIOD_B, PERIOD_SWAP, planFlight, p
 import type { Scene } from './engine/terrain';
 import { toUV } from './engine/geo';
 import { inside } from './engine/terrain';
-import { extremesOf, kmBetween, visibleCellAt } from './experiences/pure';
+import { extremesOf, kmBetween, sstLines, visibleCellAt } from './experiences/pure';
 import { STUDIES } from './experiences/studies';
 
 const json = <T,>(p: string) => JSON.parse(readFileSync(new URL(`../public/${p}`, import.meta.url), 'utf-8')) as T;
@@ -32,6 +32,27 @@ describe('picking on the relief follows the clipped footprints', () => {
     });
     expect(hidden).toBeGreaterThan(0);                               // the native boxes do reach off the region: the old test would have opened them
     expect(shown).toBeGreaterThan(hidden);
+  });
+});
+
+describe('SST study area', () => {
+  const sst = json<{ box: string; period: number[]; series: { mur_sst: { trend: { slope_per_decade: number; ci_low: number; ci_high: number; p_value: number; start: string; end: string } } } }>('data/sst.json');
+  const sea = (atlas as unknown as { sst_sea: [number, number][][][] }).sst_sea;
+  it('the outline lies inside the published box and on the sea only', () => {
+    const [x0, y0, x1, y1] = sst.box.split(',').map(Number);
+    for (const [lo, la] of sea.flat(2)) { expect(lo).toBeGreaterThanOrEqual(x0 - 1e-9); expect(lo).toBeLessThanOrEqual(x1 + 1e-9); expect(la).toBeGreaterThanOrEqual(y0 - 1e-9); expect(la).toBeLessThanOrEqual(y1 + 1e-9); }
+    expect(visibleCellAt([-71.3, -24.0], [sea])).toBe(0);               // open Pacific inside the box
+    for (const p of atlas.places.filter((q) => q.scene === 'antofagasta' && q.lon >= x0 && q.lon <= x1))
+      expect(visibleCellAt([p.lon, p.lat], [sea])).toBe(-1);            // towns on the coast are land, not SST
+    expect(visibleCellAt([-70.0, -24.0], [sea])).toBe(-1);              // inland
+  });
+  it('its card repeats sst.json and says it is one area average, not a map', () => {
+    const t = sst.series.mur_sst.trend, l = sstLines(t, 'not significant');
+    expect(l[0]).toBe(`${t.slope_per_decade < 0 ? '−' : '+'}${Math.abs(t.slope_per_decade).toFixed(2)} °C per decade (2003–2025)`);
+    expect(l[1]).toContain(`p = ${t.p_value.toFixed(3)}`);
+    expect(l[1]).toContain(`${t.ci_low < 0 ? '−' : '+'}${Math.abs(t.ci_low).toFixed(2)} to +${t.ci_high.toFixed(2)}`);
+    expect(l[2]).toMatch(/not a spatial temperature map/);
+    expect(sst.period).toEqual([2003, 2025]);
   });
 });
 
