@@ -224,6 +224,14 @@ function Evidence({ terr, sst, stage, cat, regional, precipFile, study, setStudy
               <p>Drag to turn the Earth and zoom in on Chile. Pick a flag, click any of the 16 regions, or start with a guided case.</p>
               <button type="button" className="im-guide" onClick={() => { sound.cue('fly'); useStage.setState({ layer: 'cells', cells: true, period: '1980-2025', mode: 'explore' }); stage?.flyTo('antofagasta'); setStudy(STUDIES[0]); }}>
                 <span className="im-mono">Guided case</span>Investigate a changing coastline →</button>
+              <div className="im-mono im-dim">What we found — open the evidence</div>
+              {/* links to the Research Lab's real results; no figure is repeated here */}
+              <ul className="im-list">
+                <li><a href={`${LAB}&q=climate`}>Antofagasta warmed faster than Los Lagos</a> — confirmatory, MERRA-2</li>
+                <li><a href={`${LAB}&q=coast`}>Inside Antofagasta, coast and interior differ — and the answer depends on the period</a> — exploratory</li>
+                <li><a href={`${LAB}&q=disagreement`}>In Magallanes, NASA and other sources disagree</a></li>
+              </ul>
+              <p className="im-note">Six regional layers for the 16 regions are under <b>Data on the globe</b>. Trends only — no causes, no forecasts; limits in <b>Methodology</b>.</p>
               <a className="im-note" href="https://github.com/GiuseppePrbst/trend-detective-lab/blob/main/docs/education/CLASSROOM_INVESTIGATION_EN.md" target="_blank" rel="noopener">Teachers and students: a 15-minute investigation with this app ↗</a>
             </>)}
           {s.mode === 'trends' && (reg && s.layer !== 'cells' ? <>
