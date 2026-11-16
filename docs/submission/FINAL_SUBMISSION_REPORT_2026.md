@@ -81,3 +81,14 @@ No trend was recomputed and no result file changed during the final day. Statist
 | P1 | The saved form text names two globe layers; six are now online (optional update before submitting) | team |
 | P2 | First visit on a slow connection still takes about 12 s (Cesium bundle); no screen reader or phone tested | — |
 | P2 | Real devices and screen readers were not tested; performance measured on one desktop GPU | — |
+
+## Freeze (21:35) and the submitted text
+
+Production frozen at tag `nasa-spaceapps-2026-final` (`bdfd6e7`; app identical to `6461cdf`, production smoke 29/29). The submitted form was read back at 21:29 (`isSubmitted: true`). Two statements in *Project Details* are older than the published version — both understate, neither is false:
+
+| Submitted text | Published now | Recommendation |
+| --- | --- | --- |
+| "Chile's 16 regions coloured by their NASA trends (air temperature, precipitation)" | six regional layers (adds four GLDAS variables) | Optional. Judges see the app and README. If the team edits it: replace the parenthesis with "for six variables (air temperature, precipitation; GLDAS root-zone and surface soil moisture, evapotranspiration and snow water equivalent, labelled exploratory model output)", Save, click **Submit for Judging** again before 23:59, and check that the page still says submitted |
+| "54 science tests and 37 frontend tests" | 54 and 43 | Not worth a resubmission |
+
+The form's own tips: only the last click on *Submit for Judging* before 23:59 counts; nothing can be changed after the deadline.

@@ -19,7 +19,8 @@ Deadline: Sunday 15 Nov 2026, 23:59 America/Santiago. Feature freeze 21:30; targ
 | H10 First load, focus order, external review | DONE | 20:50 | 7cf07ff | #31, #32, #33 | 4.40 | slow first load 16.3–17.2 s → 11.8–11.9 s; header before markers for keyboard; 26 links, video and PDF public | — |
 | H11 First-visit walkthrough | DONE (agent, clean session; no user test) | 21:08 | 7cf07ff | — | — | findings, six layers and limits were not visible on the first screen | — |
 | H12 High-impact fix | DONE | 21:19 | 6461cdf | #34 | 4.40 | welcome card lists the three findings (links), the six layers and the limits | — |
-| H13 Final release | DONE | 21:30 | (this PR) | this PR | 4.40 | tests green, MP4 hash unchanged, PDF 7 pages, science files unchanged; tag `nasa-spaceapps-2026-final` | — |
+| H13 Final release | DONE | 21:30 | bdfd6e7 | #35 | 4.40 | tests green, MP4 hash unchanged, PDF 7 pages, science files unchanged; tag `nasa-spaceapps-2026-final` | — |
+| H14 Freeze | DONE — production frozen | 21:35 | (this PR) | this PR | 4.40 | submitted text read back (21:29): no resubmission needed; see the final report | — |
 
 ## H0 facts
 
