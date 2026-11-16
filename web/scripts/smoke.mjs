@@ -72,6 +72,8 @@ try {
     const t0 = Date.now(); await go(''); metrics.ready_ms = Date.now() - t0;
     assert(await ev(TERR) === 'earth', 'territory is not Whole Earth');
     assert(await ev(`document.querySelectorAll('h1').length`) === 1, 'the page needs exactly one h1 (screen readers)');
+    const welcome = await ev(`document.querySelector('.im-right').textContent`);
+    for (const s of ['What we found', 'Antofagasta warmed faster than Los Lagos', 'Magallanes', 'Six regional layers', 'no causes']) assert(welcome.includes(s), `first screen lacks "${s}"`);
     const order = await ev(`[...document.querySelectorAll('a[href],button,select,input')].filter((e) => e.offsetParent !== null && e.tabIndex >= 0).map((e) => e.closest('.im-markers') ? 'marker' : e.closest('.im-top') ? 'header' : 'other')`);
     assert(order.indexOf('header') < order.indexOf('marker') && order.lastIndexOf('header') < order.indexOf('marker'), `keyboard reaches map markers before the header: ${order.join(',')}`);
     await wait(4000);
