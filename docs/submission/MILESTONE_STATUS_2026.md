@@ -6,7 +6,7 @@ Deadline: Sunday 15 Nov 2026, 23:59 America/Santiago. Feature freeze 21:30; targ
 
 | Milestone | State | Time (−03:00) | main SHA | PR | Internal score /5 | Deliverable | Blockers |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| H0 Secure the submission | **PREPARED, SAVED, NOT SUBMITTED** (20:16) | 20:16 | 733fb59 | #20, #21 | 3.9 | demo public; form filled and saved 18:08 with declarations | **Human:** click *Submit for Judging* |
+| H0 Secure the submission | **SUBMITTED** 21:06:38 (`isSubmitted: true`) | 21:09 | 733fb59 | #20, #21 | 3.9 | demo public; form submitted by the team | — |
 | H1 README | DONE | 18:20 | ddd5fd1 | #22 | 4.0 | yes | — |
 | H2 Official 30 s video | DONE (no code) | 18:25 | ddd5fd1 | — | 4.1 | release text improved, MP4 unchanged (SHA-256 ef0b9568…), PDF audited, presenter mode OK in production | — |
 | H3 Six national layers | DONE | 18:47 | 7ffb02a | #23 | 4.2 | yes; production smoke 01/09/10/21/22 pass | saved form text still names two layers (human may update) |
@@ -15,8 +15,11 @@ Deadline: Sunday 15 Nov 2026, 23:59 America/Santiago. Feature freeze 21:30; targ
 | H6 Classroom investigation | DONE | 19:20 | 2bf40a3 | #26 | 4.34 | `docs/education/` (worksheet + teacher guide, smoke 23) | — |
 | H7 7-slide deck on Earth Atlas V2 | DONE | 19:30 | 77852e8 | #27 | 4.36 | PDF regenerated, seven pages inspected | — |
 | H8 Judge experience audit | DONE | 19:52 | eb52758 | #28, #29 | 4.38 | welcome card fixed; `JUDGE_UX_AUDIT_2026.md`; production smoke 29/29 | — |
-| H9 Freeze and final check | DONE — READY BUT NOT SUBMITTED | 19:55 | 7cb36c7 | #30 | 4.38 | report updated | **Human:** Submit for Judging |
-| H10 First load, focus order, external review | DONE | 20:50 | (this PR) | #31, #32, this PR | 4.40 | slow first load 16.3–17.2 s → 11.8–11.9 s; header before markers for keyboard; 26 links, video and PDF public | **Human:** Submit for Judging |
+| H9 Freeze and final check | DONE — READY BUT NOT SUBMITTED | 19:55 | 7cb36c7 | #30 | 4.38 | report updated | — |
+| H10 First load, focus order, external review | DONE | 20:50 | 7cf07ff | #31, #32, #33 | 4.40 | slow first load 16.3–17.2 s → 11.8–11.9 s; header before markers for keyboard; 26 links, video and PDF public | — |
+| H11 First-visit walkthrough | DONE (agent, clean session; no user test) | 21:08 | 7cf07ff | — | — | findings, six layers and limits were not visible on the first screen | — |
+| H12 High-impact fix | DONE | 21:19 | 6461cdf | #34 | 4.40 | welcome card lists the three findings (links), the six layers and the limits | — |
+| H13 Final release | DONE | 21:30 | (this PR) | this PR | 4.40 | tests green, MP4 hash unchanged, PDF 7 pages, science files unchanged; tag `nasa-spaceapps-2026-final` | — |
 
 ## H0 facts
 
