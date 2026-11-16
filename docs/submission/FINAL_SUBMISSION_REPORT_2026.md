@@ -2,23 +2,23 @@
 
 *SI disclosure: written by an SI coding tool (Claude) from verified checks; for the team. No personal data or credentials.*
 
-**State at 20:50 −03:00, Sunday 15 November 2026: READY BUT NOT SUBMITTED.**
-The project form is filled and saved (18:08, declarations ticked by the team) but the platform reports `isSubmitted: false` (last read 20:16). A team member must click **Submit for Judging** before 23:59 local time, then check the public team page.
+**State at 21:25 −03:00, Sunday 15 November 2026: READY AND SUBMITTED.**
+The team clicked **Submit for Judging**; the platform reports `isSubmitted: true`, `submittedAt` 2026-11-16 00:06:38 UTC (**21:06:38 −03:00**), project name *Trend Detective Lab*, demo link = the public MP4 of the release (read at 21:09). Per the form's own tips, only the last click on *Submit for Judging* before 23:59 counts, and nothing can be changed after the deadline.
 
 ## Published version
 
 | Item | Value |
 | --- | --- |
 | Repository | https://github.com/GiuseppePrbst/trend-detective-lab (Apache-2.0) |
-| `main` | `04c6b97` before this report's PR (its merge commit is the final one) — CI and GitHub Pages green at every merge |
+| `main` | `6461cdf` before this report's PR; the final verified version is tagged **`nasa-spaceapps-2026-final`** — CI and GitHub Pages green at every merge |
 | Live app | https://giuseppeprbst.github.io/trend-detective-lab/ |
 | Presenter mode | https://giuseppeprbst.github.io/trend-detective-lab/?present=1 |
 | Research Lab | https://giuseppeprbst.github.io/trend-detective-lab/?view=lab |
 | Official demo (video, 30.0 s) | https://github.com/GiuseppePrbst/trend-detective-lab/releases/tag/nasa-spaceapps-2026-demo — MP4 SHA-256 `ef0b95684fd6a16a1e6e6ae9de161252874e569a9cff797635512f9fe646c7f5`, downloaded and played without logging in |
 | Backup demo (7 slides) | `docs/presentation/TrendDetectiveLab_demo.pdf` |
-| Recovery point | the merge commit of this report on `main` (or `04c6b97`); rollback of any later change: `git revert -m 1 <merge>` |
+| Recovery point | tag `nasa-spaceapps-2026-final`; rollback of any later change: `git revert -m 1 <merge>` |
 
-PRs of the final day: #13 Earth Atlas V2 · #14 release record · #15 SST study area · #16 colour scales · #17 film fixed scale · #18 film re-render · #19 presenter mode · #20 form copy · #21 demo link · #22 README · #23 six regional layers · #24 a11y and audit records · #25 first final report · #26 classroom investigation · #27 7-slide deck on Earth Atlas V2 · #28 welcome card · #29 judge experience audit · #30 report · #31 faster first load · #32 keyboard focus order · this report. Still open on purpose: #8, #12 (design contract and Fabiana's observations), #2.
+PRs of the final day: #13 Earth Atlas V2 · #14 release record · #15 SST study area · #16 colour scales · #17 film fixed scale · #18 film re-render · #19 presenter mode · #20 form copy · #21 demo link · #22 README · #23 six regional layers · #24 a11y and audit records · #25 first final report · #26 classroom investigation · #27 7-slide deck on Earth Atlas V2 · #28 welcome card · #29 judge experience audit · #30 report · #31 faster first load · #32 keyboard focus order · #33 report · #34 findings, six layers and limits on the first screen · this report. Still open on purpose: #8, #12 (design contract and Fabiana's observations), #2.
 
 ## What the judges get
 
@@ -68,16 +68,16 @@ No trend was recomputed and no result file changed during the final day. Statist
 | Creativity | 4.1 | Globe + evidence + direct difference tests + film and presenter mode from one engine |
 | Validity | 4.5 | Pre-registration, calibration by simulation, cross-checks, 126 automated checks (54 + 43 + 29), numbers audited, judge tasks verified in production |
 | Relevance | 4.6 | All four challenge objectives; NASA data from the challenge Resources as the core |
-| Presentation | 4.8 | README, 30 s film, deck on V2, presenter mode, welcome card that says what the app is; globe usable about 28 % sooner on slow connections; logical keyboard order |
+| Presentation | 4.8 | README, 30 s film, deck on V2, presenter mode; the first screen says what the app is, what we found, where the six layers are and the limits; globe usable about 28 % sooner on slow connections; logical keyboard order |
 | **Average** | **4.40** | |
 
-**Eligibility: FAIL until submitted** — every requirement is met except the click on *Submit for Judging*.
+**Eligibility: PASS** — submitted at 21:06:38 −03:00 with public app, repository and 30-second demo.
 
 ## Open items
 
 | Priority | Item | Owner |
 | --- | --- | --- |
-| P0 | Click **Submit for Judging**; check the public team page | team |
+| — | Submitted 21:06:38 (P0 closed) | team |
 | P1 | The saved form text names two globe layers; six are now online (optional update before submitting) | team |
 | P2 | First visit on a slow connection still takes about 12 s (Cesium bundle); no screen reader or phone tested | — |
 | P2 | Real devices and screen readers were not tested; performance measured on one desktop GPU | — |
